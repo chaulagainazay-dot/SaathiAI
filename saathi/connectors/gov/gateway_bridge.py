@@ -55,11 +55,14 @@ def emit_deprecation(
         if len(_DEPRECATION_EVENTS) > 500:
             del _DEPRECATION_EVENTS[:250]
     try:
-        from pathlib import Path
         import json
-        root = Path(__file__).resolve().parents[3]
-        path = root / "docs" / "evidence" / "m28" / "deprecation_events.jsonl"
-        path.parent.mkdir(parents=True, exist_ok=True)
+
+        from saathi.runtime_paths import runtime_evidence_dir
+
+        # Appended on every legacy-path call, including during imports and test
+        # collection. It is a runtime log, not a certification record, so it
+        # must not dirty the committed evidence tree.
+        path = runtime_evidence_dir("m28") / "deprecation_events.jsonl"
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps(ev, default=str) + "\n")
     except Exception:

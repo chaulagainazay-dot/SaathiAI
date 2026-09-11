@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SaathiProductSpeechClip",
+  "type": "object",
+  "required": [
+    "clip_id",
+    "speaker_id",
+    "audio_path",
+    "transcript",
+    "language_class",
+    "contains_numbers",
+    "contains_financial_terms",
+    "duration",
+    "split",
+    "consent_ref",
+    "sha256",
+    "qa_status",
+    "bucket"
+  ],
+  "properties": {
+    "clip_id": { "type": "string" },
+    "speaker_id": { "type": "string" },
+    "prompt_id": { "type": ["string", "null"] },
+    "audio_path": { "type": "string" },
+    "transcript": { "type": "string" },
+    "language_class": { "enum": ["EN", "NE", "MIX"] },
+    "contains_numbers": { "type": "boolean" },
+    "contains_financial_terms": { "type": "boolean" },
+    "duration": { "type": "number" },
+    "sample_rate": { "type": "integer" },
+    "channels": { "type": "integer" },
+    "device_label": { "type": ["string", "null"] },
+    "noise_class": { "type": ["string", "null"] },
+    "split": { "enum": ["TRAIN", "VALIDATION", "TEST", "UNASSIGNED"] },
+    "consent_ref": { "type": "string" },
+    "sha256": { "type": "string" },
+    "qa_status": { "enum": ["PASS", "FAIL", "PENDING"] },
+    "qa_errors": { "type": "array", "items": { "type": "string" } },
+    "bucket": { "enum": ["PRODUCT_CLEAN", "OWNER_PRIVATE", "RESEARCH_ONLY", "REJECTED"] },
+    "human_verified": { "type": "boolean" },
+    "canonical_number": { "type": ["string", "null"] }
+  }
+}

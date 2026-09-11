@@ -34,6 +34,49 @@ def _out(data: Any) -> int:
     return 0
 
 
+def _ops_dispatch(command: str) -> int:
+    """M328–M335 read-only operations commands. Nothing here mutates live state."""
+    from saathi.platform.tg.production_readiness.service import default_operations
+
+    ops = default_operations()
+    handlers = {
+        "prod-verdict": ops.posture,
+        "prod-charter": ops.charter,
+        "prod-control-center": ops.control_center,
+        "prod-health": ops.health.snapshot,
+        "prod-observability": ops.observability.posture,
+        "prod-timelines": ops.observability.timelines,
+        "prod-execution-history": ops.observability.execution_history,
+        "prod-audit-visualization": lambda: ops.observability.audit_visualization(
+            ops.governance.store.list_audit(100)
+        ),
+        "prod-metrics": ops.metrics.summary,
+        "prod-alerts": ops.alerts.list_alerts,
+        "prod-alert-policy": ops.alerts.destination_policy,
+        "prod-backups": ops.backups.list_snapshots,
+        "prod-backup-verify": ops.verify_backups,
+        "prod-recovery-simulate": ops.simulate_recovery,
+        "prod-recovery-history": ops.backups.recovery_history,
+        "prod-diagnostics": ops.run_diagnostics,
+        "prod-load-validation": ops.run_load_validation,
+        "prod-authority": ops.authority_summary,
+        "prod-certification-history": ops.certification_history,
+        "prod-security": ops.security_scan,
+        "prod-maturity": ops.maturity,
+        "prod-evidence": ops.evidence_bundle,
+        "prod-certify": ops.certify,
+    }
+    handler = handlers.get(command)
+    if handler is None:
+        return _out({"ok": False, "error": f"unknown operations command: {command}"})
+    try:
+        return _out(handler())
+    except Exception as exc:
+        from saathi.platform.tg.production_readiness.errors import error_envelope
+
+        return _out(error_envelope(exc))
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = argparse.ArgumentParser(prog="saathi-trading", description="Trading Guardian CLI (paper only)")
@@ -529,6 +572,37 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("mo-dashboard")
     sub.add_parser("mo-bootstrap")
     sub.add_parser("mo-certify")
+    # M312–M319 connectivity governance
+    for _cg in (
+        "cg-verdict", "cg-charter-show", "cg-authority-list", "cg-authority-evaluate",
+        "cg-provider-list", "cg-provider-show", "cg-provider-register", "cg-provider-prohibit",
+        "cg-approval-create", "cg-approval-submit", "cg-approval-review", "cg-approval-reject",
+        "cg-approval-revoke", "cg-credential-policy", "cg-threat-list", "cg-risk-summary",
+        "cg-incident-create", "cg-incident-contain", "cg-emergency-shutdown", "cg-maturity",
+        "cg-certify", "cg-dashboard", "cg-bootstrap",
+    ):
+        pg_sub.add_parser(_cg)
+        sub.add_parser(_cg)
+    # M320–M327 credentialless provider contracts (mock/replay only)
+    for _pc in (
+        "pc-verdict", "pc-charter", "pc-dashboard", "pc-providers", "pc-capabilities",
+        "pc-sessions", "pc-replay-fixtures", "pc-mock-quote",
+        "pc-replay-quote", "pc-security", "pc-certify",
+    ):
+        pg_sub.add_parser(_pc)
+        sub.add_parser(_pc)
+    # M328–M335 production readiness, observability and operational resilience
+    for _ops in (
+        "prod-verdict", "prod-charter", "prod-control-center", "prod-health",
+        "prod-observability", "prod-timelines", "prod-execution-history",
+        "prod-audit-visualization", "prod-metrics", "prod-alerts", "prod-alert-policy",
+        "prod-backups", "prod-backup-verify", "prod-recovery-simulate",
+        "prod-recovery-history", "prod-diagnostics", "prod-load-validation",
+        "prod-authority", "prod-certification-history", "prod-security",
+        "prod-maturity", "prod-evidence", "prod-certify",
+    ):
+        pg_sub.add_parser(_ops)
+        sub.add_parser(_ops)
     # Aliases matching goal prompt command names
     p_sl = sub.add_parser("strategy-list")
     p_sl.add_argument("--category", default="")
@@ -1366,6 +1440,65 @@ def main(argv: list[str] | None = None) -> int:
                 return mowrap(mo.list_benchmarks())
             if args.action == "mo-certify":
                 return mowrap(mo.certify())
+        # M312–M319 connectivity governance
+        if args.action and str(args.action).startswith("cg-"):
+            from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+            cg = default_connectivity_governance()
+            action = args.action
+            if action == "cg-verdict":
+                return _out(cg.terminal_verdict())
+            if action == "cg-dashboard":
+                return _out(cg.dashboard())
+            if action == "cg-bootstrap":
+                return _out(cg.bootstrap_demo_pipeline())
+            if action == "cg-charter-show":
+                return _out(cg.charter())
+            if action == "cg-authority-list":
+                return _out(cg.authority_list())
+            if action == "cg-provider-list":
+                return _out(cg.list_providers())
+            if action == "cg-credential-policy":
+                return _out(cg.credential_policy())
+            if action == "cg-threat-list":
+                return _out(cg.list_threats())
+            if action == "cg-risk-summary":
+                return _out(cg.risk_summary())
+            if action == "cg-maturity":
+                return _out(cg.maturity())
+            if action == "cg-emergency-shutdown":
+                return _out(cg.emergency_shutdown(actor="cli_operator", reason="paper_gov_drill"))
+            if action == "cg-certify":
+                return _out(cg.certify())
+            return _out({"ok": False, "error": f"unknown cg action: {action}"})
+        if args.action and str(args.action).startswith("pc-"):
+            from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+            pc = default_provider_contracts()
+            action = args.action
+            if action == "pc-verdict":
+                return _out(pc.posture())
+            if action == "pc-charter":
+                return _out(pc.charter())
+            if action == "pc-dashboard":
+                return _out(pc.dashboard())
+            if action == "pc-providers":
+                return _out(pc.list_providers())
+            if action == "pc-capabilities":
+                return _out(pc.capabilities())
+            if action == "pc-sessions":
+                return _out(pc.sessions())
+            if action == "pc-replay-fixtures":
+                return _out(pc.replay_fixtures())
+            if action == "pc-mock-quote":
+                return _out(pc.mock_quote())
+            if action == "pc-replay-quote":
+                return _out(pc.replay_quote())
+            if action == "pc-security":
+                return _out(pc.security_scan())
+            if action == "pc-certify":
+                return _out(pc.certify())
+            return _out({"ok": False, "error": f"unknown pc action: {action}"})
+        if args.action and str(args.action).startswith("prod-"):
+            return _ops_dispatch(str(args.action))
         return 2
 
     # Top-level market-data aliases (M256–M263)
@@ -1501,6 +1634,136 @@ def main(argv: list[str] | None = None) -> int:
             return _out(mo.bootstrap_demo_pipeline())
         if args.cmd == "mo-certify":
             return _out(mo.certify())
+
+    # Top-level connectivity-governance aliases (M312–M319)
+    if args.cmd and str(args.cmd).startswith("cg-"):
+        from saathi.platform.tg.connectivity_governance.service import default_connectivity_governance
+        cg = default_connectivity_governance()
+        cmd = args.cmd
+        if cmd == "cg-verdict":
+            return _out(cg.terminal_verdict())
+        if cmd == "cg-dashboard":
+            return _out(cg.dashboard())
+        if cmd == "cg-bootstrap":
+            return _out(cg.bootstrap_demo_pipeline())
+        if cmd == "cg-charter-show":
+            return _out(cg.charter())
+        if cmd == "cg-authority-list":
+            return _out(cg.authority_list())
+        if cmd == "cg-authority-evaluate":
+            cap = getattr(args, "capability", None) or "offline_fixture_access"
+            return _out(cg.authority_evaluate(cap))
+        if cmd == "cg-provider-list":
+            return _out(cg.list_providers())
+        if cmd == "cg-provider-show":
+            pid = getattr(args, "provider_id", None) or "prov_mock_contract"
+            return _out(cg.get_provider(pid))
+        if cmd == "cg-provider-register":
+            return _out(cg.register_provider({
+                "provider_id": "prov_cli_docs",
+                "provider_name": "CLI Registered Docs Provider",
+                "provider_type": "docs",
+                "jurisdiction": "N/A",
+                "official_domains": ["localhost"],
+                "governance_status": "RESEARCH_ONLY",
+            }, actor="cli_operator"))
+        if cmd == "cg-provider-prohibit":
+            pid = getattr(args, "provider_id", None) or "prov_cli_docs"
+            return _out(cg.prohibit_provider(pid, actor="cli_operator", reason="operator_request"))
+        if cmd == "cg-approval-create":
+            import time as _t
+            return _out(cg.create_approval(
+                requestor="cli_requestor",
+                approval_type="provider_documentation_review",
+                provider="prov_mock_contract",
+                environment="governance",
+                capability_scope=["offline_fixture_access"],
+                operation_scope=["documentation_review"],
+                jurisdiction="N/A",
+                expiry_time=_t.time() + 86400,
+                allowed_network_destinations=["localhost"],
+                evidence_requirements=["docs"],
+                revocation_conditions=["operator_request"],
+                acknowledgements=["governance_only", "no_activation"],
+            ))
+        if cmd == "cg-approval-submit":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.submit_approval(aid, actor="cli_requestor"))
+        if cmd == "cg-approval-review":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.review_approval(aid, approver="cli_approver", decision="approve"))
+        if cmd == "cg-approval-reject":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.review_approval(aid, approver="cli_approver", decision="reject"))
+        if cmd == "cg-approval-revoke":
+            aid = getattr(args, "approval_id", None)
+            if not aid:
+                return _out({"ok": False, "error": "approval_id required"})
+            return _out(cg.revoke_approval(aid, actor="cli_operator", reason="operator_request"))
+        if cmd == "cg-credential-policy":
+            return _out(cg.credential_policy())
+        if cmd == "cg-threat-list":
+            return _out(cg.list_threats())
+        if cmd == "cg-risk-summary":
+            return _out(cg.risk_summary())
+        if cmd == "cg-incident-create":
+            return _out(cg.create_incident(
+                incident_type="scope_violation",
+                actor="cli_operator",
+                summary="CLI governance incident drill",
+                severity="HIGH",
+            ))
+        if cmd == "cg-incident-contain":
+            iid = getattr(args, "incident_id", None)
+            if not iid:
+                return _out({"ok": False, "error": "incident_id required"})
+            return _out(cg.advance_incident(iid, step="contain", actor="cli_operator"))
+        if cmd == "cg-emergency-shutdown":
+            return _out(cg.emergency_shutdown(actor="cli_operator", reason="cli_drill"))
+        if cmd == "cg-maturity":
+            return _out(cg.maturity())
+        if cmd == "cg-certify":
+            return _out(cg.certify())
+        return _out({"ok": False, "error": f"unknown cg command: {cmd}"})
+
+    # Top-level credentialless provider contract aliases (M320–M327)
+    if args.cmd and str(args.cmd).startswith("pc-"):
+        from saathi.platform.tg.provider_contracts.service import default_provider_contracts
+        pc = default_provider_contracts()
+        cmd = args.cmd
+        if cmd == "pc-verdict":
+            return _out(pc.posture())
+        if cmd == "pc-charter":
+            return _out(pc.charter())
+        if cmd == "pc-dashboard":
+            return _out(pc.dashboard())
+        if cmd == "pc-providers":
+            return _out(pc.list_providers())
+        if cmd == "pc-capabilities":
+            return _out(pc.capabilities())
+        if cmd == "pc-sessions":
+            return _out(pc.sessions())
+        if cmd == "pc-replay-fixtures":
+            return _out(pc.replay_fixtures())
+        if cmd == "pc-mock-quote":
+            return _out(pc.mock_quote())
+        if cmd == "pc-replay-quote":
+            return _out(pc.replay_quote())
+        if cmd == "pc-security":
+            return _out(pc.security_scan())
+        if cmd == "pc-certify":
+            return _out(pc.certify())
+        return _out({"ok": False, "error": f"unknown pc command: {cmd}"})
+
+    # Top-level operations aliases (M328–M335)
+    if args.cmd and str(args.cmd).startswith("prod-"):
+        return _ops_dispatch(str(args.cmd))
 
     parser.print_help()
     return 2

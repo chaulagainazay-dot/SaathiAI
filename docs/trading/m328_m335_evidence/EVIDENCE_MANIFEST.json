@@ -1,0 +1,148 @@
+{
+  "schema": "m335.evidence_manifest.v1",
+  "milestones": "M328-M335",
+  "branch": "milestone/m328-m335-production-readiness",
+  "base_sha": "5b505f1a119989ec78856f969cb9fe3184bc784f",
+  "verdict": "PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS",
+  "browser_verdict": "PRODUCTION_READINESS_OPERATIONAL_RESILIENCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "maximum_state": "OPERATIONALLY_READY_OFFLINE",
+  "maturity": "OPERATIONALLY_READY_OFFLINE",
+  "artifact_count": 27,
+  "artifacts": [
+    {
+      "path": "FOCUSED_TEST_LOG.txt",
+      "bytes": 858,
+      "sha256": "1b6c13c23788ad898339ffc6098c9aee6106bf178b8af72e8c5bbbab3040029c"
+    },
+    {
+      "path": "FRONTEND_TEST_LOG.txt",
+      "bytes": 483,
+      "sha256": "2750bf96428ad02b01e6557e06b4ef4ca68cf8dddbb0bc9612b66bdd1fef1ead"
+    },
+    {
+      "path": "LIMITATIONS.json",
+      "bytes": 2189,
+      "sha256": "f66086ef2da4e947473ad5b78168b7032f7476d7889ab5781fe6af1cd9d71fce"
+    },
+    {
+      "path": "M328_OPERATIONS_CHARTER.json",
+      "bytes": 2686,
+      "sha256": "7063fbb25d82a0c4b212e931169b40e55c011749c9292fe12a60dc0d294ba9be"
+    },
+    {
+      "path": "M328_SYSTEM_HEALTH.json",
+      "bytes": 7548,
+      "sha256": "c028865f72807c81221ae851393086c2f83d9eb20fb2ea8b826f0582bed37b9c"
+    },
+    {
+      "path": "M332_BACKUP_VERIFICATION.json",
+      "bytes": 7938,
+      "sha256": "63ded7e677212cd49d03cc7f3d5cbb8846fa767163daa9534a4eae73ba096196"
+    },
+    {
+      "path": "M332_RECOVERY_SIMULATION.json",
+      "bytes": 4040,
+      "sha256": "5864c97dd5aaafebe7d05b29a86520078f81683a75b3abab3fa696c90f2265a1"
+    },
+    {
+      "path": "M333_DIAGNOSTIC_REPORT.json",
+      "bytes": 5875,
+      "sha256": "d6320d819d8e3086a641f20bcb460b42f2cef1c66fb417b426b2b1549506492c"
+    },
+    {
+      "path": "M334_LOAD_VALIDATION.json",
+      "bytes": 19594,
+      "sha256": "b929d37bee01d18b4e5564d454207ac42fdcc9a795cfd0a79080c56cbe722216"
+    },
+    {
+      "path": "M335_CLEAN_CLONE_CERTIFICATION.json",
+      "bytes": 1794,
+      "sha256": "fe3a4cc73e3346f18424e307ddad431278fc5c5f841477c8160974f9793947ec"
+    },
+    {
+      "path": "M335_CONTROL_CENTER.json",
+      "bytes": 8929,
+      "sha256": "c5f9e028d4a6fc9430ae9384a8b25b8645066a88c8cc4392a7e6c6de128fc343"
+    },
+    {
+      "path": "M335_OPERATIONS_CERTIFICATION.json",
+      "bytes": 5740,
+      "sha256": "ffaa3d9f73e89bda707124ad804418560df6c29eb00d8c26f5f27e60b93ecf28"
+    },
+    {
+      "path": "M335_SECURITY_SCANS.json",
+      "bytes": 4293,
+      "sha256": "c6748815f03dae9ebc47d22150d30d6a29e82f1cba7786e3a69ed1fd93e6ac9a"
+    },
+    {
+      "path": "M335_SECURITY_SCAN_LOG.txt",
+      "bytes": 2972,
+      "sha256": "0f2770a78dd0c4a606ed25fd7b19af9861bf1656f53b5cba468f91ec7207f5e6"
+    },
+    {
+      "path": "PRODUCTION_BUILD_LOG.txt",
+      "bytes": 489,
+      "sha256": "0b2f2b2718e4c673aad33db246c07580dbc2179e155ca03371db2a9a451887a1"
+    },
+    {
+      "path": "REGRESSION_TEST_LOG.txt",
+      "bytes": 882,
+      "sha256": "54117c3ffac52e61c2a912e90023414a5932a8088955f6a938f63c7dd96daa15"
+    },
+    {
+      "path": "STARTING_SHA.txt",
+      "bytes": 41,
+      "sha256": "760582bc24bc3f50e001444c99433895a91f110651431b6731b2b64e7d9f893e"
+    },
+    {
+      "path": "browser/M335_BROWSER_CERT.json",
+      "bytes": 60418,
+      "sha256": "8940c1d713fd3d79a83f72041f1cd8d2abc3de386833be5f79123e17991aa9ae"
+    },
+    {
+      "path": "browser/operations-alerts.png",
+      "bytes": 275135,
+      "sha256": "16b151dc0757e02ff1e28ce2519708fd40b5046384fa732dad04b22343ccdf49"
+    },
+    {
+      "path": "browser/operations-authority-boundary.png",
+      "bytes": 27519,
+      "sha256": "03919bb685a8300da10365c0239592481e249b9795ac8f51fa2f453eeea53754"
+    },
+    {
+      "path": "browser/operations-backups-and-recovery.png",
+      "bytes": 269819,
+      "sha256": "8e3ffff95c66034cafc2470f1983bbf1f6936d357cc0695aa97d675b2f537994"
+    },
+    {
+      "path": "browser/operations-certification.png",
+      "bytes": 11712,
+      "sha256": "de925648e1fab7a34d2bfdc6a29868e5b3f131cdd7a0686454a01ec90920a3ee"
+    },
+    {
+      "path": "browser/operations-control-center.png",
+      "bytes": 269216,
+      "sha256": "e11dab0968f39503b8e7bcc46705c76ff75dc3fdb540a1bd23d858339f9e28a6"
+    },
+    {
+      "path": "browser/operations-diagnostics.png",
+      "bytes": 281237,
+      "sha256": "195015b27eed98ecaea768df228b445067cf526a3908d07818ec0701b939997f"
+    },
+    {
+      "path": "browser/operations-metrics-and-load.png",
+      "bytes": 299568,
+      "sha256": "fb15a1c4062156694e76c24d1de5951be9984706e4dd2fcbc94a0a639bcb7b21"
+    },
+    {
+      "path": "browser/operations-system-health.png",
+      "bytes": 247910,
+      "sha256": "8e0c2de1d8d663c15eb1573f404701bfc9e2e2e3d6556b1a25595ef6273bb619"
+    },
+    {
+      "path": "browser/run_m335_browser_cert.mjs",
+      "bytes": 28327,
+      "sha256": "85f8dae00d5cbc97c85a66e2d3328ae2b879ee9bd7082941bf96354388da99ba"
+    }
+  ]
+}

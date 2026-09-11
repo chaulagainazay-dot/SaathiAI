@@ -51,7 +51,7 @@ M62 `market_data`, M62 `strategy` engine, paper broker / ExecutionGateway (uncha
 | `tg/historical/store.py` | Immutable store + quarantine + disk preflight |
 | `tg/historical/quality.py` | OHLC/session/coverage gates |
 | `tg/historical/normalize.py` | Corporate actions; raw preserved |
-| `tg/historical/calendars.py` | NEPSE, US_RTH, BINANCE_24_7 + M62 calendars |
+| `tg/historical/calendars.py` | Canonical NEPSE compatibility adapter, US_RTH, BINANCE_24_7 + M62 calendars |
 | `tg/historical/adapters/*` | Local, Binance public, NEPSE, Yahoo (file-first) |
 | `tg/historical/import_service.py` | Import orchestration |
 | `tg/historical/monte_carlo.py` | Bounded MC + risk of ruin |
@@ -63,7 +63,10 @@ M62 `market_data`, M62 `strategy` engine, paper broker / ExecutionGateway (uncha
 1. **Local CSV/Parquet** — primary; deterministic; fingerprint; quarantine invalid.
 2. **Binance public** — file-first exports; optional public klines only (`allow_network=False` by default); no credentials/orders.
 3. **Yahoo public** — local CSV cache only (network fetch disabled by design).
-4. **NEPSE local** — operator CSV/Parquet; NPR; NEPSE calendar; no scraping.
+4. **NEPSE local** — operator CSV/Parquet; NPR; canonical Sunday-Thursday
+   weekly semantics; no scraping. Uncovered holiday years import with explicit
+   `HOLIDAY_COVERAGE_UNKNOWN` provenance but cannot support a certified
+   backtest until complete sourced coverage is supplied.
 
 ## PAPER_ELIGIBLE
 

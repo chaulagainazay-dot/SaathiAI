@@ -1,0 +1,89 @@
+{
+  "record": "SAATHIOS_E2E_RBAC_MATRIX",
+  "note": "HTTP status observed per role against the live isolated backend. 200 = allowed, 403 = denied by permission, 401 = unauthenticated.",
+  "source": "API_JOURNEY.json rbac probes plus targeted journey assertions",
+  "matrix": [
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/missions",
+      "owner": 200,
+      "operator": 200,
+      "viewer": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/audit",
+      "owner": 200,
+      "operator": 200,
+      "viewer": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/approvals",
+      "owner": 200,
+      "operator": 200,
+      "viewer": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/platform/projects",
+      "owner": 200,
+      "operator": 200,
+      "viewer": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/platform/invitations",
+      "owner": 200,
+      "operator": 403,
+      "viewer": 403
+    }
+  ],
+  "additional_verified_boundaries": [
+    {
+      "check": "viewer creates mission",
+      "role": "viewer",
+      "result": 403
+    },
+    {
+      "check": "requester self-approves",
+      "role": "operator",
+      "result": 403
+    },
+    {
+      "check": "viewer decides approval",
+      "role": "viewer",
+      "result": 403
+    },
+    {
+      "check": "operator cancels runtime execution (RUNTIME_OPERATE is owner+)",
+      "role": "operator",
+      "result": 403
+    },
+    {
+      "check": "no token",
+      "role": "anonymous",
+      "result": 401
+    },
+    {
+      "check": "bogus token",
+      "role": "anonymous",
+      "result": 401
+    },
+    {
+      "check": "revoked session",
+      "role": "operator",
+      "result": 401
+    },
+    {
+      "check": "logged-out token",
+      "role": "viewer",
+      "result": 401
+    },
+    {
+      "check": "email-only login for a credentialed account",
+      "role": "owner",
+      "result": 401
+    }
+  ]
+}

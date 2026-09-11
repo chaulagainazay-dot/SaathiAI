@@ -1,0 +1,20 @@
+# CONTAMINATION_REPORT
+
+Locked eval index size: **55**  
+Product clips checked: **0**  
+Status: **CLEAN**
+
+```json
+{
+  "checked_at": "2026-08-07T10:23:41.817294+00:00",
+  "locked_text_entries_indexed": 55,
+  "product_clips_checked": 0,
+  "overlaps": [],
+  "overlap_count": 0,
+  "status": "CLEAN",
+  "policy": "Do not train on V-NEXT-2B.1\u20132B.4 locked corpora; treat as immutable holdout"
+}
+```
+
+Historical benchmark corpora remain untouched.
+

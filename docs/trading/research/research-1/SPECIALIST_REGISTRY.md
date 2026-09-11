@@ -1,0 +1,3 @@
+# Registry
+
+Roles: FUNDAMENTAL, TECHNICAL, MARKET_REGIME, NEWS_EVENT, SENTIMENT, RISK, CATALYST, COUNTER_THESIS. Registry describes capability and `RESEARCH_ONLY` authority.

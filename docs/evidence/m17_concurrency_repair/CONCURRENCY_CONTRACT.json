@@ -1,0 +1,29 @@
+{
+  "schema": "m17.concurrency_repair.contract.v1",
+  "title": "Scheduled graph concurrent recovery contract",
+  "scope": "in_process_multi_thread_same_RunLedger_sqlite",
+  "scope_not_claimed": [
+    "multi_process separate interpreters without shared sqlite locking proof beyond sqlite BEGIN IMMEDIATE",
+    "distributed multi-host recovery",
+    "cross-machine leases"
+  ],
+  "questions": {
+    "who_wins": "The caller that atomically wins RunLedger.claim_recovery (BEGIN IMMEDIATE) for the source pipeline_id.",
+    "loser_return": "Either converge on the winner's terminal recovered mission (same ms_rec_* id and same pipeline_id) or return in_progress/resume_in_progress leaving the occurrence recoverable (OCC_RETRY_WAIT). Never invent OCC_FAILED solely from contention.",
+    "idempotent": true,
+    "both_report_success_when_converged": true,
+    "explicit_already_recovered_allowed": true,
+    "uniqueness_invariant": "One recovery claim per pipeline; one deterministic recovered mission id per source mission (ms_rec_sha256); graph resumed in place (same pipeline_id); recovered mission run_count == 1 after convergence.",
+    "winner_crash_after_claim": "Stale recovery lease is reclaimable via reclaim_stale_recovery / lease expiry; claim_recovery rejects only active non-expired leases and terminal recovery states.",
+    "stale_claims": "reclaim_stale_recovery lists RESUMING claims with expired lease; operators/reconcile can resume again.",
+    "atomic_commit_unit": "claim_recovery transaction; reopen_pipeline transaction; per-step claims; finish_mission_run; finish_occurrence. Not one mega-transaction across the whole resume.",
+    "evidence_distinctions": {
+      "actual_recovery_failure": "Winner completed resume; graph terminal failed; recovered mission failed/blocked with failure_code from graph.",
+      "duplicate_recovery_request": "Second caller after terminal recovered mission returns idempotent/converged success without second run.",
+      "already_recovered": "rec mission terminal COMPLETED; recover returns OCC_SUCCEEDED with idempotent/converged.",
+      "recovery_in_progress": "reason resume_in_progress / in_progress true; occurrence left recoverable.",
+      "successful_convergence": "All callers that finish after winner reference same rec_id and pipeline_id; occurrence SUCCEEDED; original mission remains FAILED (audit)."
+    }
+  },
+  "preferred_semantic": "Two concurrent recovery attempts for the same source graph create at most one resumed graph. Both callers receive a truthful non-failure outcome: either the winning recovery result or an explicit idempotent/already-recovered/in_progress result referencing the same recovered mission id. No caller observes a false terminal failure caused solely by contention."
+}

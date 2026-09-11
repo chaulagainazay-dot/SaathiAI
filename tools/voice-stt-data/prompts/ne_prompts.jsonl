@@ -1,0 +1,36 @@
+{"prompt_id": "ne_001", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "आजको बजार कस्तो छ?"}
+{"prompt_id": "ne_002", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "मेरो कामको सूची देखाऊ।"}
+{"prompt_id": "ne_003", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "प्रणालीको स्वास्थ्य जाँच गर।"}
+{"prompt_id": "ne_004", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "यो जवाफ रोक।"}
+{"prompt_id": "ne_005", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "बस, अहिले नगर्नु।"}
+{"prompt_id": "ne_006", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "छोटो सारांश दे।"}
+{"prompt_id": "ne_007", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "लामो व्याख्या नचाहिने।"}
+{"prompt_id": "ne_008", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "आज के के बाँकी छ?"}
+{"prompt_id": "ne_009", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "मिशनको अवस्था कस्तो छ?"}
+{"prompt_id": "ne_010", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "स्वीकृति चाहिने छ?"}
+{"prompt_id": "ne_011", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "आवाज बन्द गर।"}
+{"prompt_id": "ne_012", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "फेरि सुन।"}
+{"prompt_id": "ne_013", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "अहिले के गर्न सकिन्छ?"}
+{"prompt_id": "ne_014", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "साथी, मद्दत चाहियो।"}
+{"prompt_id": "ne_015", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "आजको अपडेट भन।"}
+{"prompt_id": "ne_016", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": true, "text": "जोखिम कस्तो देखिन्छ?"}
+{"prompt_id": "ne_017", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": true, "text": "पोर्टफोलियो अवस्था भन।"}
+{"prompt_id": "ne_018", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "कमाण्ड सेन्टर खोल।"}
+{"prompt_id": "ne_019", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "एजेन्ट चलिरहेको छ?"}
+{"prompt_id": "ne_020", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "प्रमाण हेर्न दे।"}
+{"prompt_id": "ne_021", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "रद्द गर।"}
+{"prompt_id": "ne_022", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "हो, ठिकै छ।"}
+{"prompt_id": "ne_023", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "होइन, नगर्नु।"}
+{"prompt_id": "ne_024", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "पर्ख।"}
+{"prompt_id": "ne_025", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "रोक।"}
+{"prompt_id": "ne_026", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "छिटो भन।"}
+{"prompt_id": "ne_027", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "बिस्तारै भन।"}
+{"prompt_id": "ne_028", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "अहिले शान्त कोठामा छु।"}
+{"prompt_id": "ne_029", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "आवाज कम छ।"}
+{"prompt_id": "ne_030", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "दोहोर्याइदे।"}
+{"prompt_id": "ne_031", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": true, "text": "आजको जोखिम बताऊ।"}
+{"prompt_id": "ne_032", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "स्वीकृति कति छन्?"}
+{"prompt_id": "ne_033", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "काम सकियो?"}
+{"prompt_id": "ne_034", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "फेरि सुरु गर।"}
+{"prompt_id": "ne_035", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "बन्द गर।"}
+{"prompt_id": "ne_036", "language_class": "NE", "category": "general", "contains_numbers": false, "contains_financial_terms": false, "text": "सुन्नुहोस्।"}

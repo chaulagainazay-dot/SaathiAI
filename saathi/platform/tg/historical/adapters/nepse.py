@@ -79,7 +79,7 @@ class NepseLocalAdapter(HistoricalAdapter):
             provenance_notes=[
                 "Operator-supplied NEPSE historical file",
                 "No scraping of protected systems",
-                "NEPSE holidays via explicit calendar fixture",
+                "Canonical NEPSE weekly rule; holiday coverage recorded separately",
                 "Currency NPR",
             ],
         )

@@ -1,0 +1,26 @@
+{"id": "pc_en_001", "lang": "en", "category": "command", "text": "Saathi, show my active missions."}
+{"id": "pc_en_002", "lang": "en", "category": "command", "text": "Open the command center."}
+{"id": "pc_en_003", "lang": "en", "category": "interrupt", "text": "Stop. Cancel that response."}
+{"id": "pc_en_004", "lang": "en", "category": "finance", "text": "What is Trading Guardian status?"}
+{"id": "pc_en_005", "lang": "en", "category": "finance", "text": "Is ExecutionGateway healthy?"}
+{"id": "pc_ne_001", "lang": "ne", "category": "command", "text": "मेरो आजको portfolio risk देखाऊ।"}
+{"id": "pc_ne_002", "lang": "ne", "category": "command", "text": "आजको market exposure कति छ?"}
+{"id": "pc_ne_003", "lang": "ne", "category": "command", "text": "मेरो pending approvals के छन्?"}
+{"id": "pc_mx_001", "lang": "mixed", "category": "codeswitch", "text": "आजको portfolio risk explain गर"}
+{"id": "pc_mx_002", "lang": "mixed", "category": "codeswitch", "text": "Trading Guardian को status देखाऊ"}
+{"id": "pc_mx_003", "lang": "mixed", "category": "codeswitch", "text": "मेरो pending approvals show गर"}
+{"id": "pc_mx_004", "lang": "mixed", "category": "codeswitch", "text": "Saathi, current NAV कति छ?"}
+{"id": "pc_mx_005", "lang": "mixed", "category": "codeswitch", "text": "आजको NAV र drawdown compare गर"}
+{"id": "pc_mx_006", "lang": "mixed", "category": "codeswitch", "text": "Stop, त्यो action cancel गर"}
+{"id": "pc_mx_007", "lang": "mixed", "category": "codeswitch", "text": "यो response cancel गर"}
+{"id": "pc_nm_001", "lang": "en", "category": "numeric", "text": "Reduce position by five percent."}
+{"id": "pc_nm_002", "lang": "en", "category": "numeric", "text": "Set stop-loss at fifteen percent."}
+{"id": "pc_nm_003", "lang": "en", "category": "numeric", "text": "Buy five hundred shares."}
+{"id": "pc_nm_004", "lang": "en", "category": "numeric", "text": "NAV is fifty thousand NPR."}
+{"id": "pc_nm_005", "lang": "en", "category": "numeric", "text": "Drawdown is one point five percent."}
+{"id": "pc_nm_006", "lang": "mixed", "category": "numeric", "text": "Position size five percent राख"}
+{"id": "pc_nm_007", "lang": "mixed", "category": "numeric", "text": "आजको drawdown seven point five percent छ?"}
+{"id": "pc_nm_008", "lang": "mixed", "category": "numeric", "text": "NPR fifty thousand भन्दा माथि नजाऊ"}
+{"id": "pc_nm_009", "lang": "mixed", "category": "numeric", "text": "Buy five hundred shares भन्दा बढी नगर्नु"}
+{"id": "pc_sys_001", "lang": "mixed", "category": "system", "text": "Saathi, system health check गर"}
+{"id": "pc_sys_002", "lang": "en", "category": "system", "text": "ExecutionGateway healthy check."}

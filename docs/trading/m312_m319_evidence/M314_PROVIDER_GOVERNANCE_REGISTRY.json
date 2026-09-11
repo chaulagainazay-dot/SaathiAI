@@ -1,0 +1,594 @@
+{
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "approval_does_not_equal_activation": true,
+  "authority_does_not_implicitly_expand": true,
+  "capability_policy": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "any_provider_active": false,
+    "approval_does_not_equal_activation": true,
+    "approved_authentication_methods": [
+      "api_key_header",
+      "hmac_signature",
+      "mtls",
+      "none",
+      "oauth2_authorization_code"
+    ],
+    "approved_capability_names": [
+      "account_metadata",
+      "activity",
+      "authenticated_market_data",
+      "balances",
+      "cancel_order",
+      "change_settings",
+      "credential_reference_creation",
+      "credential_revocation",
+      "credential_rotation",
+      "credential_use",
+      "credential_validation",
+      "external_paper",
+      "fills",
+      "historical_refresh",
+      "internal_simulation",
+      "live_execution",
+      "margin_state",
+      "modify_order",
+      "offline_fixture_access",
+      "orders",
+      "positions",
+      "public_unauthenticated_data",
+      "real_time_quote_stream",
+      "submit_order",
+      "transfer",
+      "withdraw"
+    ],
+    "authority_does_not_implicitly_expand": true,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "governance_only": true,
+    "max_provider_state": "MOCK_ELIGIBLE",
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "prohibited_capabilities_blocklist": [
+      "account_settings_changes",
+      "credential_export",
+      "live_execution",
+      "live_order",
+      "transfer",
+      "unofficial_proxy_endpoints",
+      "unrestricted_oauth",
+      "unverified_sdks",
+      "wildcard_domains",
+      "withdraw",
+      "withdrawal"
+    ],
+    "prohibited_endpoint_classes": [
+      "account_settings_change",
+      "credential_export",
+      "live_order",
+      "transfer",
+      "unofficial_proxy",
+      "unrestricted_oauth",
+      "unverified_sdk",
+      "wildcard_domain",
+      "withdrawal"
+    ],
+    "prohibited_operations": [
+      "account_access",
+      "authenticated_provider_call",
+      "balance_read",
+      "broker_login",
+      "canary_activation",
+      "credential_storage",
+      "credential_validation",
+      "external_paper_execution",
+      "live_trading",
+      "oauth",
+      "order_cancel",
+      "order_modify",
+      "order_submit",
+      "position_read",
+      "production_activation",
+      "provider_connection",
+      "real_api_key_accept",
+      "transfer",
+      "withdrawal"
+    ],
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true,
+    "unverified_sdks_allowed": false,
+    "wildcard_domains_allowed": false
+  },
+  "connection_established": false,
+  "current_maturity": "GOVERNANCE_ONLY",
+  "domain_allowlists": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "approval_does_not_equal_activation": true,
+    "approved_api_host_patterns": [
+      "127.0.0.1",
+      "api.alpaca.markets",
+      "api.binance.com",
+      "api.binance.us",
+      "api.ibkr.com",
+      "data.alpaca.markets",
+      "localhost",
+      "localhost:5000",
+      "paper-api.alpaca.markets"
+    ],
+    "approved_documentation_sources": [
+      "docs.alpaca.markets"
+    ],
+    "approved_official_domains": [
+      "alpaca.markets",
+      "binance.com",
+      "binance.us",
+      "docs.alpaca.markets",
+      "interactivebrokers.com",
+      "localhost",
+      "www.binance.com",
+      "www.interactivebrokers.com"
+    ],
+    "authority_does_not_implicitly_expand": true,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "governance_only": true,
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true,
+    "wildcard_domains": []
+  },
+  "governance_only": true,
+  "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+  "no_account_access": true,
+  "no_balance_access": true,
+  "no_broker_login": true,
+  "no_canary_activation": true,
+  "no_credential_storage": true,
+  "no_live_trading": true,
+  "no_oauth": true,
+  "no_orders": true,
+  "no_position_access": true,
+  "no_provider_connection": true,
+  "offline_first": true,
+  "paper_only": true,
+  "providers": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "any_active": false,
+    "any_connected": false,
+    "approval_does_not_equal_activation": true,
+    "authority_does_not_implicitly_expand": true,
+    "count": 4,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "governance_only": true,
+    "max_provider_state": "MOCK_ELIGIBLE",
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "providers": [
+      {
+        "account_read_capabilities": [
+          "account_metadata",
+          "balances",
+          "positions",
+          "orders",
+          "fills"
+        ],
+        "account_restrictions": [
+          "no account access this milestone"
+        ],
+        "active": false,
+        "api_host_patterns": [
+          "api.alpaca.markets",
+          "paper-api.alpaca.markets",
+          "data.alpaca.markets"
+        ],
+        "approval_status": "documentation_reviewed",
+        "authentication_methods": [
+          "api_key_header",
+          "oauth2_authorization_code"
+        ],
+        "connected": false,
+        "connection_established": false,
+        "credential_types": [
+          "api_key_secret_pair"
+        ],
+        "data_licensing_considerations": [
+          "review required before any canary"
+        ],
+        "documented_api_families": [
+          "trading",
+          "market_data",
+          "broker"
+        ],
+        "evidence_references": [
+          "m240_m247_provider_canary_planning",
+          "public_docs_only"
+        ],
+        "geographic_restrictions": [
+          "US-centric documentation review only"
+        ],
+        "governance_status": "DOCUMENTATION_REVIEWED",
+        "jurisdiction": "US",
+        "legal_entity": "Alpaca Securities LLC (documented)",
+        "limitations": [
+          "Governance record only \u2014 no connection",
+          "No credentials",
+          "No canary activation",
+          "Live execution remains prohibited"
+        ],
+        "live_execution_capabilities": [
+          "live_execution"
+        ],
+        "market_data_capabilities": [
+          "historical_refresh",
+          "real_time_quote_stream"
+        ],
+        "official_domains": [
+          "alpaca.markets",
+          "docs.alpaca.markets"
+        ],
+        "operational_risks": [
+          "credential leakage",
+          "paper/live confusion",
+          "rate limits"
+        ],
+        "paper_environment_availability": true,
+        "paper_execution_capabilities": [
+          "external_paper"
+        ],
+        "provider_id": "prov_alpaca_paper_docs",
+        "provider_name": "Alpaca Markets (documentation review)",
+        "provider_type": "broker_api",
+        "rate_limit_posture": "documented_per_endpoint",
+        "registered_at": 1785421620.0373418,
+        "sandbox_availability": true,
+        "transfer_capabilities": [
+          "transfer"
+        ],
+        "withdrawal_capabilities": [
+          "withdraw"
+        ]
+      },
+      {
+        "account_read_capabilities": [
+          "account_metadata",
+          "balances",
+          "positions",
+          "orders"
+        ],
+        "account_restrictions": [
+          "no account access this milestone"
+        ],
+        "active": false,
+        "api_host_patterns": [
+          "api.ibkr.com",
+          "localhost:5000"
+        ],
+        "approval_status": "documentation_reviewed",
+        "authentication_methods": [
+          "oauth2_authorization_code",
+          "session_cookie"
+        ],
+        "connected": false,
+        "connection_established": false,
+        "credential_types": [
+          "username_password",
+          "oauth"
+        ],
+        "data_licensing_considerations": [
+          "market data subscriptions"
+        ],
+        "documented_api_families": [
+          "client_portal",
+          "tws"
+        ],
+        "evidence_references": [
+          "public_docs_only"
+        ],
+        "geographic_restrictions": [
+          "jurisdiction review required"
+        ],
+        "governance_status": "DOCUMENTATION_REVIEWED",
+        "jurisdiction": "MULTI",
+        "legal_entity": "Interactive Brokers LLC (documented)",
+        "limitations": [
+          "Governance only \u2014 no connection",
+          "OAuth not authorized"
+        ],
+        "live_execution_capabilities": [
+          "live_execution"
+        ],
+        "market_data_capabilities": [
+          "authenticated_market_data",
+          "historical_refresh"
+        ],
+        "official_domains": [
+          "interactivebrokers.com",
+          "www.interactivebrokers.com"
+        ],
+        "operational_risks": [
+          "session cookies",
+          "gateway complexity",
+          "live/paper confusion"
+        ],
+        "paper_environment_availability": true,
+        "paper_execution_capabilities": [
+          "external_paper"
+        ],
+        "provider_id": "prov_ibkr_docs",
+        "provider_name": "Interactive Brokers (documentation review)",
+        "provider_type": "broker_api",
+        "rate_limit_posture": "session_based",
+        "registered_at": 1785421620.037343,
+        "sandbox_availability": true,
+        "transfer_capabilities": [
+          "transfer"
+        ],
+        "withdrawal_capabilities": [
+          "withdraw"
+        ]
+      },
+      {
+        "account_read_capabilities": [
+          "balances",
+          "positions",
+          "orders",
+          "fills"
+        ],
+        "account_restrictions": [
+          "no account access this milestone"
+        ],
+        "active": false,
+        "api_host_patterns": [
+          "api.binance.com",
+          "api.binance.us"
+        ],
+        "approval_status": "research_only",
+        "authentication_methods": [
+          "hmac_signature",
+          "api_key_header"
+        ],
+        "connected": false,
+        "connection_established": false,
+        "credential_types": [
+          "api_key_secret_pair"
+        ],
+        "data_licensing_considerations": [
+          "exchange terms apply"
+        ],
+        "documented_api_families": [
+          "spot",
+          "futures",
+          "wallet"
+        ],
+        "evidence_references": [
+          "public_docs_only"
+        ],
+        "geographic_restrictions": [
+          "severe geo restrictions; jurisdiction unresolved for many regions"
+        ],
+        "governance_status": "RESEARCH_ONLY",
+        "jurisdiction": "VARIES",
+        "legal_entity": "jurisdiction-dependent (documented)",
+        "limitations": [
+          "Jurisdiction often unresolved",
+          "Withdrawal capabilities present in API surface \u2014 blocked",
+          "No connection"
+        ],
+        "live_execution_capabilities": [
+          "live_execution"
+        ],
+        "market_data_capabilities": [
+          "public_unauthenticated_data",
+          "authenticated_market_data"
+        ],
+        "official_domains": [
+          "binance.com",
+          "www.binance.com",
+          "binance.us"
+        ],
+        "operational_risks": [
+          "withdrawal paths",
+          "geo blocks",
+          "API key privilege levels"
+        ],
+        "paper_environment_availability": false,
+        "paper_execution_capabilities": [],
+        "provider_id": "prov_binance_docs",
+        "provider_name": "Binance (documentation review)",
+        "provider_type": "exchange_api",
+        "rate_limit_posture": "weight_based",
+        "registered_at": 1785421620.037344,
+        "sandbox_availability": true,
+        "transfer_capabilities": [
+          "transfer"
+        ],
+        "withdrawal_capabilities": [
+          "withdraw"
+        ]
+      },
+      {
+        "account_read_capabilities": [],
+        "account_restrictions": [
+          "no real accounts"
+        ],
+        "active": false,
+        "api_host_patterns": [
+          "127.0.0.1",
+          "localhost"
+        ],
+        "approval_status": "mock_eligible",
+        "authentication_methods": [
+          "none"
+        ],
+        "connected": false,
+        "connection_established": false,
+        "credential_types": [],
+        "data_licensing_considerations": [
+          "synthetic fixtures only"
+        ],
+        "documented_api_families": [
+          "mock_contract"
+        ],
+        "evidence_references": [
+          "m304_m311_offline_fixtures"
+        ],
+        "geographic_restrictions": [],
+        "governance_status": "MOCK_ELIGIBLE",
+        "jurisdiction": "N/A",
+        "legal_entity": "internal_synthetic",
+        "limitations": [
+          "Mock/synthetic only \u2014 no external network"
+        ],
+        "live_execution_capabilities": [],
+        "market_data_capabilities": [
+          "offline_fixture_access"
+        ],
+        "official_domains": [
+          "localhost"
+        ],
+        "operational_risks": [
+          "none material for mock"
+        ],
+        "paper_environment_availability": true,
+        "paper_execution_capabilities": [
+          "internal_simulation"
+        ],
+        "provider_id": "prov_mock_contract",
+        "provider_name": "Synthetic Mock Provider (governance)",
+        "provider_type": "mock",
+        "rate_limit_posture": "none",
+        "registered_at": 1785421620.037345,
+        "sandbox_availability": true,
+        "transfer_capabilities": [],
+        "withdrawal_capabilities": []
+      }
+    ],
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true
+  },
+  "raw_credentials_forbidden": true,
+  "research_only": true,
+  "sandbox_only": true,
+  "schema": "M314_PROVIDER_GOVERNANCE_REGISTRY"
+}

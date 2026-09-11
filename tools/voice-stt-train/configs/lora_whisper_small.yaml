@@ -1,0 +1,56 @@
+# Whisper Small LoRA training config — readiness package only.
+# Do NOT launch paid training without TRAINING_AUTHORIZATION_GATE clearance.
+
+base_model: openai/whisper-small
+base_revision: main
+
+# Optional warm-start (blocked until provenance cleared)
+warm_start_checkpoint: null
+
+lora:
+  r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  bias: none
+  target_modules:
+    - q_proj
+    - v_proj
+
+train:
+  learning_rate: 1.0e-4
+  num_train_epochs: 5
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 8
+  warmup_ratio: 0.03
+  fp16: true
+  seed: 42
+  logging_steps: 25
+  eval_steps: 100
+  save_steps: 100
+  early_stopping_patience: 3
+
+sampling:
+  ne_mono: 0.30
+  en_mono: 0.25
+  code_switch: 0.30
+  numeric_heavy: 0.15
+
+paths:
+  train_manifest: data/product_clean/train.jsonl
+  val_manifest: data/product_clean/val.jsonl
+  output_dir: artifacts/lora-whisper-small
+  excluded_eval_manifests:
+    - ../../tools/voice-stt-bench/corpus/manifest.json
+    - ../../tools/voice-stt-bench/corpus/codeswitch/manifest.json
+
+gates:
+  en_intent_min: 0.70
+  ne_intent_min: 0.60
+  mix_intent_min: 0.60
+  ne_first_span_min: 0.50
+  ne_cer_max: 0.45
+  numeric_fidelity_min: 0.70
+
+authorization:
+  training_authorized: false
+  paid_job_authorized: false

@@ -1,0 +1,29 @@
+{
+  "schema": "m327.browser_certification.v1",
+  "ok": false,
+  "verdict": "M320_M327_BROWSER_CERT_FAILED",
+  "target_verdict": "PROVIDER_CONTRACTS_MOCK_CONNECTIVITY_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "target_url": "http://127.0.0.1:3327/trading/provider-contracts",
+  "local_api_url": "http://127.0.0.1:8327",
+  "browser_runtime_available": false,
+  "browser_instances_discovered": 0,
+  "interactive_checks_completed": false,
+  "source_and_build_checks": {
+    "provider_page_built": true,
+    "capability_page_built": true,
+    "replay_page_built": true,
+    "required_safety_labels_present": true,
+    "forbidden_provider_controls_absent_in_source": true,
+    "frontend_static_tests": "7 passed"
+  },
+  "failed_checks": [
+    "interactive_provider_page_load",
+    "interactive_mock_provider_selection",
+    "interactive_replay_fixture_inspection",
+    "interactive_deterministic_query",
+    "interactive_forbidden_control_absence",
+    "interactive_authority_indicator_verification"
+  ],
+  "reason": "The mandatory in-app browser control surface reported No browser is available and its discovery list was empty.",
+  "fail_closed": true
+}

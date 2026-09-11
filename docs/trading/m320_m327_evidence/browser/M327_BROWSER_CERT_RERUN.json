@@ -1,0 +1,149 @@
+{
+  "schema": "m327.browser_certification.rerun.v1",
+  "authoritative_rerun": true,
+  "verdict": "PROVIDER_CONTRACTS_MOCK_CONNECTIVITY_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "ok": true,
+  "timestamp": "2026-07-31T01:35:57.138Z",
+  "branch": "milestone/m320-m327-provider-contracts",
+  "head_sha": "42628cda2a48f5a0d2aef75044acb2303b62b5dc",
+  "browser_engine": "chromium",
+  "browser_version": "151.0.7922.34",
+  "playwright_version": "1.62.0",
+  "application_mode": "Next.js development server and Uvicorn platform API, both explicitly bound to 127.0.0.1",
+  "application_urls": {
+    "ui": "http://127.0.0.1:3327",
+    "api": "http://127.0.0.1:8327"
+  },
+  "tested_routes": [
+    "/trading/provider-contracts",
+    "/trading/provider-contracts/capabilities",
+    "/trading/provider-contracts/replay"
+  ],
+  "checks": {
+    "total": 87,
+    "passed": 87,
+    "failed": 0,
+    "provider_page_loaded": true,
+    "offline_provider_selection_visible": true,
+    "provider_contract_information_visible": true,
+    "capability_page_loaded": true,
+    "offline_capabilities_visible": true,
+    "forbidden_capabilities_distinguished": true,
+    "capability_presence_not_authority": true,
+    "replay_page_loaded": true,
+    "replay_fixtures_visible": true,
+    "synthetic_replay_provenance_visible": true,
+    "deterministic_mock_repeatable": true,
+    "deterministic_replay_repeatable": true,
+    "missing_replay_fixture_fails_closed": true,
+    "allowed_session_states_visible": true,
+    "forbidden_session_states_absent": true,
+    "required_boundary_banners_visible": true,
+    "forbidden_controls_absent": true,
+    "all_authorities_false": true,
+    "console_clean": true,
+    "network_localhost_only": true
+  },
+  "screenshots": [
+    "provider-contracts-overview-rerun.png",
+    "capability-matrix-rerun.png",
+    "replay-fixtures-rerun.png",
+    "deterministic-mock-result-rerun.png",
+    "deterministic-replay-result-rerun.png",
+    "offline-authority-boundary-rerun.png"
+  ],
+  "screenshot_sha256": {
+    "provider-contracts-overview-rerun.png": "6c74d9d4754937f7837989f2650e2507c461ff7fd4e74e5cf8b967e34dffe89b",
+    "capability-matrix-rerun.png": "a347c1233293f46fd9dff3a3489345910e68f4aaf710ef67f9514bd81678bc6d",
+    "replay-fixtures-rerun.png": "2d29daac702794f2f89daa75311b1ba5d7ae9d93bb8bad2d9af9b8b26c2787e0",
+    "deterministic-mock-result-rerun.png": "200d23d15deb5d5a5a55be1808109126b6e7142cc04d98904761bff54a881b13",
+    "deterministic-replay-result-rerun.png": "e0625f4e1ec4eccc1dc3e7c0986b3ee6d371177d90e98997427263acc8cc3e82",
+    "offline-authority-boundary-rerun.png": "7193ac4945f99ccdeedbaa805b6954cde4a1d92ed62ea862dc96d24fcf54c9e3"
+  },
+  "console_errors": [],
+  "page_errors": [],
+  "request_failures": [],
+  "network_requests": {
+    "total_observed": 74,
+    "allowed_origins": [
+      "http://127.0.0.1:3327",
+      "http://127.0.0.1:8327"
+    ],
+    "allowed_classes": [
+      "local application documents",
+      "local Next.js assets",
+      "local platform shell APIs",
+      "local provider-contract APIs"
+    ],
+    "provider_contract_endpoints": [
+      "GET /api/v1/platform/tg/provider-contracts/dashboard",
+      "GET /api/v1/platform/tg/provider-contracts/providers",
+      "GET /api/v1/platform/tg/provider-contracts/sessions",
+      "GET /api/v1/platform/tg/provider-contracts/capabilities",
+      "POST /api/v1/platform/tg/provider-contracts/capabilities/negotiate",
+      "GET /api/v1/platform/tg/provider-contracts/replay/fixtures",
+      "POST /api/v1/platform/tg/provider-contracts/requests"
+    ],
+    "request_headers_captured": false,
+    "response_bodies_captured_in_network_log": false
+  },
+  "forbidden_external_requests": [],
+  "forbidden_external_request_count": 0,
+  "credential_controls_present": false,
+  "oauth_controls_present": false,
+  "account_controls_present": false,
+  "order_controls_present": false,
+  "live_connect_controls_present": false,
+  "authority_values": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "AUTHENTICATION_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_HISTORY_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false
+  },
+  "maximum_state": "MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY",
+  "maturity": "MOCK_CONNECTIVITY_ONLY",
+  "runtime_discovery": {
+    "in_app_browser_available": false,
+    "in_app_browser_instances": 0,
+    "project_playwright_available": true,
+    "project_playwright_browser_already_installed": true,
+    "browser_install_performed": false,
+    "dependency_change_performed": false
+  },
+  "ui_defect_repair": {
+    "proven_by_initial_interactive_run": true,
+    "description": "The provider session card rendered backend policy-only forbidden state names.",
+    "repair": "Render only the allowed lifecycle state list and fail-closed session facts.",
+    "commit": "42628cda2a48f5a0d2aef75044acb2303b62b5dc",
+    "focused_regression": "8 passed"
+  },
+  "historical_result": {
+    "path": "browser/M327_BROWSER_CERT.json",
+    "verdict": "M320_M327_BROWSER_CERT_FAILED",
+    "reason": "No in-app browser instance was available.",
+    "preserved": true,
+    "superseded_by_this_authoritative_rerun": true
+  },
+  "browser_storage_inspection": "NOT_PERFORMED_BY_BROWSER_CONTROL_SAFETY_POLICY",
+  "provider_credentials_injected": false,
+  "limitations": [
+    "The in-app browser runtime remained unavailable; the already-installed project-pinned Playwright Chromium runtime was used.",
+    "A synthetic local SaathiOS platform-operator session passed the existing Control Center SignInGate; it was not a provider, broker, or exchange credential.",
+    "Browser cookies and browser storage values were not inspected under browser-control safety rules.",
+    "The global SaathiOS shell LIVE CONNECTED badge denotes localhost platform-runtime health, not provider connectivity; the tested provider surface displayed NO PROVIDER CONNECTION and exposed no live-connect control.",
+    "All application and API traffic was bound to localhost."
+  ]
+}

@@ -95,6 +95,7 @@ export default function ApprovalDetailPage() {
       paletteData={{}}
     >
       <RequireSession token={d.token} ready={d.ready}>
+        <div data-testid="approval-detail-page" />
         {notFound && (
           <div className="glass-frame glass-frame--danger" style={{ padding: "var(--space-5)" }} role="alert">
             <div className="eyebrow" style={{ color: "var(--signal-danger)" }}>Object not found</div>
@@ -162,8 +163,8 @@ export default function ApprovalDetailPage() {
                     <input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Decision reason" className="mono" style={{ display: "block", width: "100%", boxSizing: "border-box", marginTop: 4, background: "transparent", border: "1px solid var(--glass-frame-border)", borderRadius: 8, color: "var(--text-primary)", padding: "7px 10px" }} />
                   </label>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <button disabled={busy} onClick={() => decide(true)} style={approveBtn}>Approve</button>
-                    <button disabled={busy} onClick={() => decide(false)} style={rejectBtn}>Reject</button>
+                    <button data-testid="approval-approve" disabled={busy} onClick={() => decide(true)} style={approveBtn}>Approve</button>
+                    <button data-testid="approval-reject" disabled={busy} onClick={() => decide(false)} style={rejectBtn}>Reject</button>
                     <button disabled={busy} onClick={revoke} style={backBtn}>Revoke</button>
                   </div>
                 </div>

@@ -1,0 +1,91 @@
+{
+  "env": {
+    "CLAUDE_PLUGIN_ROOT": "/Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0",
+    "ECC_PLUGIN_ROOT": "/Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0",
+    "ECC_HOOKS_ENABLED": "true",
+    "ECC_HOOK_PROFILE": "standard",
+    "ECC_AGENT_DATA_HOME": "/Users/macbookpro/SaathiAI/.ecc-data",
+    "ECC_MEMORY_PROJECT_ROOT": "/Users/macbookpro/SaathiAI/.ecc-data/memory",
+    "ECC_MEMORY_HARNESS": "claude-code",
+    "ECC_SESSION_START_MAX_CHARS": "4000",
+    "ECC_SESSION_RETENTION_DAYS": "14",
+    "ECC_SKIP_OBSERVE": "1",
+    "ECC_DISABLED_MCPS": "chrome-devtools",
+    "ECC_DISABLED_HOOKS": "pre:bash:auto-tmux-dev,pre:bash:tmux-reminder,pre:bash:git-push-reminder,pre:bash:commit-quality,pre:write:doc-file-warning,pre:edit-write:suggest-compact,pre:observe:continuous-learning,post:observe:continuous-learning,pre:mcp-health-check,post:mcp-health-check,stop:check-console-log,stop:format-typecheck,stop:desktop-notify,stop:evaluate-session,stop:cost-tracker,stop:plan-canvas-pending,session-start:plan-canvas-sessions,post:quality-gate,post:edit:design-quality-check"
+  },
+  "permissions": {
+    "deny": [
+      "mcp__chrome-devtools",
+      "mcp__plugin:ecc:chrome-devtools"
+    ]
+  },
+  "enabledPlugins": {
+    "ecc@ecc": false
+  },
+  "extraKnownMarketplaces": {
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0/scripts/hooks/pre-bash-dispatcher.js",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0/scripts/hooks/run-with-flags.js pre:config-protection scripts/hooks/config-protection.js standard,strict",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0/scripts/hooks/run-with-flags.js pre:edit-write:gateguard-fact-force scripts/hooks/gateguard-fact-force.js standard,strict",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0/scripts/hooks/session-start-bootstrap.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/macbookpro/.claude/plugins/cache/ecc/ecc/2.2.0/scripts/hooks/run-with-flags.js stop:session-end scripts/hooks/session-end.js minimal,standard,strict",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

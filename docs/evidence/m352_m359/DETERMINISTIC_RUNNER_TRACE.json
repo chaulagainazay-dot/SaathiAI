@@ -1,0 +1,1914 @@
+{
+  "runner": "agentdev.runner.v1",
+  "dev_mission_id": "dmrunner01",
+  "deterministic": true,
+  "model_used": null,
+  "completed": true,
+  "final_state": "closed",
+  "terminal_verdict": "APPROVED_WITH_LIMITATIONS",
+  "steps": [
+    {
+      "step_id": "intake",
+      "index": 0,
+      "action": "agent",
+      "agent_id": "ceo",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "0 input(s) for ceo",
+          "duration_ms": 0.544
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.005
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "miss_dmrunner01_00",
+          "duration_ms": 0.019
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted miss_dmrunner01_00",
+          "duration_ms": 0.335
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "6c7308a3bcbb0caa",
+          "duration_ms": 0.124
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "program-manager",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "miss_dmrunner01_00",
+      "output_digest": "6c7308a3bcbb0caaf2f16753be794b40753235ca8338ed267bb5a1354991aca0",
+      "handoff_to": "program-manager",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 1.09
+    },
+    {
+      "step_id": "decompose",
+      "index": 1,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently intake",
+          "duration_ms": 0.053
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "intake -> decomposed",
+          "duration_ms": 0.002
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to decomposed",
+          "duration_ms": 0.406
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "decomposed",
+          "duration_ms": 0.047
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "program-manager",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "program-manager",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.55
+    },
+    {
+      "step_id": "assign",
+      "index": 2,
+      "action": "agent",
+      "agent_id": "program-manager",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for program-manager",
+          "duration_ms": 0.048
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.007
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "task_dmrunner01_02",
+          "duration_ms": 0.012
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted task_dmrunner01_02",
+          "duration_ms": 0.232
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "c91bb7a0ea8b7492",
+          "duration_ms": 0.121
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "research",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.001
+        }
+      ],
+      "input_artifact_ids": [
+        "miss_dmrunner01_00"
+      ],
+      "output_artifact_id": "task_dmrunner01_02",
+      "output_digest": "c91bb7a0ea8b7492fe6a1ef9e4e43e2b56790e666ecdafeb0bccc3b590b1ac32",
+      "handoff_to": "research",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.464
+    },
+    {
+      "step_id": "to_research",
+      "index": 3,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently decomposed",
+          "duration_ms": 0.043
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "decomposed -> research",
+          "duration_ms": 0.002
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to research",
+          "duration_ms": 0.378
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "research",
+          "duration_ms": 0.045
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.508
+    },
+    {
+      "step_id": "research",
+      "index": 4,
+      "action": "agent",
+      "agent_id": "research",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for research",
+          "duration_ms": 0.048
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'claims', 'limitations', 'payload']",
+          "duration_ms": 0.009
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "rese_dmrunner01_04",
+          "duration_ms": 0.019
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted rese_dmrunner01_04",
+          "duration_ms": 0.248
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "fb977a616e013df9",
+          "duration_ms": 0.159
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "architecture",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "task_dmrunner01_02"
+      ],
+      "output_artifact_id": "rese_dmrunner01_04",
+      "output_digest": "fb977a616e013df95cfb3c74e9fe03bd2d9a23175a7fd6685516162556d7969f",
+      "handoff_to": "architecture",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.525
+    },
+    {
+      "step_id": "gate_research",
+      "index": 5,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.112
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "research_completeness",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate research_completeness recorded",
+          "duration_ms": 0.556
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "architecture approved research",
+          "duration_ms": 0.053
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "architecture",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "rese_dmrunner01_04"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "architecture",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.761
+    },
+    {
+      "step_id": "to_design",
+      "index": 6,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently research",
+          "duration_ms": 0.044
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "research -> design",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to design",
+          "duration_ms": 0.393
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "design",
+          "duration_ms": 0.049
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.525
+    },
+    {
+      "step_id": "design",
+      "index": 7,
+      "action": "agent",
+      "agent_id": "architecture",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for architecture",
+          "duration_ms": 0.061
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'claims', 'payload']",
+          "duration_ms": 0.006
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "arch_dmrunner01_07",
+          "duration_ms": 0.013
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted arch_dmrunner01_07",
+          "duration_ms": 0.248
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "8aff1d6292f82b80",
+          "duration_ms": 0.122
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "security-governance",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "rese_dmrunner01_04"
+      ],
+      "output_artifact_id": "arch_dmrunner01_07",
+      "output_digest": "8aff1d6292f82b80bc09ab9c96a4b65b77c44d0b1033d38e1712e90dae946f92",
+      "handoff_to": "security-governance",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.49
+    },
+    {
+      "step_id": "gate_design",
+      "index": 8,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.102
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "architecture_approval",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate architecture_approval recorded",
+          "duration_ms": 0.492
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "security-governance approved architecture",
+          "duration_ms": 0.055
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "security-governance",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "arch_dmrunner01_07"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "security-governance",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.691
+    },
+    {
+      "step_id": "to_security",
+      "index": 9,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently design",
+          "duration_ms": 0.045
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "design -> security_review",
+          "duration_ms": 0.002
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to security_review",
+          "duration_ms": 0.407
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "security_review",
+          "duration_ms": 0.05
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.541
+    },
+    {
+      "step_id": "security",
+      "index": 10,
+      "action": "agent",
+      "agent_id": "security-governance",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for security-governance",
+          "duration_ms": 0.055
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'claims', 'payload']",
+          "duration_ms": 0.005
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "secu_dmrunner01_10",
+          "duration_ms": 0.012
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted secu_dmrunner01_10",
+          "duration_ms": 0.206
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "a588987bb433f90b",
+          "duration_ms": 0.108
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "testing-verification",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "arch_dmrunner01_07"
+      ],
+      "output_artifact_id": "secu_dmrunner01_10",
+      "output_digest": "a588987bb433f90b48449ef4d2aca27a1af3c3bdcf383938cfde8f99c29326bc",
+      "handoff_to": "testing-verification",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.424
+    },
+    {
+      "step_id": "gate_security",
+      "index": 11,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.1
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "security_approval",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate security_approval recorded",
+          "duration_ms": 0.515
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "security-governance approved architecture",
+          "duration_ms": 0.055
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "program-manager",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "secu_dmrunner01_10"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "program-manager",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.712
+    },
+    {
+      "step_id": "handoff",
+      "index": 12,
+      "action": "agent",
+      "agent_id": "program-manager",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "2 input(s) for program-manager",
+          "duration_ms": 0.093
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.003
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "impl_dmrunner01_12",
+          "duration_ms": 0.01
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted impl_dmrunner01_12",
+          "duration_ms": 0.265
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "92328d033e84b0ed",
+          "duration_ms": 0.099
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "backend-engineering",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "arch_dmrunner01_07",
+        "secu_dmrunner01_10"
+      ],
+      "output_artifact_id": "impl_dmrunner01_12",
+      "output_digest": "92328d033e84b0ed38b8e1241dc02a95230aa57527cf43dc7cd1ef5789e0b82d",
+      "handoff_to": "backend-engineering",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.51
+    },
+    {
+      "step_id": "gate_readiness",
+      "index": 13,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.1
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "implementation_readiness",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate implementation_readiness recorded",
+          "duration_ms": 0.527
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "architecture approved program-manager",
+          "duration_ms": 0.058
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "backend-engineering",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "impl_dmrunner01_12"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "backend-engineering",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.724
+    },
+    {
+      "step_id": "to_ready",
+      "index": 14,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently security_review",
+          "duration_ms": 0.051
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "security_review -> implementation_ready",
+          "duration_ms": 0.002
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to implementation_ready",
+          "duration_ms": 0.436
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "implementation_ready",
+          "duration_ms": 0.056
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.582
+    },
+    {
+      "step_id": "to_implementation",
+      "index": 15,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently implementation_ready",
+          "duration_ms": 0.051
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "implementation_ready -> in_implementation",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to in_implementation",
+          "duration_ms": 0.407
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "in_implementation",
+          "duration_ms": 0.057
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.554
+    },
+    {
+      "step_id": "review",
+      "index": 16,
+      "action": "agent",
+      "agent_id": "code-review",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for code-review",
+          "duration_ms": 0.043
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.003
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "code_dmrunner01_16",
+          "duration_ms": 0.01
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted code_dmrunner01_16",
+          "duration_ms": 0.181
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "1cef36a2962daa15",
+          "duration_ms": 0.076
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "testing-verification",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "impl_dmrunner01_12"
+      ],
+      "output_artifact_id": "code_dmrunner01_16",
+      "output_digest": "1cef36a2962daa15185ebf9ed745c4317b37270fc19fdf6f1cb59e4fb36cd5df",
+      "handoff_to": "testing-verification",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.35
+    },
+    {
+      "step_id": "gate_code_review",
+      "index": 17,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.096
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "code_review",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate code_review recorded",
+          "duration_ms": 0.546
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "code-review approved backend-engineering",
+          "duration_ms": 0.061
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "testing-verification",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "code_dmrunner01_16"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "testing-verification",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.74
+    },
+    {
+      "step_id": "to_verification",
+      "index": 18,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently in_implementation",
+          "duration_ms": 0.055
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "in_implementation -> verification",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to verification",
+          "duration_ms": 0.448
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "verification",
+          "duration_ms": 0.062
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.604
+    },
+    {
+      "step_id": "testing",
+      "index": 19,
+      "action": "agent",
+      "agent_id": "testing-verification",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for testing-verification",
+          "duration_ms": 0.043
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.003
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "veri_dmrunner01_19",
+          "duration_ms": 0.011
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted veri_dmrunner01_19",
+          "duration_ms": 0.264
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "a8a244bd52193c09",
+          "duration_ms": 0.102
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "code-review",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "code_dmrunner01_16"
+      ],
+      "output_artifact_id": "veri_dmrunner01_19",
+      "output_digest": "a8a244bd52193c092315c6579a6b39d914c97c440d80162970fc19630db55132",
+      "handoff_to": "code-review",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.461
+    },
+    {
+      "step_id": "gate_automated",
+      "index": 20,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.109
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "automated_testing",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate automated_testing recorded",
+          "duration_ms": 0.561
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "code-review approved testing-verification",
+          "duration_ms": 0.069
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "code-review",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "veri_dmrunner01_19"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "code-review",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.777
+    },
+    {
+      "step_id": "gate_negative",
+      "index": 21,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.11
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "negative_path_testing",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate negative_path_testing recorded",
+          "duration_ms": 0.583
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "code-review approved testing-verification",
+          "duration_ms": 0.068
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "security-governance",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "veri_dmrunner01_19"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "security-governance",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.798
+    },
+    {
+      "step_id": "redteam",
+      "index": 22,
+      "action": "agent",
+      "agent_id": "security-governance",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "2 input(s) for security-governance",
+          "duration_ms": 0.09
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.003
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "meet_dmrunner01_22",
+          "duration_ms": 0.009
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted meet_dmrunner01_22",
+          "duration_ms": 0.192
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "572630c94e916d3c",
+          "duration_ms": 0.084
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "ceo",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.001
+        }
+      ],
+      "input_artifact_ids": [
+        "veri_dmrunner01_19",
+        "arch_dmrunner01_07"
+      ],
+      "output_artifact_id": "meet_dmrunner01_22",
+      "output_digest": "572630c94e916d3c0d8014dc2eb9392d25326e8de5bbd3fea76134b9fb8f521c",
+      "handoff_to": "ceo",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.418
+    },
+    {
+      "step_id": "gate_redteam",
+      "index": 23,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.112
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "red_team_review",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate red_team_review recorded",
+          "duration_ms": 0.582
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "security-governance approved architecture",
+          "duration_ms": 0.071
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "ceo",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "meet_dmrunner01_22"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "ceo",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.802
+    },
+    {
+      "step_id": "to_decision",
+      "index": 24,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently verification",
+          "duration_ms": 0.064
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "verification -> executive_decision",
+          "duration_ms": 0.002
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to executive_decision",
+          "duration_ms": 0.587
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "executive_decision",
+          "duration_ms": 0.106
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "lifecycle continues",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.812
+    },
+    {
+      "step_id": "docs",
+      "index": 25,
+      "action": "agent",
+      "agent_id": "documentation",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 input(s) for documentation",
+          "duration_ms": 0.075
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.004
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "docu_dmrunner01_25",
+          "duration_ms": 0.013
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted docu_dmrunner01_25",
+          "duration_ms": 0.275
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "246d8ce7b2389ccf",
+          "duration_ms": 0.116
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "ceo",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "veri_dmrunner01_19"
+      ],
+      "output_artifact_id": "docu_dmrunner01_25",
+      "output_digest": "246d8ce7b2389ccfb1485e54c39e2543d34fc1b07ce4d016c1884704215712df",
+      "handoff_to": "ceo",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.563
+    },
+    {
+      "step_id": "decision",
+      "index": 26,
+      "action": "agent",
+      "agent_id": "ceo",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "2 input(s) for ceo",
+          "duration_ms": 0.091
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "handler produced ['body', 'payload']",
+          "duration_ms": 0.003
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "exec_dmrunner01_26",
+          "duration_ms": 0.018
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "persisted exec_dmrunner01_26",
+          "duration_ms": 0.362
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "dde9a4621f1e1648",
+          "duration_ms": 0.101
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "program-manager",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "recorded in the step index",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "docu_dmrunner01_25",
+        "meet_dmrunner01_22"
+      ],
+      "output_artifact_id": "exec_dmrunner01_26",
+      "output_digest": "dde9a4621f1e16488ef669e2112fd0a51ca5a9cb20cba83cc1758c669d11197b",
+      "handoff_to": "program-manager",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.621
+    },
+    {
+      "step_id": "gate_synthesis",
+      "index": 27,
+      "action": "gate",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "1 evidence artifact(s)",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "allowed",
+          "duration_ms": 0.143
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "executive_synthesis",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "gate executive_synthesis recorded",
+          "duration_ms": 0.667
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "program-manager approved ceo",
+          "duration_ms": 0.08
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "ceo",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "gate step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [
+        "exec_dmrunner01_26"
+      ],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "ceo",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.943
+    },
+    {
+      "step_id": "verdict",
+      "index": 28,
+      "action": "verdict",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "9 gate record(s) on file",
+          "duration_ms": 0.072
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "proposed verdict APPROVED_WITH_LIMITATIONS",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; the decision document was written earlier",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "APPROVED_WITH_LIMITATIONS",
+          "duration_ms": 0.532
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "APPROVED_WITH_LIMITATIONS",
+          "duration_ms": 0.077
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "owner",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "verdict step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "owner",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.723
+    },
+    {
+      "step_id": "close",
+      "index": 29,
+      "action": "advance",
+      "agent_id": "",
+      "phases": [
+        {
+          "phase": "receive",
+          "ok": true,
+          "detail": "currently executive_decision",
+          "duration_ms": 0.07
+        },
+        {
+          "phase": "process",
+          "ok": true,
+          "detail": "executive_decision -> closed",
+          "duration_ms": 0.001
+        },
+        {
+          "phase": "produce",
+          "ok": true,
+          "detail": "no artifact; a transition is not a document",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "record",
+          "ok": true,
+          "detail": "advanced to closed",
+          "duration_ms": 0.511
+        },
+        {
+          "phase": "verify",
+          "ok": true,
+          "detail": "closed",
+          "duration_ms": 0.075
+        },
+        {
+          "phase": "handoff",
+          "ok": true,
+          "detail": "owner",
+          "duration_ms": 0.0
+        },
+        {
+          "phase": "finish",
+          "ok": true,
+          "detail": "advance step complete",
+          "duration_ms": 0.0
+        }
+      ],
+      "input_artifact_ids": [],
+      "output_artifact_id": "",
+      "output_digest": "",
+      "handoff_to": "owner",
+      "status": "completed",
+      "failure_phase": "",
+      "failure_cause": "",
+      "failure_detail": "",
+      "duration_ms": 0.698
+    }
+  ],
+  "failures": [],
+  "lineage": [
+    {
+      "from": "miss_dmrunner01_00",
+      "to": "task_dmrunner01_02",
+      "via_step": "assign"
+    },
+    {
+      "from": "task_dmrunner01_02",
+      "to": "rese_dmrunner01_04",
+      "via_step": "research"
+    },
+    {
+      "from": "rese_dmrunner01_04",
+      "to": "arch_dmrunner01_07",
+      "via_step": "design"
+    },
+    {
+      "from": "arch_dmrunner01_07",
+      "to": "secu_dmrunner01_10",
+      "via_step": "security"
+    },
+    {
+      "from": "arch_dmrunner01_07",
+      "to": "impl_dmrunner01_12",
+      "via_step": "handoff"
+    },
+    {
+      "from": "secu_dmrunner01_10",
+      "to": "impl_dmrunner01_12",
+      "via_step": "handoff"
+    },
+    {
+      "from": "impl_dmrunner01_12",
+      "to": "code_dmrunner01_16",
+      "via_step": "review"
+    },
+    {
+      "from": "code_dmrunner01_16",
+      "to": "veri_dmrunner01_19",
+      "via_step": "testing"
+    },
+    {
+      "from": "veri_dmrunner01_19",
+      "to": "meet_dmrunner01_22",
+      "via_step": "redteam"
+    },
+    {
+      "from": "arch_dmrunner01_07",
+      "to": "meet_dmrunner01_22",
+      "via_step": "redteam"
+    },
+    {
+      "from": "veri_dmrunner01_19",
+      "to": "docu_dmrunner01_25",
+      "via_step": "docs"
+    },
+    {
+      "from": "docu_dmrunner01_25",
+      "to": "exec_dmrunner01_26",
+      "via_step": "decision"
+    },
+    {
+      "from": "meet_dmrunner01_22",
+      "to": "exec_dmrunner01_26",
+      "via_step": "decision"
+    }
+  ],
+  "timing": {
+    "total_ms": 19.569,
+    "per_agent_ms": {
+      "architecture": 0.49,
+      "ceo": 1.711,
+      "code-review": 0.35,
+      "documentation": 0.563,
+      "program-manager": 0.974,
+      "research": 0.525,
+      "security-governance": 0.842,
+      "testing-verification": 0.461
+    },
+    "per_phase_ms": {
+      "finish": 0.002,
+      "handoff": 0.021,
+      "process": 1.049,
+      "produce": 0.147,
+      "receive": 1.748,
+      "record": 12.342,
+      "verify": 2.406
+    },
+    "slowest_step": "intake"
+  },
+  "limitation": "Scripted execution. Handlers are Python functions, so this establishes that the orchestration and gate path hold \u2014 not that a model would produce comparable output."
+}

@@ -133,8 +133,14 @@ class PrivateAlphaMixin:
         workspace_id: str = "",
         magic_code: str = "",
         client_key: str = "",
+        ttl_sec: float | None = None,
     ) -> dict[str, Any]:
-        """Secure login with abuse controls + generic failures."""
+        """Secure login with abuse controls + generic failures.
+
+        ``ttl_sec`` overrides the configured session lifetime. It exists so that
+        expiry can be exercised on a credentialed account — the passwordless
+        ``PlatformService.login`` path is not available to those.
+        """
         email_n = (email or "").strip().lower()
         abuse_key = client_key or email_n or "unknown"
         allowed, why = self._abuse().check("login", abuse_key)
@@ -197,7 +203,7 @@ class PrivateAlphaMixin:
             raise PlatformContextError("WORKSPACE_ISOLATION", "workspace not in organization")
 
         sec = self.store.get_config("security", {}) or {}
-        ttl = float(sec.get("session_ttl_sec", 86400))
+        ttl = float(sec.get("session_ttl_sec", 86400) if ttl_sec is None else ttl_sec)
         idle = float(sec.get("idle_ttl_sec", 3600))
         raw = secrets.token_urlsafe(32)
         sess, token = self.store.create_session(

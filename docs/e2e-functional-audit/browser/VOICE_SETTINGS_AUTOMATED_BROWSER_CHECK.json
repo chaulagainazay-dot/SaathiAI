@@ -1,0 +1,242 @@
+{
+  "verdict": "SAATHIOS_VOICE_SETTINGS_AUTOMATED_BROWSER_BOUNDARY_PASSED_WITH_LIMITATIONS",
+  "timestamp": "2026-08-03T00:46:36.766Z",
+  "browser_engine": "chromium",
+  "browser_version": "151.0.7922.34",
+  "ui_base": "http://127.0.0.1:3000",
+  "route": "/settings/voice",
+  "checks": [
+    {
+      "name": "voice_settings_route_loads",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "voice_settings_heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "runtime_voice_count_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "local_voice_boundary_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy_boundary_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "output_controls_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "input_controls_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "nepali_phrase_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "nepali_phrase_selectable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "playback_or_safe_no_voice_result",
+      "ok": true,
+      "detail": "No installed local Nepali voice was detected. Nepali playback was not attempted."
+    },
+    {
+      "name": "no_credential_controls",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "no_external_requests",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "no_console_errors",
+      "ok": true,
+      "detail": "count=0"
+    }
+  ],
+  "screenshots": [
+    "voice-settings-automated-boundary.png"
+  ],
+  "console_errors": [],
+  "network_requests": [
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/settings/voice",
+      "resource_type": "document"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/main-app-dbda2bbfc3c10352.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/7045-062aa664ffb0703f.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/4505-566796cc7aa2313e.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/8187-64ae16b8bc92a70f.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/app/layout-ae65469de7d66462.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/app/error-515339792613a4c9.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/app/settings/voice/page-07a1c59376ddf001.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/app/global-error-8ace86c1f61dc5e6.js",
+      "resource_type": "script"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:8766",
+      "path": "/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:8766",
+      "path": "/api/executive/briefing",
+      "resource_type": "fetch"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:8766",
+      "path": "/api/events/stream",
+      "resource_type": "eventsource"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/settings",
+      "resource_type": "fetch"
+    },
+    {
+      "method": "GET",
+      "origin": "http://127.0.0.1:3000",
+      "path": "/_next/static/chunks/app/settings/page-556a3a8b21e4cf00.js",
+      "resource_type": "script"
+    }
+  ],
+  "forbidden_external_requests": [],
+  "limitations": [
+    "Automated playback observes browser state only; owner hearing review remains required.",
+    "This harness does not request microphone permission or inspect browser storage."
+  ]
+}

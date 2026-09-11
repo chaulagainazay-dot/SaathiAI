@@ -1,0 +1,30 @@
+{
+  "mission": "UI-NEXT-2.1",
+  "title": "HYBRID COMMAND CENTER INTERACTIVE PROTOTYPE",
+  "certified_at": "2026-08-07T11:46:01.133348+00:00",
+  "terminal_verdict": "HYBRID_COMMAND_INTERACTIVE_PROTOTYPE_CERTIFIED_WITH_LIMITATIONS",
+  "production_readiness": "READY_WITH_LIMITATIONS",
+  "base_branch": "design/ui-next-2-saathios-design-dna",
+  "base_sha": "c7883994c825ca899b557c0e761ef55a491ec542",
+  "work_branch": "feature/ui-next-2-1-hybrid-command-prototype",
+  "prototype_route": "/design-lab",
+  "tests": {
+    "contracts": 10,
+    "legacy_demo": 5,
+    "total": 15
+  },
+  "adapter": "FIXTURE_ADAPTER_MATCHING_CANONICAL_SCHEMA",
+  "non_actions": {
+    "command_replaced": false,
+    "threejs": false,
+    "gsap_runtime": false,
+    "tg_changed": false,
+    "eg_changed": false,
+    "ledger_mutated": false,
+    "risk_mutated": false,
+    "approval_mutation": false,
+    "trading_branch_merged": false,
+    "master_merge": false,
+    "pr38_auto_merge": false
+  }
+}

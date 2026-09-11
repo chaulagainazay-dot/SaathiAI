@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
 import { runLearningAnalysis, fetchRecommendations, decideRecommendation } from "@/lib/api";
 
-const PURPLE = "#9B6BFF";
+const PURPLE = "var(--accent)";
 const TEAL = "#00BFA5";
 const RED = "#FF5A5A";
 const AMBER = "#E8B84B";
 
 const CAT = {
   technical: { label: "Technical", color: "#7CF5E4", note: "how SaathiAI improves" },
-  educational: { label: "Educational", color: "#9B6BFF", note: "how Mr. Yeti teaches better" },
+  educational: { label: "Educational", color: "var(--accent)", note: "how Mr. Yeti teaches better" },
   business: { label: "Business", color: "#E8B84B", note: "how each company operates better" },
 };
 const PRI = { high: RED, medium: AMBER, low: "#5b6478" };

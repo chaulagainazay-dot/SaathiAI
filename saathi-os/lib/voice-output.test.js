@@ -36,6 +36,10 @@ describe("voice output contract", () => {
         enabled: false,
         profileId: "../../private",
         speakingRate: 99,
+        volume: -3,
+        browserVoiceURI: "system:Ajay",
+        locale: "en-US",
+        inputEnabled: false,
         token: "must-not-persist",
       }),
       {
@@ -43,6 +47,11 @@ describe("voice output contract", () => {
         enabled: false,
         profileId: "saathi_default",
         speakingRate: 2,
+        volume: 0,
+        browserVoiceURI: "system:Ajay",
+        locale: "en-US",
+        inputEnabled: false,
+        interruptionMode: "PUSH_TO_INTERRUPT",
       }
     );
   });

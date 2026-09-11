@@ -1,7 +1,7 @@
 """Universal Account & Connector LAYER — catalog, encrypted accounts, capability dispatch, events."""
 import tempfile, os
 from saathi.connectors.catalog import catalog, provider_info, capabilities_for
-from saathi.connectors.accounts import AccountStore
+from saathi.connectors.accounts import AccountStatus, AccountStore
 from saathi.connectors import manager
 
 
@@ -42,9 +42,24 @@ def test_one_account_many_missions_and_list_filter():
     assert s.get(a["id"])["missions"] == ["mr_yeti"]
 
 
+def test_a_new_account_is_not_connected_and_cannot_execute():
+    """Storing a credential is configuration. It is not the provider's agreement."""
+    s = _s()
+    a = s.add(provider="gmail", display_name="g", secret={"refresh_token": "x"})
+    assert a["status"] == AccountStatus.AUTH_REQUIRED.value
+    blocked = manager.execute(a["id"], "email.send", {"to": "x"}, store=s)
+    assert blocked["ok"] is False
+    assert "reconnect" in blocked["error"]
+
+
 def test_execute_validates_capability_and_runs_simulated():
     s = _s()
     a = s.add(provider="gmail", display_name="g")
+    # gmail has no live adapter, so SIMULATED is the truthful readiness state —
+    # metadata-only dispatch, no external side effect. This test used to get
+    # readiness for free from a default of "connected", which claimed Google had
+    # verified an account nobody had authenticated.
+    s.mark_simulated(a["id"])
     bad = manager.execute(a["id"], "email.launch_rockets", store=s)
     assert bad["ok"] is False and "no capability" in bad["error"]
     ok = manager.execute(a["id"], "email.send", {"to": "x"}, store=s)

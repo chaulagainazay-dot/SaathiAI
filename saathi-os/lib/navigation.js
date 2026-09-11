@@ -33,6 +33,16 @@ export const NAV_GROUPS = [
         authoritySensitivity: "approval-aware",
       },
       {
+        id: "orbit",
+        label: "Orbit",
+        href: "/orbit",
+        icon: "◎",
+        description: "Agent constellation — read-only system view",
+        shortcut: "g o",
+        accent: "#E8B84B",
+        authoritySensitivity: "observation-only",
+      },
+      {
         id: "missions",
         label: "Missions",
         href: "/missions",
@@ -120,6 +130,28 @@ export const NAV_GROUPS = [
         authoritySensitivity: "paper-only",
         environmentSensitivity: "never-imply-production",
       },
+      {
+        id: "analysis",
+        label: "Chart Analysis",
+        href: "/analysis",
+        icon: "◈",
+        description: "NEPSE and crypto chart analysis — research only, never advice",
+        accent: "#1F8A53",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
+      {
+        id: "nepse",
+        label: "NEPSE Tracker",
+        href: "/nepse",
+        icon: "◪",
+        description: "NEPSE portfolio, screener and market — snapshot data, not a live feed",
+        accent: "#35C47A",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
     ],
   },
   {
@@ -147,7 +179,10 @@ export const NAV_GROUPS = [
   },
 ];
 
-/** Global chrome destinations (not in the 12 primary areas list for group count). */
+/** Primary navigable areas. Bump deliberately when a surface is added. */
+export const PRIMARY_AREA_COUNT = 15;
+
+/** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [
   {
     id: "fleet",
@@ -173,14 +208,25 @@ export const GLOBAL_NAV = [
   },
   {
     id: "apps",
-    label: "Apps",
+    label: "Applications",
     href: "/apps",
     icon: "▦",
-    description: "Universal application launcher — local apps only",
+    description: "M64 Applications Dashboard — backend-authoritative module discovery",
     authoritySensitivity: "runtime-operate",
     global: true,
     accent: "#10C98A",
-    aliases: ["/applications", "/app-launcher"],
+    aliases: ["/applications"],
+  },
+  {
+    id: "app-launcher",
+    label: "App Launcher",
+    href: "/app-launcher",
+    icon: "▦",
+    description: "M121–M129 Universal Application Runtime — install, enable, launch, manage",
+    authoritySensitivity: "runtime-operate",
+    global: true,
+    accent: "#10C98A",
+    aliases: [],
   },
   {
     id: "platform",
@@ -209,11 +255,11 @@ export const GLOBAL_NAV = [
     label: "Settings",
     href: "/settings",
     icon: "⚙",
-    description: "Theme, density, experience mode, profile",
+    description: "Theme, density, profile, and discoverable voice controls",
     mobilePriority: 5,
     global: true,
     accent: "#8B98B4",
-    aliases: ["/me"],
+    aliases: ["/me", "/settings/voice"],
   },
   {
     id: "evidence",
@@ -321,8 +367,8 @@ export function validateNavigationModel() {
   if (NAV_GROUPS.length !== 4) {
     errors.push(`Expected 4 groups, got ${NAV_GROUPS.length}`);
   }
-  if (primary.length !== 12) {
-    errors.push(`Expected 12 primary areas, got ${primary.length}`);
+  if (primary.length !== PRIMARY_AREA_COUNT) {
+    errors.push(`Expected ${PRIMARY_AREA_COUNT} primary areas, got ${primary.length}`);
   }
 
   for (const g of NAV_GROUPS) {

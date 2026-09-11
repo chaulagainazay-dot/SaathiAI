@@ -11,8 +11,15 @@
 // unit-level provider checks, and a full production build. Live microphone
 // permission + a real spoken utterance were NOT exercised in this session —
 // the sandboxed browser-automation environment cannot grant getUserMedia.
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
+import {
+  acquireInputClaim,
+  openMicrophoneForClaim,
+  cancelBrowserSpeechSynthesis,
+  forceReleaseInput,
+} from "@/lib/voice-session";
 
 const STATES = {
   idle: { label: "Voice off", color: "#8fa0c4" },
@@ -84,6 +91,7 @@ export default function VoiceControl({ conversationId, chatMode, agent,
   const synthUtterRef = useRef(null);
   const levelTimerRef = useRef(null);
   const bargeInStartRef = useRef(0);
+  const inputClaimRef = useRef(null);
 
   useEffect(() => {
     setSupported(!!getRecognitionCtor() && !!window?.speechSynthesis);
@@ -126,11 +134,12 @@ export default function VoiceControl({ conversationId, chatMode, agent,
     next();
   }, []);
 
-  // ── barge-in: stop playback the instant new speech is detected ─────────
+  // Recognition-result interruption only. This is not full acoustic barge-in:
+  // the browser must first report speech before playback can be cancelled.
   const stopPlayback = useCallback(() => {
     if (window?.speechSynthesis?.speaking) {
       const stopMs = performance.now() - bargeInStartRef.current;
-      window.speechSynthesis.cancel();
+      cancelBrowserSpeechSynthesis();
       setVoiceState("interrupted");
       if (sessionId) {
         afetch(`${API_BASE}/api/v1/voice/sessions/${sessionId}/interrupt?stop_latency_ms=${stopMs}`,
@@ -162,10 +171,22 @@ export default function VoiceControl({ conversationId, chatMode, agent,
   }, [ensureSession, onTurn, speakSegments]);
 
   // ── start/stop real microphone capture + recognition ────────────────────
+  // V-NEXT-1: acquires exclusive AudioInputOwner claim (preempts other owners).
   const start = useCallback(async () => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) { setSupported(false); return; }
     await ensureSession();
+    const claim = acquireInputClaim({ label: "chat.VoiceControl" });
+    inputClaimRef.current = claim;
+    try {
+      await openMicrophoneForClaim(claim, { audio: true });
+    } catch {
+      claim.release();
+      inputClaimRef.current = null;
+      setPermissionDenied(true);
+      setVoiceState("error");
+      return;
+    }
     const r = new Ctor();
     r.continuous = true;
     r.interimResults = true;
@@ -173,6 +194,7 @@ export default function VoiceControl({ conversationId, chatMode, agent,
     r.onstart = () => setVoiceState("listening");
     r.onaudiostart = () => setPermissionDenied(false);
     r.onresult = (ev) => {
+      if (!claim.isActive()) return;
       bargeInStartRef.current = performance.now();
       stopPlayback();
       setVoiceState("speech_detected");
@@ -193,22 +215,31 @@ export default function VoiceControl({ conversationId, chatMode, agent,
       }
     };
     r.onend = () => {
-      if (recogRef.current === r && voiceState !== "idle" && !muted) {
+      if (recogRef.current === r && voiceState !== "idle" && !muted && claim.isActive()) {
         try { r.start(); } catch { /* already stopped */ }
       }
     };
+    claim.setRecognition(r);
     recogRef.current = r;
     try {
       r.start();
     } catch {
       setError("Could not start microphone.");
       setVoiceState("error");
+      claim.release();
+      inputClaimRef.current = null;
     }
   }, [ensureSession, stopPlayback, submitFinal, voiceState, muted]);
 
   const stop = useCallback(() => {
     recogRef.current?.stop();
     recogRef.current = null;
+    if (inputClaimRef.current) {
+      inputClaimRef.current.release();
+      inputClaimRef.current = null;
+    } else {
+      forceReleaseInput("USER_CANCEL");
+    }
     window?.speechSynthesis?.cancel();
     clearInterval(levelTimerRef.current);
     setVoiceState("idle");
@@ -221,7 +252,13 @@ export default function VoiceControl({ conversationId, chatMode, agent,
 
   useEffect(() => () => { // cleanup on unmount/navigation — never leave mic hot
     recogRef.current?.stop();
-    window?.speechSynthesis?.cancel();
+    if (inputClaimRef.current) {
+      inputClaimRef.current.release();
+      inputClaimRef.current = null;
+    } else {
+      forceReleaseInput("SESSION_CLOSE");
+    }
+    cancelBrowserSpeechSynthesis();
     clearInterval(levelTimerRef.current);
   }, []);
 
@@ -289,6 +326,9 @@ export default function VoiceControl({ conversationId, chatMode, agent,
       {error && !permissionDenied && (
         <div style={{ color: "#ff8c8c" }} role="alert">{error}</div>
       )}
+      <div style={{ fontSize: 11, color: "#8fa0c4" }}>
+        Push-to-interrupt only · <Link href="/settings/voice">Voice setup and privacy</Link>
+      </div>
     </div>
   );
 }

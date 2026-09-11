@@ -1,0 +1,82 @@
+=== 5 PRODUCTION BUILD ===
+├ ○ /trading/paper-reconcile             1.05 kB         163 kB
+├ ○ /trading/paper-recovery                982 B         163 kB
+├ ○ /trading/paper-risk                  1.07 kB         163 kB
+├ ○ /trading/paper-simulation            2.38 kB         164 kB
+├ ○ /trading/policy                      1.37 kB         163 kB
+├ ○ /trading/portfolio-risk              2.59 kB         164 kB
+├ ○ /trading/positions                    1.1 kB         163 kB
+├ ○ /trading/proposals                   1.44 kB         163 kB
+├ ○ /trading/provider-canary-planning    2.19 kB         164 kB
+├ ○ /trading/qualification               1.47 kB         163 kB
+├ ○ /trading/reconciliation              2.28 kB         164 kB
+├ ○ /trading/regime                      1.16 kB         163 kB
+├ ○ /trading/research                    1.61 kB         163 kB
+├ ○ /trading/research-data               4.01 kB         166 kB
+├ ○ /trading/research-lab                3.87 kB         166 kB
+├ ○ /trading/research-orchestrator       2.51 kB         164 kB
+├ ○ /trading/safety                       3.4 kB         165 kB
+├ ○ /trading/strategies                  1.05 kB         163 kB
+├ ○ /unlock                              4.89 kB         157 kB
+├ ○ /voice                               1.74 kB         154 kB
+└ ○ /workspace                           2.48 kB         155 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-cf02c4775860a5ab.js      46.1 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          1.94 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+BUILD_EXIT:0
+=== 6 BROWSER CERT ===
+
+> saathi-os@0.1.0 cert:m319
+> node scripts/m319_connectivity_governance_browser_cert.mjs
+
+PASS page_source_governance_banner
+PASS page_source_no_password_field
+PASS page_source_no_api_key_field
+PASS page_source_no_connect_enable
+PASS page_source_maturity
+PASS page_source_approval_not_activation
+PASS backend_bootstrap
+PASS backend_cert
+PASS backend_verdict
+PASS backend_maturity
+PASS backend_authority_false
+PASS screenshot_control_center
+PASS banner_visible
+PASS verdict_renders
+PASS max_state_renders
+PASS maturity_governance_only
+PASS authority_false_display
+PASS charter_section
+PASS provider_section
+PASS approval_section
+PASS credential_section
+PASS threat_section
+PASS incident_section
+PASS maturity_section
+PASS evidence_section
+PASS no_secret_input
+PASS no_external_auth_request — static local page only
+VERDICT TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS
+BROWSER_EXIT:0
+=== 7 ISOLATION SCANS (service security) ===
+{
+  "security_ok": true,
+  "provider_isolation": true,
+  "llm_authority_scan": {
+    "llm_may_approve": false,
+    "llm_may_activate": false
+  },
+  "schema_ok": true,
+  "refuse_connect": true,
+  "refuse_account": true,
+  "refuse_order": true,
+  "refuse_canary": true,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "external_domains_called": []
+}

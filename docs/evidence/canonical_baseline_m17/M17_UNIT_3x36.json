@@ -1,0 +1,6 @@
+{
+  "file": "tests/test_m17_17_scheduled_graph_recovery.py",
+  "iterations": 3,
+  "per_iteration_passed": 36,
+  "failed": 0
+}

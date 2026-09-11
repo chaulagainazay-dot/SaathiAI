@@ -1,0 +1,86 @@
+{
+  "evidence": "fm_i6_2_memory_gate.gate_comparison.v1",
+  "milestone": "FM-I6.2-MG",
+  "baseline_sha": "54a4665e7bbc6e113c18ec50d150245934603991",
+  "candidates": [
+    {
+      "id": "A_PURE_FREE_PERCENT",
+      "formula": "pages_free * page_size / hw.memsize >= threshold",
+      "threshold_example": 0.20,
+      "stability": "poor — pure free is often <2% on healthy macOS due to file cache",
+      "false_block_risk": "very high on Apple Silicon with active apps or large inactive file cache",
+      "false_allow_risk": "low when threshold is high; still ignores swap and compressor",
+      "suitable_primary": false,
+      "on_current_host": "would FAIL (pure free ~0.7–0.8%) despite idle Ollama and 0 swap"
+    },
+    {
+      "id": "B_RECLAIMABLE_AVAILABLE",
+      "formula": "(free+inactive+speculative)*page_size — absolute MiB and/or % of RAM",
+      "components": {
+        "free": "include",
+        "inactive": "include (file-backed cache reclaimable without swap-out of anonymous)",
+        "speculative": "include (small; reclaimable)",
+        "purgeable": "optional soft credit only — not for hard headroom",
+        "compressed": "do not fully credit as available; may thrash under load"
+      },
+      "stability": "moderate",
+      "false_block_risk": "moderate if absolute floor too high",
+      "false_allow_risk": "high if only 1024 MiB floor used without model budget",
+      "suitable_primary": "as component only",
+      "on_current_host": "reclaimable ~2250 MiB / ~27.5% — passes 20% ratio and 1024 MiB floor"
+    },
+    {
+      "id": "C_MEMORY_PRESSURE",
+      "formula": "Darwin memory_pressure free% and/or pressure level",
+      "notes": "memory_pressure reports System-wide free percentage counting reclaimable/compressible pages; higher than pure free. Explicit normal/warning/critical labels are not always exposed as a single enum on all macOS versions; free% is reliable.",
+      "stability": "good for coarse OS signal",
+      "false_block_risk": "low at 20% Darwin free% on this host (observed 57–58%)",
+      "false_allow_risk": "medium alone — can be high while reclaimable headroom is insufficient for model peak",
+      "suitable_primary": "as hard fail-closed component when probe fails or free% critical",
+      "m370_usage": "min_free_memory_percent=20 against memory_pressure free%"
+    },
+    {
+      "id": "D_SWAP_COMPRESSION",
+      "formula": "swap used/activity + compressor occupancy bounds",
+      "stability": "good for thrash detection",
+      "false_block_risk": "medium if any nonzero swap forbidden (M370 hosts often had swap)",
+      "false_allow_risk": "high if ignored",
+      "suitable_primary": "as hard component",
+      "on_current_host": "swap used 0; swapins/swapouts 0; compressor ~1.9 GiB occupied"
+    },
+    {
+      "id": "E_MODEL_BUDGET_HEADROOM",
+      "formula": "reclaimable_mib >= max(absolute_floor, estimated_peak_mib * safety_factor)",
+      "stability": "depends on quality of peak estimate (must label estimate not measurement)",
+      "false_block_risk": "medium if estimate too conservative",
+      "false_allow_risk": "high if estimate optimistic or weight-only",
+      "suitable_primary": "as hard component for load admission",
+      "on_current_host": "conservative peak ~2.68 GiB * 1.5 ≈ 4.02 GiB required; reclaimable ~2.25 GiB → FAIL (correct fail-closed before load)"
+    },
+    {
+      "id": "F_COMBINED",
+      "formula": "see DECISION.json and ADR",
+      "suitable_primary": true,
+      "rationale": "No single metric is both sufficient and macOS-faithful. Combine OS pressure, reclaimable headroom vs model budget, swap, single-session, single-model."
+    }
+  ],
+  "current_implementation_gap": {
+    "file": "saathi/agent_runtime/harness/local_model.py::_default_memory_probe",
+    "field_name": "free_percent",
+    "actual_definition": "(free+inactive+speculative)/total*100",
+    "not_pure_free": true,
+    "not_memory_pressure_free_percent": true,
+    "thresholds": {
+      "MIN_FREE_MEMORY_PERCENT": 20,
+      "MIN_AVAILABLE_MEMORY_MIB": 1024.0
+    },
+    "missing": [
+      "swap check",
+      "compressor / swap activity trend",
+      "model peak budget comparison",
+      "sampling window / hysteresis",
+      "Darwin memory_pressure probe",
+      "explicit pure-free metric (if retained as diagnostic only)"
+    ]
+  }
+}

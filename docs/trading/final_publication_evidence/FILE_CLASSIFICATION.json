@@ -1,0 +1,69 @@
+{
+  "schema": "FILE_CLASSIFICATION",
+  "as_of": "2026-07-30T14:41:46.278029+00:00",
+  "paths": {
+    "saathi/platform/tg/connectivity_governance/": {
+      "class": "REQUIRED_AND_TRACKED",
+      "action": "none"
+    },
+    "docs/trading/m312_m319_evidence/": {
+      "class": "REQUIRED_AND_TRACKED",
+      "action": "none",
+      "note": "except cg_evidence.db"
+    },
+    "docs/trading/m312_m319_evidence/cg_evidence.db": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "preserve_local_not_commit",
+      "reason": "local runtime sqlite evidence DB"
+    },
+    "docs/evidence/m25/": {
+      "class": "UNKNOWN_PRESERVE",
+      "action": "preserve_not_commit",
+      "note": "historical modified tracked files"
+    },
+    "docs/evidence/m27/": {
+      "class": "UNKNOWN_PRESERVE",
+      "action": "preserve_not_commit"
+    },
+    "docs/evidence/m28/": {
+      "class": "UNKNOWN_PRESERVE",
+      "action": "preserve_not_commit"
+    },
+    "docs/design-spec/": {
+      "class": "UNRELATED_USER_FILE",
+      "action": "preserve_not_commit"
+    },
+    "docs/trading/final_publication_evidence/": {
+      "class": "REQUIRED_BUT_UNCOMMITTED",
+      "action": "commit_for_publication"
+    },
+    ".env": {
+      "class": "INTENTIONALLY_LOCAL_SENSITIVE",
+      "action": "never_commit"
+    },
+    ".proxy.env": {
+      "class": "INTENTIONALLY_LOCAL_SENSITIVE",
+      "action": "never_commit"
+    },
+    ".venv/": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "preserve_not_delete_default"
+    },
+    "saathi-os/node_modules/": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "preserve_not_delete_default"
+    },
+    "saathi-os/.next/": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "eligible_cleanup_after_push"
+    },
+    ".pytest_cache/": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "eligible_cleanup_after_push"
+    },
+    "**/__pycache__/": {
+      "class": "GENERATED_REPRODUCIBLE",
+      "action": "eligible_cleanup_after_push"
+    }
+  }
+}

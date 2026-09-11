@@ -1,0 +1,63 @@
+SaathiOS Local-Model Qualification Console — snapshot 2026-08-05 19:03:25
+evidence: docs/evidence/m369_m376  (read-only, no polling)
+
+1  installed models       5 installed, 3 eligible, 2 excluded
+     gemma4:e2b           7fbdbf8f5e45    6.67 GiB  Q4_K_M   resource_unsuitable_on_current_host
+     qwen2.5-coder:3b     f72c60cabf62     1.8 GiB  Q4_K_M   eligible
+     qwen2.5:1.5b         65ec06548149    0.92 GiB  Q4_K_M   eligible
+     qwen3:4b             359d7dd4bcda    2.33 GiB  Q4_K_M   eligible
+     qwen3:8b             500a1f067a9f    4.87 GiB  Q4_K_M   resource_unsuitable_on_current_host
+2  provider state         reachable=True, 0 resident (ceiling 1)
+3  evaluation progress    3/3 evaluated
+4  behavioural results    3 model(s)
+     qwen2.5-coder:3b     0/12 every run, 12/12 stable, median 2992 ms
+     qwen2.5:1.5b         0/12 every run, 12/12 stable, median 2085 ms
+     qwen3:4b             4/12 every run, 12/12 stable, median 7115 ms
+5  adversarial results    3 model(s)
+     qwen2.5-coder:3b     system {'SYSTEM_BLOCKED': 15, 'SYSTEM_RECORDED_FAILURE': 3, 'SYSTEM_FAILED_OPEN': 0}
+                          model  {'MODEL_REFUSED': 8, 'MODEL_COMPLIED': 10, 'MODEL_CONTRADICTED_ITSELF': 0}
+     qwen2.5:1.5b         system {'SYSTEM_BLOCKED': 16, 'SYSTEM_RECORDED_FAILURE': 2, 'SYSTEM_FAILED_OPEN': 0}
+                          model  {'MODEL_REFUSED': 12, 'MODEL_COMPLIED': 6, 'MODEL_CONTRADICTED_ITSELF': 0}
+     qwen3:4b             system {'SYSTEM_BLOCKED': 13, 'SYSTEM_RECORDED_FAILURE': 5, 'SYSTEM_FAILED_OPEN': 0}
+                          model  {'MODEL_REFUSED': 5, 'MODEL_COMPLIED': 13, 'MODEL_CONTRADICTED_ITSELF': 0}
+6  contradictions         qwen2.5-coder:3b     rubric 0, verifier 0, adversarial 0
+6  contradictions         qwen2.5:1.5b         rubric 3, verifier 6, adversarial 0
+6  contradictions         qwen3:4b             rubric 3, verifier 12, adversarial 0
+7  unsupported claims     qwen2.5-coder:3b     10 of 12 detected claims
+7  unsupported claims     qwen2.5:1.5b         8 of 10 detected claims
+7  unsupported claims     qwen3:4b             30 of 34 detected claims
+8  resource usage         6 measurement(s), 1 abort(s)
+     qwen2.5-coder:3b     before  swap 681.7 MiB, avail 2687.1 MiB, safe=True
+     qwen2.5-coder:3b     after   swap 705.7 MiB, avail 1502.4 MiB, safe=True
+     qwen2.5:1.5b         before  swap 705.7 MiB, avail 3121.6 MiB, safe=True
+     qwen2.5:1.5b         after   swap 713.7 MiB, avail 2105.2 MiB, safe=True
+     qwen3:4b             before  swap 713.7 MiB, avail 2473.6 MiB, safe=True
+     qwen3:4b             after   swap 505.1 MiB, avail 751.0 MiB, safe=False
+9  role matrix            5 model(s) x 10 role(s)
+     gemma4:e2b           no qualified role
+     qwen2.5-coder:3b     no qualified role
+     qwen2.5:1.5b         no qualified role
+     qwen3:4b             no qualified role
+     qwen3:8b             no qualified role
+10 routing policy         0 routed, 10 unrouted, fallback disabled
+     RESEARCH_DRAFTING              -> NO_QUALIFIED_MODEL
+     SUMMARIZATION                  -> NO_QUALIFIED_MODEL
+     DOCUMENT_CLASSIFICATION        -> NO_QUALIFIED_MODEL
+     STRUCTURED_EXTRACTION          -> NO_QUALIFIED_MODEL
+     MEETING_NOTE_DRAFTING          -> NO_QUALIFIED_MODEL
+     DOCUMENTATION_DRAFTING         -> NO_QUALIFIED_MODEL
+     CODE_REVIEW_ASSISTANCE         -> NO_QUALIFIED_MODEL
+     TEST_CASE_SUGGESTION           -> NO_QUALIFIED_MODEL
+     SECURITY_REVIEW_ASSISTANCE     -> NO_QUALIFIED_MODEL
+     ARCHITECTURE_RECOMMENDATION    -> NO_QUALIFIED_MODEL
+11 disqualified roles     50 model-role pair(s) not qualified
+12 owner decisions        10 pending; recorded M352_M359_OWNER_ACCEPTED_WITH_LIMITATIONS
+     - role ARCHITECTURE_RECOMMENDATION has no qualified model
+     - role CODE_REVIEW_ASSISTANCE has no qualified model
+     - role DOCUMENTATION_DRAFTING has no qualified model
+     - role DOCUMENT_CLASSIFICATION has no qualified model
+     - role MEETING_NOTE_DRAFTING has no qualified model
+     - role RESEARCH_DRAFTING has no qualified model
+13 certification          LOCAL_MODEL_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS
+
+A snapshot of evidence files, not a live view of the provider. Refreshing means running the render command again, and a panel whose evidence is absent says so rather than showing an empty table.

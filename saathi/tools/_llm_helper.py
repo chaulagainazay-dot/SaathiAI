@@ -4,6 +4,12 @@ Routes exclusively through ``saathi.llm.generate`` (ModelRouter) after
 preflight. Direct provider HTTP chains removed (were DIRECT_PROVIDER_BYPASS).
 
 Public API preserved: ``ask_llm(prompt, system, timeout, max_tokens) -> str``.
+``ask_llm_result`` is the same call returning the full ``LLMResult``, for the one
+caller that needs the model identity; ``ask_llm`` delegates to it.
+
+This is also the sanctioned path for SERVER ROUTES, which the ``server_tools``
+caller policy states directly: "Indirect via tools_llm_helper; no direct provider
+from server routes."
 """
 from __future__ import annotations
 
@@ -15,13 +21,18 @@ CALLER_ID = "tools_llm_helper"
 PATH_ID = "tools_llm_helper"
 
 
-def ask_llm(
+def ask_llm_result(
     prompt: str,
     system: str = "You are a helpful assistant. Reply ONLY with valid JSON.",
     timeout: int = 60,
     max_tokens: int = 4000,
-) -> str:
+) -> Any:
     """Call an LLM via Model Router under registered caller ``tools_llm_helper``.
+
+    Returns the full ``LLMResult`` so a caller that needs the model identity does
+    not have to reach for ``llm.generate`` itself — reaching for it is exactly the
+    M21.3/M22 violation this helper exists to prevent, and losing the model name
+    is not a good enough reason to open a new call site.
 
     No direct provider SDK or URL calls. No nested retry beyond ModelRouter chain.
     """
@@ -41,7 +52,7 @@ def ask_llm(
     if not pf.ok:
         raise RuntimeError(pf.error_message or pf.reason_code or "ask_llm_preflight_denied")
 
-    res = generate(
+    return generate(
         ModelLabel.STANDARD,
         prompt,
         system,
@@ -51,7 +62,16 @@ def ask_llm(
         caller_id=CALLER_ID,
         skip_preflight=True,  # already preflighted
     )
-    return res.text
+
+
+def ask_llm(
+    prompt: str,
+    system: str = "You are a helpful assistant. Reply ONLY with valid JSON.",
+    timeout: int = 60,
+    max_tokens: int = 4000,
+) -> str:
+    """Text-only form. Public API unchanged."""
+    return ask_llm_result(prompt, system, timeout, max_tokens).text
 
 
 def extract_json(text: str) -> dict:

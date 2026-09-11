@@ -1,0 +1,266 @@
+{
+  "ok": true,
+  "milestone": "M328",
+  "schema_version": "m328.production_readiness.v1",
+  "overall_state": "HEALTHY",
+  "overall_rank": 0,
+  "component_count": 7,
+  "counts": {
+    "HEALTHY": 7,
+    "WARNING": 0,
+    "DEGRADED": 0,
+    "FAILED": 0,
+    "MAINTENANCE": 0
+  },
+  "supported_states": [
+    "HEALTHY",
+    "WARNING",
+    "DEGRADED",
+    "FAILED",
+    "MAINTENANCE"
+  ],
+  "domains": [
+    {
+      "domain": "dependency",
+      "components": [
+        {
+          "component_id": "platform.dependencies",
+          "domain": "dependency",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "dependencies_satisfied",
+          "detail": {
+            "checked": [
+              "governance_service",
+              "governance_store",
+              "provider_contract_service",
+              "replay_provider",
+              "repo_root_readable",
+              "sqlite_available"
+            ],
+            "unmet": [],
+            "network_dependencies": 0
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "module",
+      "components": [
+        {
+          "component_id": "platform.modules",
+          "domain": "module",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "modules_loaded",
+          "detail": {
+            "loaded": [
+              "saathi.platform.tg.connectivity_governance.service",
+              "saathi.platform.tg.production_readiness.alerts",
+              "saathi.platform.tg.production_readiness.backup",
+              "saathi.platform.tg.production_readiness.diagnostics",
+              "saathi.platform.tg.production_readiness.health",
+              "saathi.platform.tg.production_readiness.metrics",
+              "saathi.platform.tg.production_readiness.observability",
+              "saathi.platform.tg.production_readiness.performance",
+              "saathi.platform.tg.provider_contracts.service"
+            ],
+            "missing": []
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "platform",
+      "components": [
+        {
+          "component_id": "platform.core",
+          "domain": "platform",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "authority_locks_intact",
+          "detail": {
+            "schema_version": "m328.production_readiness.v1",
+            "offline_only": true
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "provider_registry",
+      "components": [
+        {
+          "component_id": "platform.provider_registry",
+          "domain": "provider_registry",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "registry_offline_and_bounded",
+          "detail": {
+            "governance_provider_count": 4,
+            "contract_provider_count": 2,
+            "any_connected": false,
+            "any_real": false,
+            "any_authenticated": false
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "replay",
+      "components": [
+        {
+          "component_id": "platform.replay_engine",
+          "domain": "replay",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "replay_deterministic",
+          "detail": {
+            "fixture_count": 6,
+            "deterministic": true,
+            "network_capture": false,
+            "recorded_offline": true
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "scheduler",
+      "components": [
+        {
+          "component_id": "platform.scheduler",
+          "domain": "scheduler",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "scheduler_idle",
+          "detail": {
+            "pending": 0,
+            "engine": "offline_research_orchestrator",
+            "external_cron": false,
+            "background_threads": 0
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    },
+    {
+      "domain": "storage",
+      "components": [
+        {
+          "component_id": "platform.storage",
+          "domain": "storage",
+          "state": "HEALTHY",
+          "rank": 0,
+          "reason": "storage_reachable_and_clean",
+          "detail": {
+            "schema_ok": true,
+            "table_count": 13,
+            "forbidden_fields_found": [],
+            "database_present": true,
+            "database_size_bytes": 249856,
+            "raw_credentials_forbidden": true
+          },
+          "observed_at": 1767225617.75,
+          "actionable": false,
+          "grants_authority": false
+        }
+      ],
+      "state": "HEALTHY",
+      "rank": 0,
+      "component_count": 1
+    }
+  ],
+  "required_domains": [
+    "platform",
+    "module",
+    "dependency",
+    "storage",
+    "scheduler",
+    "replay",
+    "provider_registry"
+  ],
+  "missing_required_domains": [],
+  "domain_coverage_complete": true,
+  "maintenance_components": [],
+  "degradation_triggers_remediation": false,
+  "health_grants_authority": false,
+  "observed_at": 1767225617.75,
+  "fingerprint": "1603e748070201be8326f0d80b594a15f9d370739ae20209bd9ff706f58644ee",
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "AUTHENTICATION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "ORDER_HISTORY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "OFFLINE_OBSERVABILITY_ONLY": true,
+  "NO_EXTERNAL_TELEMETRY": true,
+  "NO_CLOUD_MONITORING": true,
+  "NO_EMAIL_ALERTS": true,
+  "NO_SMS_ALERTS": true,
+  "NO_PUSH_ALERTS": true,
+  "NO_CLOUD_BACKUP": true,
+  "NO_DEPLOYMENT_CONTROL": true,
+  "NO_EXECUTION_CONTROL": true,
+  "READ_ONLY_OPERATIONS_DASHBOARD": true,
+  "DETERMINISTIC_ENGINE": true,
+  "PRODUCTION_AUTHORIZED": false,
+  "DEPLOYMENT_AUTHORIZED": false,
+  "EXTERNAL_TELEMETRY_AUTHORIZED": false,
+  "CLOUD_MONITORING_AUTHORIZED": false,
+  "CLOUD_BACKUP_AUTHORIZED": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "real_connectivity": false,
+  "authenticated": false,
+  "credentials_present": false,
+  "network_transport_available": false,
+  "offline_only": true,
+  "read_only": true,
+  "deterministic": true,
+  "current_maturity": "OPERATIONALLY_READY_OFFLINE",
+  "max_state": "OPERATIONALLY_READY_OFFLINE"
+}

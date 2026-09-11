@@ -3,12 +3,15 @@ import base64
 import json
 import re
 import secrets
+import threading
 import time
+import uuid
 from pathlib import Path
 import os as _os
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 
 
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -27,13 +30,12 @@ from .cors_policy import (  # noqa: E402
 )
 
 _origins = resolve_cors_origins()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
-)
+# NOTE: CORSMiddleware is deliberately NOT registered here. Starlette builds the
+# middleware stack outermost-first from the reverse of the registration order, so
+# registering CORS at import time would bury it beneath the `_auth` gate defined
+# further down this module. It is registered at the bottom of the file instead —
+# see `_install_outermost_cors()` — so that CORS is the outermost layer and an
+# authentication rejection still leaves the origin correctly labelled.
 
 
 # ── Security Headers Middleware (Phase 7) ───────────────────────────────────
@@ -61,6 +63,68 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error_without_secrets(request, exc):
+    """422 responses must never echo the credential that was submitted.
+
+    FastAPI's default handler puts the offending `input` verbatim into the error
+    body. A login endpoint therefore answers a malformed request by REFLECTING
+    the password back to the caller, which then lands in terminal scrollback,
+    proxy logs, browser devtools and any error tracker in the path. This was
+    observed live: POSTing to /api/v1/platform/auth/login without the required
+    field returned the submitted password in the 422 body.
+
+    The fix is at the boundary, not per-endpoint. Every route that takes a body
+    inherits this handler, so a new endpoint cannot reintroduce the leak by
+    forgetting about it, and the field list is the repo's existing certified
+    secret detector rather than a second copy that would drift from it.
+
+    `loc` is kept: a field NAME is what makes the error actionable, and naming
+    "password" is not disclosing one.
+    """
+    from fastapi.encoders import jsonable_encoder
+
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key, redact
+
+    def _safe(value):
+        """Redacted AND serialisable.
+
+        A malformed body arrives here as raw BYTES, which json cannot encode. An
+        exception raised inside this handler does not become a 422 — it escapes
+        as an unhandled error, so a handler that can throw turns the bug it was
+        written to fix into a 500. Everything is coerced through
+        `jsonable_encoder`, and anything that still resists becomes its repr.
+        """
+        try:
+            return jsonable_encoder(redact(value))
+        except Exception:
+            try:
+                return repr(value)[:200]
+            except Exception:
+                return REDACTED
+
+    safe = []
+    for err in exc.errors():
+        e = dict(err)
+        loc = e.get("loc") or ()
+        # The value that failed validation, under a key that names a credential.
+        leaf = str(loc[-1]) if loc else ""
+        if "input" in e:
+            e["input"] = REDACTED if is_secret_key(leaf) else _safe(e["input"])
+        if "ctx" in e:
+            e["ctx"] = _safe(e["ctx"])
+        # Pydantic's url points at its docs; harmless, but nothing needs it.
+        e.pop("url", None)
+        try:
+            e["loc"] = [str(x) for x in loc]
+        except Exception:
+            e["loc"] = []
+        safe.append(e)
+    return JSONResponse({"detail": safe}, status_code=422)
+
+
 
 
 # ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──
@@ -166,6 +230,124 @@ async def human_test(request: Request):
     except Exception as e:
         return {"ok": False, "error": str(e), "execution_id": gov_exec_id, "governed": True,
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
+
+
+_SAATHIOS_BROWSER = None
+_SAATHIOS_BROWSER_LOCK = threading.Lock()
+
+
+def _saathios_browser():
+    """The browser behind the SaathiOS Browser surface.
+
+    Real network access is OPT-IN via SAATHI_BROWSER_LIVE=1. Without it this runs
+    the deterministic fake, so the surface, its policy denials and its UI are all
+    exercisable without a single outbound request. The process-wide
+    default_governed_browser() singleton is deliberately left alone: it defaults to
+    the fake, and every existing caller and test depends on that.
+    """
+    global _SAATHIOS_BROWSER
+    with _SAATHIOS_BROWSER_LOCK:
+        if _SAATHIOS_BROWSER is None:
+            from saathi.browser.governed import GovernedBrowser
+            from saathi.browser.policy import DEFAULT_ALLOWED_HOST_SUFFIXES
+            live = _os.getenv("SAATHI_BROWSER_LIVE", "").strip() in ("1", "true", "yes")
+            # The adapter re-checks the domain itself (defence in depth) with its
+            # OWN host list, which does not consult the environment. Pass the
+            # configured hosts explicitly or an allowlisted host is still refused
+            # at the second check. The deny list applies regardless of this list.
+            extra = [h.strip().lower() for h in
+                     _os.getenv("SAATHI_BROWSER_ALLOWED_DOMAINS", "").split(",") if h.strip()]
+            hosts = list(DEFAULT_ALLOWED_HOST_SUFFIXES) + extra
+            _SAATHIOS_BROWSER = GovernedBrowser(
+                mode="service" if live else "fake", allowed_hosts=hosts,
+            )
+        return _SAATHIOS_BROWSER
+
+
+class BrowserFetchIn(BaseModel):
+    url: str
+    action: str = "read"          # read | extract | navigate | screenshot
+    selector: str = ""
+    timeout: int = 30
+    actor: str = "user:api"
+
+
+@app.post("/api/v1/browser/fetch")
+async def browser_fetch(body: BrowserFetchIn):
+    """Read a page through the GOVERNED browser (SaathiOS Browser surface).
+
+    Every request passes domain policy, risk classification, approval and the
+    ExecutionGateway before any network call — this endpoint adds a surface, never
+    a bypass. Only non-side-effecting actions are accepted here: reading a page is
+    not the same authority as clicking or submitting on one, and mixing them behind
+    one endpoint is how a read surface quietly becomes an action surface.
+
+    Page text comes back marked UNTRUSTED. It is third-party content that reaches a
+    model and a browser, so injection hits are reported alongside it and the caller
+    is expected to treat it as data.
+    """
+    import asyncio
+
+    READ_ONLY = {"read", "extract", "navigate", "open", "screenshot"}
+    action = (body.action or "read").strip().lower()
+    if action not in READ_ONLY:
+        return {"ok": False, "error": "action_not_permitted",
+                "message": f"{action} can change a page; this endpoint is read-only",
+                "permitted": sorted(READ_ONLY)}
+
+    url = (body.url or "").strip()
+    if not url:
+        return {"ok": False, "error": "missing_url"}
+
+    try:
+        gb = _saathios_browser()
+        rec = await asyncio.to_thread(
+            gb.execute,
+            action=action,
+            url=url,
+            selector=(body.selector or "").strip(),
+            actor=body.actor or "user:api",
+            request_source="api",
+            mission_id="saathios_browser",
+            mission_run_id="browser-surface",
+            environment=_os.getenv("SAATHI_ENV", "dev"),
+            payload={"timeout": max(1, min(int(body.timeout or 30), 60))},
+            # Reads are not side-effecting, so re-reading a page is a legitimate
+            # act rather than a duplicate one. Without a fresh key the gateway's
+            # idempotency guard — which exists to stop a click or a submit being
+            # replayed — refuses the second read of the same URL.
+            idempotency_key=uuid.uuid4().hex,
+        )
+    except Exception as e:  # governance itself failed — never fall through to a raw fetch
+        return {"ok": False, "error": "governance_error", "detail": str(e)[:300]}
+
+    if rec.status not in ("succeeded", "completed", "ok"):
+        # A denial is an answer, not an error: say which rule refused and why.
+        return {
+            "ok": False,
+            "error": "denied",
+            "status": rec.status,
+            "failure_category": getattr(rec, "failure_category", "") or "",
+            "execution_id": rec.execution_id,
+            "url": url,
+            "governed": True,
+        }
+
+    body_out = gb.take_content(rec.execution_id) or {}
+    return {
+        "ok": True,
+        "governed": True,
+        "execution_id": rec.execution_id,
+        "url": url,
+        "action": action,
+        "final_origin": body_out.get("final_origin", ""),
+        "page_title": body_out.get("page_title", ""),
+        "content": body_out.get("content", ""),
+        "truncated": bool(body_out.get("truncated", False)),
+        "injection_hits": body_out.get("injection_hits", []),
+        "trust": "UNTRUSTED_EXTERNAL_CONTENT",
+        "summary": getattr(rec, "result_summary", "") or "",
+    }
 
 
 @app.get("/api/v1/human/automation")
@@ -374,11 +556,26 @@ async def connectors_account_add(request: Request):
     from saathi.connectors.accounts import default_store
     if not body.get("provider"):
         return {"ok": False, "error": "provider required"}
-    a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
-                            email=body.get("email", ""), scopes=body.get("scopes") or [],
-                            secret=body.get("secret") or None, status=body.get("status", "connected"))
+    # A caller registering an account cannot declare the provider accepted it.
+    # `status` is deliberately NOT read from the body: the store refuses
+    # CONNECTED at creation, and letting the request pick any other state would
+    # just move the same false claim one field along.
+    from saathi.connectors.accounts import AccountStatus
+    try:
+        a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
+                                email=body.get("email", ""), scopes=body.get("scopes") or [],
+                                secret=body.get("secret") or None)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
     a.pop("secret", None)
-    return {"ok": True, "account": a}
+    return {
+        "ok": True,
+        "account": a,
+        # Said outright so a UI cannot read a successful write as a live
+        # connection: storing a credential is configuration, not confirmation.
+        "verified": False,
+        "next": f"status is {AccountStatus.AUTH_REQUIRED.value} until the provider verifies it",
+    }
 
 
 @app.post("/api/v1/connectors/accounts/{aid}/mission")
@@ -1719,6 +1916,11 @@ async def _auth(request, call_next):
     path = request.url.path
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
+    #
+    # There is no `OPTIONS` bypass here. CORSMiddleware is the outermost layer
+    # (see `_install_outermost_cors()`), so a browser preflight is answered
+    # before it ever reaches this gate. An `OPTIONS` request that is not a
+    # preflight is an ordinary request and is authenticated like any other.
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
@@ -1820,6 +2022,7 @@ class LoginIn(BaseModel):
 def login(body: LoginIn, request: Request):
     from fastapi.responses import JSONResponse
     from saathi import sessions, authsec
+    from saathi.security.store import get_store
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
     ua = request.headers.get("user-agent", "")
     # rate-limit brute-force attempts
@@ -1827,9 +2030,16 @@ def login(body: LoginIn, request: Request):
     if not allowed:
         authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    ok = (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    # Accept the canonical owner's stored credential through the security-store
+    # abstraction, while preserving legacy environment fallback credentials.
+    store = get_store()
+    has_stored_password = store.active_owner_has_password()
+    stored_owner_ok = store.verify_active_owner_password(body.password)
+    ok = (stored_owner_ok or
+          (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or
+          (ACCESS_TOKEN and body.password == ACCESS_TOKEN))
     if not ok:
-        if not (_PASSWORD_HASH or ACCESS_TOKEN):
+        if not (_PASSWORD_HASH or ACCESS_TOKEN or has_stored_password):
             ok = True  # nothing configured — let the owner in
         else:
             authsec.rate_hit(f"{ip}:login")
@@ -1875,9 +2085,11 @@ def _rp(request) -> tuple[str, str]:
 def passkey_status(request: Request):
     """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
+    from saathi.security.store import get_store
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
+            "has_password": bool(_PASSWORD_HASH) or get_store().active_owner_has_password(),
+            "signed_in": _is_authed(request) or _is_local(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
@@ -2528,6 +2740,66 @@ def _rate_ok(request: Request) -> bool:
     return True
 
 
+class NarrateIn(BaseModel):
+    """Facts block for chart-analysis narration. The CLIENT NEVER SUPPLIES THE SYSTEM
+    PROMPT — only the computed facts — so this endpoint cannot be repurposed as a
+    general 'run my prompt' hole."""
+
+    facts: str
+    question: str = ""
+
+
+# Fixed server-side. Not overridable by any caller.
+_NARRATE_SYSTEM = (
+    "You explain a chart analysis that has ALREADY been computed by a deterministic "
+    "engine. HARD RULES: (1) Every number you use must appear verbatim in the FACTS. "
+    "Never compute, round, extrapolate or invent a price, level, percentage or "
+    "indicator value. (2) If something is marked unavailable, say it is unavailable; "
+    "never estimate it. (3) Do not give investment advice, a buy/sell recommendation, "
+    "or a position size — explain what the chart shows and what would change it. "
+    "(4) Lead with what conflicts, not only what agrees. (5) If the verdict is AVOID "
+    "or WAIT, say so plainly rather than finding something encouraging to say. "
+    "Write 3-5 short paragraphs for an experienced swing trader."
+)
+
+_NARRATE_MAX_FACTS = 12000
+
+
+@app.post("/api/v1/analysis/narrate")
+def analysis_narrate(body: NarrateIn, request: Request):
+    """Narrate a computed chart analysis. Explanation only — never a new number."""
+    if not _rate_ok(request):
+        return {"ok": False, "reason": "RATE_LIMITED"}
+    facts = (body.facts or "").strip()
+    if not facts:
+        return {"ok": False, "reason": "NO_FACTS"}
+    if len(facts) > _NARRATE_MAX_FACTS:
+        return {"ok": False, "reason": "FACTS_TOO_LARGE"}
+
+    # Server routes reach the model INDIRECTLY, through the registered
+    # `tools_llm_helper` caller — the convention the `server_tools` caller policy
+    # states outright ("no direct provider from server routes"). The earlier
+    # version called the deprecated `llm.generate` facade with caller_id
+    # "analysis_narrate", which is not a registered caller, so preflight denied
+    # every request and this endpoint always answered LLM_UNAVAILABLE.
+    #
+    # RUNTIME-CONVERGENCE-1: the connectivity-governance branch resolved the same
+    # dead route through `chat_generate`, which is the ChatEngine adapter — it
+    # borrows caller_id "chat_engine" for a route that is not the chat engine,
+    # and it returns a DICT, so this function's `getattr(res, "text", "")` read
+    # the default and the endpoint answered ok:true with empty narration. The
+    # helper below returns an LLMResult carrying both .text and the .model the
+    # analysis UI displays.
+    from saathi.tools._llm_helper import ask_llm_result
+
+    prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
+    try:
+        res = ask_llm_result(prompt, _NARRATE_SYSTEM, timeout=60, max_tokens=900)
+        return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
+    except Exception as exc:  # narration is optional — never break the analysis
+        return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
+
+
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn, request: Request):
     if not _rate_ok(request):
@@ -2698,8 +2970,40 @@ def pielts_set_targets(body: TargetIn):
 
 @app.get("/api/v1/connections")
 def get_connections():
+    """Platform connection settings, with credential VALUES redacted.
+
+    This returned `connections.get_all()` verbatim, so an authenticated caller
+    received the Facebook page access token — 202 characters of live publishing
+    credential — in a 200 body, where it lands in browser devtools, proxy logs
+    and any client-side error reporting. The 422 redaction boundary does not
+    cover success responses; this one does.
+
+    PRESENCE is preserved. The UI has to show whether a platform is configured,
+    and `has_page_access_token: true` says that without disclosing the value.
+    Field names come from the repository's existing secret detector rather than
+    a second list that would drift from it.
+    """
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key
+
     from . import connections
-    return {"connections": connections.get_all()}
+
+    safe = {}
+    for platform, cfg in (connections.get_all() or {}).items():
+        if not isinstance(cfg, dict):
+            safe[platform] = cfg
+            continue
+        out = {}
+        for key, value in cfg.items():
+            if is_secret_key(key) and value not in (None, "", [], {}):
+                out[key] = REDACTED
+                out[f"has_{key}"] = True
+            elif is_secret_key(key):
+                out[key] = value
+                out[f"has_{key}"] = False
+            else:
+                out[key] = value
+        safe[platform] = out
+    return {"connections": safe}
 
 
 class ConnIn(BaseModel):
@@ -5310,6 +5614,38 @@ def _start_background():
         pass
 
 
+def _install_outermost_cors() -> None:
+    """Register CORSMiddleware as the outermost middleware.
+
+    Starlette applies `add_middleware` by prepending, so the last registration
+    wins the outermost position. Every other middleware in this module — the
+    security headers layer and the `_auth` gate — is registered above, which
+    makes this call the one that puts CORS on the outside.
+
+    Ordering matters beyond preflight. With CORS innermost, an authentication
+    rejection short-circuits before CORS can label the response, so the browser
+    reports a CORS failure for what is really a 401 and the real cause is
+    invisible in the console. With CORS outermost:
+
+      * an allowed-origin preflight is answered by CORS and never reaches
+        `_auth`, so no `OPTIONS` bypass is needed in the auth gate;
+      * an allowed-origin unauthenticated request still returns 401, and that
+        401 carries the correct `Access-Control-Allow-Origin`;
+      * a disallowed origin gets no `Access-Control-Allow-Origin` on anything,
+        and authentication is not consulted to decide that.
+    """
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+    )
+
+
+_install_outermost_cors()
+
+
 def main():
     import uvicorn
     uvicorn.run(app, host=config.HOST, port=config.PORT)
@@ -5336,5 +5672,56 @@ def _saathi_stop_local_heartbeat():
     try:
         from saathi.platform.cluster import stop_local_heartbeat
         stop_local_heartbeat()
+    except Exception:
+        pass
+
+
+@app.on_event("startup")
+async def _saathi_start_public_market_data():
+    """Start the public crypto feed ONLY when explicitly configured.
+
+    Off unless `SAATHI_PUBLIC_MARKET_DATA=1`. Booting the server must not open a
+    socket by default: a feed nobody asked for is an unannounced outbound
+    connection, and in test or offline contexts it would be a failure looking for
+    somewhere to happen. Public Binance spot market data only — no credentials
+    exist on this path and no account, order or user-data surface is reachable.
+    """
+    import os
+
+    if os.getenv("SAATHI_PUBLIC_MARKET_DATA", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from saathi.platform.crypto.runtime import (
+            PublicMarketDataConfig, reset_public_market_data_for_tests,
+        )
+
+        symbols = tuple(
+            s.strip().upper()
+            for s in os.getenv("SAATHI_PUBLIC_MARKET_DATA_SYMBOLS", "BTCUSDT,ETHUSDT").split(",")
+            if s.strip()
+        )
+        rt = reset_public_market_data_for_tests(
+            PublicMarketDataConfig(enabled=True, symbols=symbols))
+        # Async lifecycle: connect, subscribe, then start the single ingestion
+        # task. Without the reader the socket would be open and unread.
+        await rt.start_async()
+    except Exception:
+        # A feed that cannot start must not take the server down with it; the
+        # health surface reports the real state either way.
+        pass
+
+
+@app.on_event("shutdown")
+async def _saathi_stop_public_market_data():
+    """Close the public stream cleanly: reader cancelled, socket closed, queue released.
+
+    Order is load-bearing — the transport close is what frees a thread parked in
+    a blocking recv, so cancelling the reader alone would leave it waiting.
+    """
+    try:
+        from saathi.platform.crypto import runtime as _rt_mod
+
+        if _rt_mod._RUNTIME is not None:
+            await _rt_mod._RUNTIME.stop_async()
     except Exception:
         pass

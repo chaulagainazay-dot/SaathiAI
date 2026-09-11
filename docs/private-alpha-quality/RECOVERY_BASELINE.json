@@ -1,0 +1,64 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_PRODUCT_EXCELLENCE_RECOVERY_BASELINE",
+  "captured_at": "2026-08-02T18:40:00+05:45",
+  "repository": "/Users/macbookpro/SaathiAI",
+  "working_worktree": "/Users/macbookpro/SaathiAI-full-e2e",
+  "worktree_note": "The dedicated branch was created in the existing repair worktree rather than a new one at /Users/macbookpro/SaathiAI-private-alpha-quality. A second worktree would require a duplicate node_modules install and would orphan the running loopback frontend/backend, which are bound to this path. Branch isolation from the published PR branch is preserved either way.",
+  "branching": {
+    "source_branch": "fix/saathios-full-e2e-functional-recovery",
+    "source_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+    "source_sha_short": "6b55013",
+    "new_branch": "improve/saathios-private-alpha-product-excellence",
+    "ancestry_verified": true,
+    "ancestry_method": "git merge-base --is-ancestor 6b55013 HEAD",
+    "published_branch_not_continued": true
+  },
+  "remote_state": {
+    "origin": "https://github.com/chaulagainazay-dot/SaathiAI.git",
+    "remote_repair_branch_sha": "c2f198c4c454048fcce3fb5e2adcb2c0d176ded8",
+    "local_ahead_of_remote_by": 1,
+    "unpushed_commit": "6b55013 fix(platform): recover safely from expired sessions",
+    "push_authorized": false
+  },
+  "protected_pull_requests": [
+    { "number": 14, "title": "SaathiOS: Full E2E Functional and Security Recovery", "state": "DRAFT", "action": "NOT_MODIFIED" },
+    { "number": 13, "title": "M320-M327: Provider Contracts & Mock Connectivity", "state": "DRAFT", "action": "NOT_MODIFIED" },
+    { "number": 12, "title": "M312-M319: Trading Connectivity Governance", "state": "DRAFT", "action": "NOT_MODIFIED" }
+  ],
+  "preserved_uncommitted_evidence": [
+    "docs/e2e-functional-audit/OWNER_AUDIO_REVIEW_TEMPLATE.json",
+    "docs/e2e-functional-audit/OWNER_AUDIO_REVIEW_TEMPLATE.before-automation.json",
+    "docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json",
+    "docs/evidence/m25/LIVE_CERT_EVIDENCE.json",
+    "docs/evidence/m25/LIVE_CERT_SUMMARY.md",
+    "docs/evidence/m27/connector_events.jsonl",
+    "docs/evidence/m28/deprecation_events.jsonl"
+  ],
+  "other_worktrees_observed": {
+    "active": [
+      "/Users/macbookpro/SaathiAI (milestone/m312-m319-connectivity-governance @ 6639ca7)",
+      "/Users/macbookpro/SaathiAI-m320-m327 (milestone/m328-m335-production-readiness @ 6cdf726)",
+      "/Users/macbookpro/SaathiAI-m336-m343 (milestone/m336-m343-private-alpha-readiness @ d2961e0)",
+      "/Users/macbookpro/SaathiAI-ui-recovery (fix/saathios-ui-recovery @ 1647e19)",
+      "/Users/macbookpro/.worktrees/backend-core (agent/backend-core @ dbcb589)",
+      "/Users/macbookpro/.worktrees/frontend-auth (agent/frontend-auth @ 82ebdd9)"
+    ],
+    "stale_prunable_count": 101,
+    "stale_prunable_pattern": "/private/var/folders/.../m233-worktree-*/clean-wt",
+    "action_taken": "NONE - unrelated worktrees were not pruned, reset or cleaned, per mission constraint",
+    "recommendation": "Owner may run `git worktree prune` separately to reclaim 101 stale m233 entries. Not performed here."
+  },
+  "runtime_environment": {
+    "frontend": "http://127.0.0.1:3000 (next start -H 127.0.0.1, loopback only)",
+    "api_base": "http://127.0.0.1:8766 (loopback only, cwd = this worktree)",
+    "second_backend_observed": "http://127.0.0.1:8765 (cwd = /Users/macbookpro/SaathiAI main repo, NOT this worktree)",
+    "python_environment": "/Users/macbookpro/SaathiAI/.venv (shared venv; no .venv exists inside this worktree)",
+    "browser": "Brave Browser 150 (Chromium 150) - Google Chrome is not installed on this machine",
+    "operating_system": "macOS 26.5.1 (25F80)"
+  },
+  "forbidden_git_operations_used": "NONE",
+  "forbidden_git_operations_list": [
+    "git add .", "git add -A", "git clean -fd", "git clean -fdx",
+    "git reset --hard", "git restore .", "git checkout -- .", "git stash --all"
+  ]
+}

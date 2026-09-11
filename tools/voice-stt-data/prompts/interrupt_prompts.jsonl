@@ -1,0 +1,12 @@
+{"prompt_id": "int_001", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Stop."}
+{"prompt_id": "int_002", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel."}
+{"prompt_id": "int_003", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "बस।"}
+{"prompt_id": "int_005", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi stop."}
+{"prompt_id": "int_006", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "यो रोक।"}
+{"prompt_id": "int_007", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel that."}
+{"prompt_id": "int_011", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Enough."}
+{"prompt_id": "int_012", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "होइन।"}
+{"prompt_id": "int_013", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, stop now."}
+{"prompt_id": "int_014", "language_class": "EN", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel response."}
+{"prompt_id": "int_015", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "रोक्नुहोस्।"}
+{"prompt_id": "int_016", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "नगर्नुहोस्।"}

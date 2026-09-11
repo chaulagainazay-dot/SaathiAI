@@ -1,0 +1,27 @@
+{
+  "mission": "T-NEXT-1.1",
+  "title": "PAPER OMS \u2192 CANONICAL LEDGER CUTOVER + DUAL-READ ELIMINATION",
+  "certified_at": "2026-08-07T11:08:22.276193+00:00",
+  "terminal_verdict": "PAPER_LEDGER_RUNTIME_CUTOVER_CERTIFIED_WITH_LIMITATIONS",
+  "base_branch": "feature/t-next-1-canonical-paper-ledger",
+  "base_sha": "278600bbaefb6ddaacc4546c8f8c3f61eb3543d3",
+  "work_branch": "feature/t-next-1-1-paper-ledger-cutover",
+  "worktree": "/Users/macbookpro/SaathiAI-trading-next-1-1",
+  "tests": {
+    "cutover": "9 passed",
+    "fund_ledger": "19 passed",
+    "m62_5_paper_broker": "45 passed / 1 env-fail fastapi",
+    "command_composition": "7 passed"
+  },
+  "cutover_policy": "RESET_PAPER_FUND_FOR_NEW_CANONICAL_ERA",
+  "historical_migration": "HISTORICAL_STATE_NOT_MIGRATED",
+  "non_actions": {
+    "live_trading": false,
+    "broker_connectivity": false,
+    "execution_gateway_bypass": false,
+    "trading_guardian_weakened": false,
+    "agent_ledger_mutation": false,
+    "master_merge": false,
+    "pr35_auto_merge": false
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "mission": "NEPSE-CAL-1.1",
+  "starting_commit": "23cc62482539820bb642031beb7e5aa7cd3fdb2b",
+  "status": "CERTIFIED_WITH_LIMITATIONS",
+  "verdict": "NEPSE_CALENDAR_LEGACY_MIGRATION_CERTIFIED_WITH_LIMITATIONS",
+  "target_verdict": "NEPSE_CALENDAR_LEGACY_MIGRATION_CERTIFIED_WITH_LIMITATIONS",
+  "calendar_version": "NEPSE_CALENDAR_V2_CANONICAL",
+  "calendar_source_version": "unsourced",
+  "calendar_coverage_status": "HOLIDAY_COVERAGE_UNKNOWN",
+  "backtest_policy": "REQUIRE_CALENDAR_COVERAGE",
+  "semantic_corrections": [
+    "SUNDAY_OPEN_CANDIDATE",
+    "FRIDAY_CONFIRMED_CLOSED",
+    "SATURDAY_CONFIRMED_CLOSED",
+    "UNKNOWN_HOLIDAY_COVERAGE_PRESERVED"
+  ],
+  "focused_tests": [
+    {
+      "command": "pytest -q tests/nepse/test_calendar_consumer_migration.py",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "scope": "calendar_historical_market_data_strategy_recovery_paper_simulation",
+      "passed": 234,
+      "failed": 0
+    },
+    {
+      "scope": "trading_authority_regression",
+      "passed": 270,
+      "failed": 0
+    }
+  ],
+  "full_offline_regression": {
+    "status": "PASSED",
+    "passed": 7787,
+    "skipped": 8,
+    "deselected": 12,
+    "failed": 0,
+    "warnings": 324,
+    "elapsed_seconds": 576.30,
+    "skip_explanations": {
+      "pyobjc_unavailable": 5,
+      "live_ollama_safety_preconditions_not_met": 1,
+      "slow_render_not_opted_in": 1,
+      "faster_whisper_unavailable": 1
+    }
+  },
+  "static_policy_scan": {
+    "executable_nepse_marketcalendar_assignments": 0,
+    "legacy_nepse_holiday_tables": 0,
+    "nepse_weekday_lt_5_consumers": 0,
+    "remaining_mon_fri_policies": [
+      "US_RTH",
+      "US_XNAS_SYNTHETIC_DEMO_FIXTURE"
+    ]
+  },
+  "starting_head": "23cc62482539820bb642031beb7e5aa7cd3fdb2b",
+  "ending_head": "23cc62482539820bb642031beb7e5aa7cd3fdb2b",
+  "working_tree_committed": false,
+  "authority_changes": [],
+  "network_calls": 0,
+  "broker_connections": 0,
+  "live_orders": 0,
+  "fabricated_holidays": 0,
+  "safe_to_continue": "NEPSE-TXN-1",
+  "importer_schema_verification_requires_genuine_headers": true
+}

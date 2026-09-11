@@ -82,7 +82,7 @@ export default function MobileMic() {
         style={{ position: "fixed", right: 18, bottom: 24, zIndex: 61, width: 60, height: 60,
           borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 24,
           color: "#fff", boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
-          background: listening ? "#FF5A5A" : busy ? "#E8B84B" : "#9B6BFF",
+          background: listening ? "#FF5A5A" : busy ? "#E8B84B" : "var(--accent)",
           animation: listening ? "pulse 1.2s infinite" : "none" }}>
         {busy ? "…" : listening ? "◼" : "🎤"}
       </button>

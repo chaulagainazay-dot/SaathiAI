@@ -1,0 +1,118 @@
+{
+  "record": "SAATHIOS_PRODUCT_EXPERIENCE_INVENTORY",
+  "captured_at": "2026-08-02T18:45:00+05:45",
+  "build_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+  "completeness": "PARTIAL",
+  "completeness_reason": "Authenticated surfaces could not be exercised. All three platform accounts are password-protected; automation must not enter the owner's password nor bootstrap a new account. Every authenticated area below is classified from source inspection and API probing only, and is marked evidence=SOURCE_ONLY. Unauthenticated areas were verified in a real headed browser.",
+
+  "evidence_levels": {
+    "BROWSER_VERIFIED": "Observed rendering and behaving in a real headed Brave session",
+    "API_PROBED": "Endpoint status and contract confirmed over loopback HTTP",
+    "SOURCE_ONLY": "Classified by reading committed source; NOT exercised at runtime"
+  },
+
+  "scale": {
+    "total_frontend_routes": 145,
+    "routes_by_area": {
+      "trading": 54, "platform": 24, "ielts": 13, "missions": 8,
+      "knowledge": 3, "apps": 3, "studio": 2, "control": 2, "automation": 2,
+      "other_top_level": 34
+    },
+    "routes_browser_verified": 2,
+    "routes_browser_verified_list": ["/platform (unauthenticated)", "/unlock"],
+    "coverage_caveat": "2 of 145 routes were browser-verified in this session. A prior session recorded an 86/86 browser E2E pass on this branch, but that is separate evidence and is not re-asserted here."
+  },
+
+  "areas": {
+    "entry_and_onboarding": {
+      "app_launch": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "TTFB 9-13 ms on all probed routes" },
+      "private_alpha_landing_messaging": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "Persistent badges render: PRIVATE ALPHA, NON-PRODUCTION, TRADING DISABLED, LOCAL PLATFORM ONLINE, PRIVATE ALPHA · LOCAL ONLY" },
+      "invite_required_messaging": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "invitations table active (16 rows) and no public-registration path exists, but the sign-in surface does not state 'invite only' in words to a first-time visitor" },
+      "first_run_setup": { "state": "working_but_confusing", "evidence": "BROWSER_VERIFIED", "note": "/unlock renders 'Set up sign-in' (password + biometrics) because has_password=false on the local auth system, while the platform accounts already hold password hashes. Two distinct auth systems present two different truths to the same user." },
+      "bootstrap_flow": { "state": "working_but_confusing", "evidence": "SOURCE_ONLY", "note": "The only visible control on the unauthenticated /platform surface is a single 'Bootstrap + login' button, which both creates an org/workspace/owner AND logs in. A returning user whose session merely expired is offered the same button as a brand-new installation." },
+      "sign_in": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "email + password inputs render, both labelled, both enabled" },
+      "invalid_credentials": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "friendlyAuthError maps AUTH_FAILED to plain language without confirming account existence" },
+      "expired_session": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "REPAIRED at 6b55013. Dead token auto-cleared, sign-in form renders, plain-language notice, no loop, no internals leaked." },
+      "revoked_session": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "MEMBERSHIP_REVOKED shares the same recovery path; unit-tested" },
+      "sign_out": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "logout() clears token and every authenticated field via the shared helper" },
+      "returning_user_experience": { "state": "working_but_confusing", "evidence": "SOURCE_ONLY", "note": "See bootstrap_flow. No 'welcome back' distinction from first-run." }
+    },
+
+    "navigation": {
+      "global_shell": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED" },
+      "sidebar": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "OPERATE and GLOBAL groups; 4 nav landmarks; active route highlighted (Platform)" },
+      "top_navigation": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "breadcrumb, clock (KTM), command palette hint, Create, Alerts, Ask Saathi" },
+      "active_route_indication": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED" },
+      "breadcrumbs": { "state": "working_but_confusing", "evidence": "BROWSER_VERIFIED", "note": "Breadcrumb truncates to 'Pla...' / 'U...' at the observed 819 px viewport" },
+      "command_palette": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "Cmd+K affordance shown; not exercised" },
+      "mobile_navigation": { "state": "environment_limited", "evidence": "SOURCE_ONLY", "note": "Could not reach phone viewports - see mobile audit" },
+      "route_discoverability": { "state": "working_but_confusing", "evidence": "SOURCE_ONLY", "note": "145 routes with 54 under /trading. Sidebar exposes a curated subset; the majority are reachable only by direct URL." }
+    },
+
+    "identity_and_workspace": {
+      "user_identity": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "3 users: owner@e2e.local, operator@e2e.local, viewer@e2e.local, all active, all credentialed" },
+      "role": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "'OWNER · ADVISORY DEFAULT' chip renders in the top strip" },
+      "organization": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "health reports workspace_model ACTIVE; 1 workspace, 3 memberships" },
+      "workspace_switching": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "Only 1 workspace exists, so switching is untestable in this dataset" },
+      "missing_workspace": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "WORKSPACE_ISOLATION error path in service.py" },
+      "cross_organization_denial": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "context_from_token enforces org match on workspace and project; backend suite covers isolation" }
+    },
+
+    "projects_and_missions": {
+      "note": "ENTIRE AREA IS SOURCE_ONLY - no authenticated session was available.",
+      "list_create_edit_view": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "20 projects, 11 missions present in the database" },
+      "mission_lifecycle": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "16 platform_executions recorded; runtime endpoints exist for run/pause/resume/cancel/recover" },
+      "duplicate_mission_conflict": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "Repaired earlier on this branch per the brief" },
+      "empty_states": { "state": "unknown", "evidence": "SOURCE_ONLY", "note": "Not observable without authentication" },
+      "evidence_and_audit": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "428 audit_events recorded; export endpoint exists" }
+    },
+
+    "assistant_and_chat": {
+      "note": "SOURCE_ONLY - requires authentication.",
+      "assistant_entry_point": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "'Ask Saathi' button present and keyboard-focusable" },
+      "streaming_cancel_retry": { "state": "unknown", "evidence": "SOURCE_ONLY" },
+      "model_unavailable": { "state": "partially_working", "evidence": "SOURCE_ONLY", "note": "A prior observation recorded an empty Ollama model pool; local model availability is not guaranteed" },
+      "nepali_english_mixed": { "state": "unknown", "evidence": "SOURCE_ONLY" }
+    },
+
+    "voice": {
+      "voice_panel": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "Enabled checkbox, voice selector 'SaathiOS Default', rate slider" },
+      "browser_speech_synthesis": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "180 local voices, 49 languages, default Samantha (en-US)" },
+      "nepali_voice_availability": { "state": "environment_limited", "evidence": "BROWSER_VERIFIED", "note": "ZERO ne-* voices in the browser (180) and zero in macOS say -v '?' (184). Nepali cannot be spoken by a native voice on this machine." },
+      "voice_provider": { "state": "partially_working", "evidence": "API_PROBED", "note": "Panel reports 'Provider: Unavailable'. Root cause is authentication: /platform/voice/health, /voice/runtime/health and /voice/providers all return 401 ANONYMOUS_PROHIBITED to an anonymous caller. Correct security posture; not a provider outage." },
+      "stop_replay_interruption": { "state": "unknown", "evidence": "SOURCE_ONLY", "note": "Owner-observable; deferred to the audio review" },
+      "route_and_logout_cleanup": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "Repaired earlier on this branch; covered by lib/e2e-voice-route-cleanup.test.js" },
+      "owner_audio_review_status": { "state": "partially_working", "evidence": "BROWSER_VERIFIED", "note": "Objective fields populated; all 15 human checks remain AWAITING_OWNER_INPUT" }
+    },
+
+    "approvals": {
+      "note": "SOURCE_ONLY - requires authentication.",
+      "approval_records": { "state": "partially_working", "evidence": "API_PROBED", "note": "12 approvals in the database" },
+      "self_approval_denial": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "Backend suite covers this; approval-scope validation repaired earlier on this branch" },
+      "audit_trail": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "428 audit_events" },
+      "approvals_unavailable_banner": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "Unauthenticated shell shows 'APPROVALS UNAVAILABLE' rather than implying zero pending - honest degradation" }
+    },
+
+    "operations": {
+      "health": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "/api/v1/platform/health returns 200 unauthenticated with non-sensitive status only" },
+      "diagnostics": { "state": "working_and_understandable", "evidence": "API_PROBED", "note": "401 to anonymous callers - correctly protected" },
+      "database_growth_and_retention": { "state": "missing_recovery_behavior", "evidence": "API_PROBED", "note": "No enforced retention. 7.3 MB total today, but audit_events and sessions grow without bound. Policy authored in this mission; tooling NOT implemented." },
+      "browser_certification_history": { "state": "working_and_understandable", "evidence": "SOURCE_ONLY", "note": "30+ cert:* npm scripts exist" }
+    },
+
+    "trading_guardian": {
+      "route_count": 54,
+      "live_execution_state": { "state": "intentionally_unavailable", "evidence": "API_PROBED", "note": "health reports TRADING_GUARDIAN_UNENGAGED_ADVISORY_ONLY, CONNECTOR_MUTATIONS_DRY_RUN_ONLY, PRODUCTION_NOT_AUTHORIZED, AUTHORITY_FAIL_CLOSED" },
+      "source_invariant": { "state": "intentionally_unavailable", "evidence": "SOURCE_ONLY", "note": "saathi/credentials/m44.py declares permits_live_execution: bool = False with the comment 'invariant: never True', plus a guard at two call sites" },
+      "non_live_labelling_shell": { "state": "working_and_understandable", "evidence": "BROWSER_VERIFIED", "note": "'TRADING DISABLED' badge renders persistently in the shell" },
+      "per_page_non_live_labelling": { "state": "unknown", "evidence": "SOURCE_ONLY", "note": "Only the shell was browser-verified. The mission requires ALL 54 trading pages to be visibly non-live; 0 of 54 were individually confirmed in this session." }
+    }
+  },
+
+  "status_wording_audit": {
+    "forbidden_terms_searched": ["LIVE CONNECTED", "BROKER ONLINE", "TRADING READY", "ACCOUNT CONNECTED"],
+    "found_in_browser_verified_surfaces": [],
+    "observed_safe_terms": ["LOCAL PLATFORM ONLINE", "PRIVATE ALPHA", "LOCAL ONLY", "NON-PRODUCTION", "TRADING DISABLED", "OWNER · ADVISORY DEFAULT", "APPROVALS UNAVAILABLE", "Provider: Unavailable"],
+    "verdict": "PASS on browser-verified surfaces. NOT verified across the 143 unvisited routes."
+  }
+}

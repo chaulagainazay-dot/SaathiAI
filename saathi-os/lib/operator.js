@@ -43,6 +43,7 @@ export const ONBOARDING_STEPS = [
   { id: "approvals", title: "Approval model", safety: true },
   { id: "execution", title: "Execution model", safety: true },
   { id: "notifications", title: "Notification preferences", safety: false },
+  { id: "voice", title: "Voice setup", safety: false },
   { id: "ready", title: "Ready state", safety: false },
 ];
 

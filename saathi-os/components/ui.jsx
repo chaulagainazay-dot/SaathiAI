@@ -99,7 +99,7 @@ export function Ring({ value, color, size = 200, stroke = 12, label, sub }) {
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center" }}>
         {label != null && <Counter to={label} className="display"
-          style={{ fontSize: size * 0.24, color: "var(--color-ink-100)", lineHeight: 1 }} />}
+          style={{ fontSize: size * 0.24, color: "var(--text-primary)", lineHeight: 1 }} />}
         {sub && <div className="eyebrow" style={{ marginTop: 8 }}>{sub}</div>}
       </div>
     </div>

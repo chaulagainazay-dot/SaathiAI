@@ -5,6 +5,7 @@ import { useVoiceOutput } from "./VoiceOutputProvider";
 function providerLabel(provider) {
   return {
     macos_system: "macOS system voice",
+    browser_synthesis: "Browser speech (local)",
     voxcpm: "VoxCPM",
     unavailable: "Unavailable",
     auto: "Automatic",
@@ -19,7 +20,9 @@ export default function VoiceOutputDock() {
   const provider =
     operation?.provider ||
     voice.metadata.health?.default_provider ||
-    "unavailable";
+    (typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined"
+      ? "browser_synthesis"
+      : "unavailable");
   const canPlay = voice.output.audioReady && voice.output.state === "completed";
   const canStop = voice.busy || voice.output.state === "playing" || canPlay;
 

@@ -17,6 +17,8 @@ export const LOCAL_BASE = (_LOCAL === undefined || _LOCAL === null) ? API_BASE :
 // Works on every browser/device incl. Safari ITP + cross-origin, where cookies fail.
 const _tok = () => { try { return localStorage.getItem("saathi_session") || ""; } catch { return ""; } };
 export function setSessionToken(t) { try { if (t) localStorage.setItem("saathi_session", t); } catch {} }
+/** Whether a Baadar session token is present in this browser. */
+export function hasSessionToken() { return Boolean(_tok()); }
 export function clearSessionToken() { try { localStorage.removeItem("saathi_session"); } catch {} }
 export function afetch(url, opts = {}) {
   const h = { ...(opts.headers || {}) };
@@ -695,7 +697,16 @@ export const platformCapabilities = () => _cj(`/api/v1/connectors/capabilities`)
 export const platformTools = (cap = "") => _cj(`/api/v1/connectors/tools${cap ? `?capability=${cap}` : ""}`);
 export const platformAccounts = (cid = "") => _cj(`/api/v1/connectors/accounts/list${cid ? `?connector_id=${cid}` : ""}`);
 export const platformExecutions = (limit = 50) => _cj(`/api/v1/connectors/executions/list?limit=${limit}`);
-export const platformPendingApprovals = () => _cj(`/api/v1/connectors/approvals/pending`);
+// Requires a Baadar session. Sending it without one is a guaranteed 401, and
+// that 401 lands in the browser console on every page load for every
+// signed-out visitor — the shell TopBar calls this on mount. Callers already
+// treat a rejection as "unavailable" rather than inventing a zero count, so
+// failing closed here is the same outcome without the wasted round trip and
+// the console noise.
+export const platformPendingApprovals = () =>
+  hasSessionToken()
+    ? _cj(`/api/v1/connectors/approvals/pending`)
+    : Promise.reject(new Error("connectors 401 (no session)"));
 export const platformDecideApproval = (aid, approved) =>
   _cj(`/api/v1/connectors/approvals/${aid}/decide?approved=${approved}`, { method: "POST" });
 export const platformExecute = (body) =>

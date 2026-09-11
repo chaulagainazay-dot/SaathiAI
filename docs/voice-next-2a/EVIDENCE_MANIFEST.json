@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "mission": "V-NEXT-2A-LOCAL-VAD-BARGE-IN",
+  "verdict": "LOCAL_VAD_BARGE_IN_CERTIFIED_WITH_LIMITATIONS",
+  "source_branch": "feature/v-next-1-canonical-voice-session",
+  "source_sha": "b960b0d0e49aa527c39ed62a1c84897f31f48686",
+  "feature_branch": "feature/v-next-2a-vad-barge-in",
+  "vad_adapter": "energy_zcr_v1",
+  "tests": {
+    "frontend_unit_passed": 413,
+    "build": "pass"
+  },
+  "capabilities": {
+    "vadAvailable": true,
+    "acousticBargeInAvailable": "when_microphone_available",
+    "manualInterruptAvailable": true,
+    "fullDuplexAvailable": false,
+    "wakeWordAvailable": false
+  },
+  "resource_probe": {
+    "frames": 5000,
+    "totalMs": 8.102,
+    "perFrameMs": 0.0016,
+    "rss": 53395456,
+    "heapUsed": 4934408
+  }
+}

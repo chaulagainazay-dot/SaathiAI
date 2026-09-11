@@ -1,0 +1,255 @@
+{
+  "version": "v-next-2b1",
+  "note": "Locally generated TTS corpus. Owner live qualification is separate.",
+  "count": 31,
+  "items": [
+    {
+      "id": "en_001",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Saathi, show my active missions.",
+      "wav": "wav/en_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_002",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Open the command center.",
+      "wav": "wav/en_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_003",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Stop.",
+      "wav": "wav/en_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_004",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Cancel that response.",
+      "wav": "wav/en_004.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_005",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Show portfolio risk.",
+      "wav": "wav/en_005.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_006",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "What is Trading Guardian status?",
+      "wav": "wav/en_006.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_007",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Is ExecutionGateway healthy?",
+      "wav": "wav/en_007.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "en_008",
+      "lang": "en",
+      "category": "EN_CMD",
+      "text": "Compare today's NAV and drawdown.",
+      "wav": "wav/en_008.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "sh_001",
+      "lang": "en",
+      "category": "SHORT",
+      "text": "Stop.",
+      "wav": "wav/sh_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "sh_002",
+      "lang": "en",
+      "category": "SHORT",
+      "text": "Cancel.",
+      "wav": "wav/sh_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "sh_003",
+      "lang": "en",
+      "category": "SHORT",
+      "text": "Wait.",
+      "wav": "wav/sh_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_001",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "मेरो आजको portfolio risk देखाऊ।",
+      "wav": "wav/ne_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_002",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "आजको market exposure कति छ?",
+      "wav": "wav/ne_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_003",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "मेरो pending approvals के छन्?",
+      "wav": "wav/ne_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_004",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "Trading Guardian को current status देखाऊ।",
+      "wav": "wav/ne_004.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_005",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "आजको NAV र drawdown compare गर।",
+      "wav": "wav/ne_005.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "ne_006",
+      "lang": "ne",
+      "category": "NE_CMD",
+      "text": "कमान्ड सेन्टर खोल।",
+      "wav": "wav/ne_006.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "mx_001",
+      "lang": "mixed",
+      "category": "MIX",
+      "text": "Saathi, आजको portfolio मा सबैभन्दा ठूलो risk के हो?",
+      "wav": "wav/mx_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "mx_002",
+      "lang": "mixed",
+      "category": "MIX",
+      "text": "Portfolio rebalance proposal देखाऊ।",
+      "wav": "wav/mx_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "mx_003",
+      "lang": "mixed",
+      "category": "MIX",
+      "text": "ExecutionGateway healthy छ कि छैन?",
+      "wav": "wav/mx_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "mx_004",
+      "lang": "mixed",
+      "category": "MIX",
+      "text": "Show my missions र approvals।",
+      "wav": "wav/mx_004.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "mx_005",
+      "lang": "mixed",
+      "category": "MIX",
+      "text": "Drawdown कति छ today?",
+      "wav": "wav/mx_005.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "lg_001",
+      "lang": "en",
+      "category": "LONG",
+      "text": "Can you explain the largest risk in my portfolio today and what I should review before any rebalance?",
+      "wav": "wav/lg_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "lg_002",
+      "lang": "mixed",
+      "category": "LONG",
+      "text": "Saathi, summarize active missions, pending approvals, and Trading Guardian status in one short brief.",
+      "wav": "wav/lg_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "fn_001",
+      "lang": "en",
+      "category": "FIN",
+      "text": "Show current NAV and drawdown.",
+      "wav": "wav/fn_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "fn_002",
+      "lang": "en",
+      "category": "FIN",
+      "text": "Portfolio rebalance proposal.",
+      "wav": "wav/fn_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "sa_001",
+      "lang": "en",
+      "category": "SAATHI",
+      "text": "Trading Guardian current status.",
+      "wav": "wav/sa_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "sa_002",
+      "lang": "en",
+      "category": "SAATHI",
+      "text": "ExecutionGateway healthy check.",
+      "wav": "wav/sa_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "bc_001",
+      "lang": "ne",
+      "category": "SHORT",
+      "text": "हजुर",
+      "wav": "wav/bc_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nz_001",
+      "lang": "en",
+      "category": "NOISE",
+      "text": "Saathi, show my active missions.",
+      "wav": "wav/nz_001.wav",
+      "source": "tts_local+noise"
+    },
+    {
+      "id": "nz_002",
+      "lang": "en",
+      "category": "NOISE",
+      "text": "Show portfolio risk.",
+      "wav": "wav/nz_002.wav",
+      "source": "tts_local+noise"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "record": "SAATHIOS_STALE_PUBLIC_LISTENER_INSPECTION",
+  "phase": "PHASE_2_STALE_LISTENER_INSPECTION_AND_REMOVAL",
+  "method": "ps / lsof inspection of the reported PID before any signal was sent. The PID was not trusted merely because a prior report named it.",
+
+  "target_pid": 12672,
+
+  "evidence_before_action": {
+    "ps -p 12672 -o pid,ppid,user,lstart,command": {
+      "pid": 12672,
+      "ppid": 12650,
+      "user": "macbookpro",
+      "started": "Sun Aug  2 06:01:08 2026",
+      "command": "next-server (v15.5.22)"
+    },
+    "lsof -a -p 12672 -d cwd": "/Users/macbookpro/SaathiAI-ui-recovery/saathi-os",
+    "lsof -nP -iTCP:3000 -sTCP:LISTEN": "node 12672 IPv6 TCP *:3000 (LISTEN)",
+    "parent_process": {
+      "pid": 12650,
+      "ppid": 1,
+      "command": "npm run start",
+      "note": "PPID 1 — the launching shell had already exited, so this was an orphaned server from a previous session, not a child of any live task."
+    },
+    "serving_worktree": {
+      "path": "/Users/macbookpro/SaathiAI-ui-recovery",
+      "branch": "fix/saathios-ui-recovery",
+      "sha": "1647e192dfa5aa86113d386b86e96dca428e423f",
+      "relationship_to_repair_branch": "the pre-repair baseline — 9 commits behind fix/saathios-full-e2e-functional-recovery"
+    },
+    "serving_worktree_start_scripts": {
+      "dev": "next dev -p 3000",
+      "start": "next start -p 3000",
+      "note": "No -H flag. This is precisely the pre-repair script that DEFECT-006 fixed, which is why this process bound every interface."
+    }
+  },
+
+  "kill_conditions": {
+    "PROCESS_EXISTS": true,
+    "PROCESS_IS_SAATHIOS": true,
+    "PROCESS_IS_OLD_OR_WRONG_WORKTREE": true,
+    "PROCESS_LISTENS_ON_PUBLIC_INTERFACE": true,
+    "PROCESS_IS_NOT_REQUIRED_BY_ANOTHER_ACTIVE_TASK": true,
+    "all_conditions_met": true,
+    "evidence_for_last_condition": "Orphaned (PPID 1), started 06:01 in a prior session, and serving a superseded branch. The active audit frontend was a separate process (pid 32696) on 127.0.0.1:3100."
+  },
+
+  "action_taken": {
+    "signal": "SIGTERM via `kill 12672`",
+    "escalation_used": false,
+    "forbidden_commands_used": [],
+    "note": "Graceful termination succeeded on the first attempt. No SIGKILL, no pkill, no killall. The parent `npm run start` (pid 12650) exited on its own once its child stopped; it was not signalled separately.",
+    "unrelated_processes_touched": "none — the backend on 127.0.0.1:8765 (pid 1328) was left running throughout"
+  },
+
+  "evidence_after_action": {
+    "ps -p 12672": "no such process",
+    "ps -p 12650": "no such process",
+    "lsof -nP -iTCP:3000 -sTCP:LISTEN": "no listener — port 3000 free"
+  },
+
+  "result": "STALE_PUBLIC_LISTENER_REMOVED",
+  "public_listener_remaining": false
+}

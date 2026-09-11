@@ -1,0 +1,75 @@
+/**
+ * UI-NEXT-3.1 — Canonical SaathiOS motion tokens for Production Hybrid Command.
+ * Authority: docs/design/SAATHIOS_MOTION_LANGUAGE.md · SAATHIOS_DESIGN_DNA.md
+ * No GSAP / Lottie / Three.js. CSS-first; reduced-motion is a certification gate.
+ */
+
+.hc-root,
+.dl-root.hc-root {
+  /* Durations — Motion Language */
+  --motion-instant: 0ms;
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-context: 180ms;
+  --motion-mission: 240ms;
+  --motion-approval: 400ms;
+  --motion-risk: 250ms;
+  --motion-risk-block: 200ms;
+  --motion-degraded: 300ms;
+  --motion-voice-listen: 1500ms;
+  --motion-voice-think: 1100ms;
+  --motion-voice-speak: 1000ms;
+  --motion-voice-transcribe: 1200ms;
+
+  /* Easing — corporate/premium institutional (calm) */
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Voice semantic colors (Design DNA) */
+  --voice-idle: #5a6575;
+  --voice-ready: #5b9fd4;
+  --voice-listening: #5b9fd4;
+  --voice-transcribing: #7ab0e0;
+  --voice-thinking: #8b7ec8;
+  --voice-speaking: #3d9b6e;
+  --voice-interrupting: #c9a227;
+  --voice-degraded: #c47a4a;
+  --voice-error: #c45c5c;
+  --voice-closed: #4a5568;
+}
+
+/* Global reduced-motion: neutralize decorative loops; keep state color */
+@media (prefers-reduced-motion: reduce) {
+  .hc-root,
+  .dl-root.hc-root,
+  .hc-root *,
+  .dl-reduced *,
+  html.dl-reduced-root .hc-root * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .hc-root .dl-orb,
+  .dl-reduced .dl-orb,
+  html.dl-reduced-root .dl-orb {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+
+  .hc-root .hc-mode-panel,
+  .hc-root .hc-compare-sync,
+  .hc-root .hc-risk-flash,
+  .hc-root .dl-bar-fill {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.dl-reduced .dl-orb,
+html.dl-reduced-root .dl-orb {
+  animation: none !important;
+  box-shadow: none !important;
+}

@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import { getToken, plat, setToken } from "@/lib/platform-client";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
 async function clearPlatformSession() {
   const token = getToken();

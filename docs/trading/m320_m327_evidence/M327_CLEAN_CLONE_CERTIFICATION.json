@@ -1,0 +1,35 @@
+{
+  "schema": "m327.clean_clone_certification.v1",
+  "ok": true,
+  "source_branch": "milestone/m320-m327-provider-contracts",
+  "source_sha": "e2783821e911a64c52f15e08e181db7f260761fd",
+  "clone_path": "/tmp/saathi-m320-clean-clone.TPDXfk/repo",
+  "clone_method": "git clone --no-local",
+  "independent_from_original_worktree_during_validation": true,
+  "absent_before_validation": {
+    ".env": true,
+    ".proxy.env": true,
+    "python_environment": true,
+    "node_modules": true,
+    "next_build": true,
+    "codebase_memory_cache": true,
+    "runtime_platform_database": true,
+    "runtime_governance_database": true
+  },
+  "results": {
+    "focused_backend": "82 passed",
+    "predecessor_regressions": "37 passed",
+    "frontend": "301 passed",
+    "production_build": "PASS",
+    "secret_scan": "28 files, 0 findings",
+    "network_isolation": "PASS",
+    "provider_sdk_isolation": "PASS",
+    "authority_scan": "PASS"
+  },
+  "post_validation_repository_clean": true,
+  "runtime_caches_moved_outside_clone_after_validation": true,
+  "limitations": [
+    "Three tracked predecessor database artifacts are present in Git history; no untracked or active runtime database remained in the certified clone",
+    "Browser certification was unsupported because the in-app browser runtime exposed zero browser instances"
+  ]
+}

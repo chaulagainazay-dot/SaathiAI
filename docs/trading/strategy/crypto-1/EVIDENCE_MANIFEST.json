@@ -1,0 +1,55 @@
+{
+  "milestones": ["CRYPTO-DATASET-1", "STRATEGY-CRYPTO-1"],
+  "starting_head": "0af241516cc7fe6374af7e4c6cbc7cafe64aa160",
+  "dataset": {
+    "provider": "Binance",
+    "market_type": "SPOT",
+    "interval": "1d",
+    "coverage": "2018-01-01/2025-12-31",
+    "archive_count": 192,
+    "checksum_match_count": 192,
+    "canonical_bar_count": 5844,
+    "dataset_id": "binance-spot-1d-2018-01-01-2025-12-31-btcusdt-ethusdt",
+    "dataset_version": "sha256-0f1290db14ab0037e6a69e25bcd1d7928087629cf11630f0ac2c52dbb27768e8",
+    "canonical_content_sha256": "2e7df608235789aec05a3170cd70158e1d628d8118e058658c491de3b0640858",
+    "acquisition_log": "/tmp/saathios-crypto-dataset1-acquisition.log",
+    "acquisition_log_sha256": "2523a760f59f7e1b28f5f30aaeaf097be8f60678356e4a91a31ce1b51f2298fb",
+    "quality_status": "CERTIFIED_REAL_HISTORICAL"
+  },
+  "qualification": {
+    "outcome": "CRYPTO_STRATEGY_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS",
+    "artifact_sha256": "45a115c978047e228c769d05cbef48e5d1a59070c94f4706dc2903f561bccd40",
+    "family_count": 3,
+    "instrument_count": 2,
+    "trial_count": 72,
+    "test_evaluations_spent": 6,
+    "survivor_count": 1,
+    "paper_candidate": "crypto_spot_mean_reversion@1.0.0:BINANCE:BTC/USDT"
+  },
+  "focused_tests": {
+    "crypto_dataset": 25,
+    "dataset_strategy_and_canonical_bar": 95,
+    "broader_dataset_backtest_signal_security": 327
+  },
+  "canonical": {
+    "status": "PASSED",
+    "exit_code": 0,
+    "passed": 7944,
+    "skipped": 8,
+    "deselected": 12,
+    "warnings": 324,
+    "duration_seconds": 647.91,
+    "log": "/tmp/saathios-crypto-dataset1-final.log",
+    "log_sha256": "0526c518ee543c068bc06f7586fe2f9f586e0280c9a72bcb6161ed699a27dbd4"
+  },
+  "safe_free_storage_gb": 20.2,
+  "limitations": [
+    "ARCHIVE_PUBLICATION_HISTORY_NOT_RECONSTRUCTED",
+    "BAR_CLOSE_AVAILABILITY_PRECISION",
+    "OFFICIAL_ARCHIVES_MAY_PUBLISH_LATER_REVISIONS",
+    "MULTIPLE_TESTING_LIMITED",
+    "FORMAL_STATISTICAL_SIGNIFICANCE_NOT_ASSERTED",
+    "NO_ACCOUNT_SPECIFIC_BINANCE_FEE_CLAIM",
+    "PERSISTENCE_DEFERRED_BEFORE_LONG_RUNNING_PAPER_SHADOW"
+  ]
+}

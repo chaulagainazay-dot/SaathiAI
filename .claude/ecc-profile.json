@@ -1,0 +1,147 @@
+{
+  "$comment": "SaathiOS curated ECC profile. Vendor source is the PINNED, DISABLED ecc@ecc plugin cache. Synced components are gitignored; this manifest is the committed source of truth. Regenerate with scripts/ecc_profile_sync.sh.",
+  "eccVersion": "2.2.0",
+  "eccSource": "https://github.com/affaan-m/ECC.git",
+  "vendorRoot": "~/.claude/plugins/cache/ecc/ecc/2.2.0",
+  "pluginState": "installed-but-disabled",
+  "rationale": "The plugin registers all 448 components (~40.6k always-on tokens) and an unpinned chrome-devtools MCP. Disabled, it contributes zero context and zero MCP while remaining the pinned, updatable vendor source.",
+  "skills": [
+    "tdd-workflow",
+    "security-review",
+    "verification-loop",
+    "delivery-gate",
+    "architecture-decision-records",
+    "context-budget",
+    "gateguard",
+    "error-handling",
+    "api-design",
+    "database-migrations",
+    "e2e-testing",
+    "python-testing",
+    "python-patterns",
+    "fastapi-patterns",
+    "code-tour",
+    "unified-memory"
+  ],
+  "agents": [
+    "planner",
+    "architect",
+    "code-architect",
+    "tdd-guide",
+    "code-reviewer",
+    "security-reviewer",
+    "python-reviewer",
+    "fastapi-reviewer",
+    "typescript-reviewer",
+    "react-reviewer",
+    "database-reviewer",
+    "silent-failure-hunter",
+    "build-error-resolver",
+    "type-design-analyzer",
+    "e2e-runner",
+    "performance-optimizer",
+    "code-explorer",
+    "refactor-cleaner",
+    "doc-updater"
+  ],
+  "commands": [
+    "plan",
+    "code-review",
+    "review-pr",
+    "build-fix",
+    "quality-gate",
+    "security-scan",
+    "test-coverage",
+    "python-review",
+    "fastapi-review",
+    "refactor-clean",
+    "update-docs",
+    "checkpoint"
+  ],
+  "rules": [
+    "python",
+    "typescript",
+    "react"
+  ],
+  "excluded": {
+    "orchestration": [
+      "orch-*",
+      "multi-*",
+      "loop-*",
+      "santa-*",
+      "epic-*",
+      "prp-*"
+    ],
+    "reason_orchestration": "Duplicates SaathiOS mission and autonomous-loop machinery.",
+    "offDomainSkills": [
+      "healthcare-*",
+      "customs-*",
+      "energy-*",
+      "homelab-*",
+      "media/video",
+      "marketing",
+      "seo",
+      "scientific-*",
+      "ito-*",
+      "prediction-market-*",
+      "defi-*",
+      "social-*"
+    ],
+    "reason_offDomain": "No SaathiOS relevance; pure context cost.",
+    "unrelatedLanguagePacks": [
+      "cpp",
+      "csharp",
+      "fsharp",
+      "go",
+      "java",
+      "kotlin",
+      "rust",
+      "swift",
+      "dart",
+      "flutter",
+      "php",
+      "perl",
+      "ruby",
+      "vue",
+      "angular",
+      "laravel",
+      "quarkus",
+      "springboot",
+      "django"
+    ],
+    "reason_languages": "SaathiOS is Python/FastAPI plus a Next.js/React frontend.",
+    "harnessSelfManagement": [
+      "harness-audit",
+      "auto-update",
+      "configure-ecc",
+      "skill-scout",
+      "skill-stocktake",
+      "instinct-*",
+      "hookify*",
+      "ecc-guide"
+    ],
+    "reason_harness": "harness-audit is a self-authored rubric whose top remediation is installing ECC; auto-update violates the manual-update rule.",
+    "mcp": [
+      "chrome-devtools"
+    ],
+    "reason_mcp": "Unpinned `npx -y chrome-devtools-mcp@latest` with full control of a browser holding operator sessions. SaathiOS already has two reviewed browser surfaces."
+  },
+  "notInstalled_availableOnDemand": "Every other ECC component remains readable in the vendor root and can be added to this manifest and re-synced. Nothing was deleted upstream.",
+  "rulesCommonKeep": [
+    "coding-style",
+    "testing",
+    "security",
+    "code-review",
+    "development-workflow"
+  ],
+  "rulesCommonDropped": {
+    "files": [
+      "agents",
+      "hooks",
+      "git-workflow",
+      "patterns",
+      "performance"
+    ],
+    "reason": "common/ rule files are ALWAYS-loaded (no `paths:` frontmatter gate), unlike the language packs. agents.md and hooks.md describe an ECC component set this profile does not install (stale/CONFLICTING); git-workflow.md conflicts with SaathiOS git discipline in AGENTS.md; performance.md is model-selection advice; patterns.md is skeleton-project advice. Dropping them removes ~2.8k always-on tokens with no loss of a gate."
+  }
+}

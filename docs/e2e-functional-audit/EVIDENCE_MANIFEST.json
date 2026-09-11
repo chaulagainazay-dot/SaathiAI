@@ -1,0 +1,280 @@
+{
+  "record": "SAATHIOS_FULL_E2E_FUNCTIONAL_AUDIT_EVIDENCE_MANIFEST",
+  "repair_branch": "fix/saathios-full-e2e-functional-recovery",
+  "starting_sha": "1647e19",
+  "ending_sha": "5d33aa2ebad53193673afdde0e55704a0e2f2159",
+  "commits": [
+    "5d33aa2 docs(e2e): closure addendum and publication audit",
+    "cebc738 docs(clean-clone): enumerate the seven clean-clone skips",
+    "7e558bf test(clean-clone): certify the branch from committed source only",
+    "8e7dcfc test(m343): make the venv fail-closed test establish its own premise",
+    "3b1e3c9 fix(build): PyJWT needs its crypto extra for RS256 JWKS verification",
+    "aebef45 test(e2e): rerun all browser gates on the repaired loopback:3000 instance",
+    "a433ffa test(security): final security audit against the running local instance",
+    "80769f9 docs(alpha): guided audio review workflow and LAN testing policy",
+    "e20d0ad fix(voice): cancel output before the microphone opens",
+    "8854d71 fix(build): declare groq, PyJWT and PyYAML in the base install",
+    "4dd40ac fix(build): declare the dev extra the runbooks already tell operators to install",
+    "61a4255 docs(e2e): final report and evidence manifest",
+    "ddd3ab9 test(e2e): browser certification, route sweep and journey evidence",
+    "cfe345a fix(unlock): probe WebAuthn support after mount, not during render",
+    "ee72944 fix(voice): stop speech and release the microphone on route change",
+    "05f9435 fix(platform-ui): give the console login form a password field",
+    "8ff12e3 fix(shell): serve the SaathiOS UI on loopback only",
+    "a2b1f9e fix(alpha): exercise session expiry on a credentialed account",
+    "29b10fd fix(platform): close the passwordless login bypass and fail closed on duplicates",
+    "6d5f12e docs(e2e): baseline, functional inventory and defect record"
+  ],
+  "commit_count": 20,
+  "files": [
+    {
+      "path": "docs/e2e-functional-audit/API_JOURNEY.json",
+      "bytes": 60285,
+      "sha256_16": "2e08c6f87eda0880"
+    },
+    {
+      "path": "docs/e2e-functional-audit/BASELINE_DEFECTS.json",
+      "bytes": 16518,
+      "sha256_16": "fecc64918e89f32b"
+    },
+    {
+      "path": "docs/e2e-functional-audit/CLEAN_CLONE_CERTIFICATION.json",
+      "bytes": 8294,
+      "sha256_16": "b90b439c2813ef15"
+    },
+    {
+      "path": "docs/e2e-functional-audit/DEGRADED_STATE.json",
+      "bytes": 17744,
+      "sha256_16": "b5740cdf3a4de21a"
+    },
+    {
+      "path": "docs/e2e-functional-audit/EVIDENCE_MANIFEST.json",
+      "bytes": 6472,
+      "sha256_16": "bf83fc1fb11a39dc"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FINAL_CLOSURE_RECOVERY_BASELINE.json",
+      "bytes": 3363,
+      "sha256_16": "31312e5bd13699d8"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FINAL_REPORT.md",
+      "bytes": 15579,
+      "sha256_16": "e9f812f9bcf087fb"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FINAL_SECURITY_AUDIT.json",
+      "bytes": 3369,
+      "sha256_16": "e18cd90e6124c61c"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FULL_BACKEND_CLOSURE_REPORT.json",
+      "bytes": 2558,
+      "sha256_16": "f18dfe93b3fd7796"
+    },
+    {
+      "path": "docs/e2e-functional-audit/FUNCTIONAL_INVENTORY.json",
+      "bytes": 14508,
+      "sha256_16": "bf405a2db1ea3269"
+    },
+    {
+      "path": "docs/e2e-functional-audit/MANUAL_AUDIO_CHECKLIST.md",
+      "bytes": 2937,
+      "sha256_16": "b8595ef1b7ce0277"
+    },
+    {
+      "path": "docs/e2e-functional-audit/OWNER_AUDIO_REVIEW_TEMPLATE.json",
+      "bytes": 3703,
+      "sha256_16": "d3d0e1a8db775423"
+    },
+    {
+      "path": "docs/e2e-functional-audit/PUBLICATION_AUDIT.json",
+      "bytes": 6751,
+      "sha256_16": "bf1d89f68afd8804"
+    },
+    {
+      "path": "docs/e2e-functional-audit/RBAC_MATRIX.json",
+      "bytes": 1954,
+      "sha256_16": "db679847bcb14166"
+    },
+    {
+      "path": "docs/e2e-functional-audit/RECOVERY_BASELINE.json",
+      "bytes": 7925,
+      "sha256_16": "dee3e32dd8ad3e55"
+    },
+    {
+      "path": "docs/e2e-functional-audit/ROUTE_INVENTORY.json",
+      "bytes": 24738,
+      "sha256_16": "3961c37799963d68"
+    },
+    {
+      "path": "docs/e2e-functional-audit/STALE_LISTENER_INSPECTION.json",
+      "bytes": 2747,
+      "sha256_16": "dc911b65b4f15401"
+    },
+    {
+      "path": "docs/e2e-functional-audit/VOICE_ARCHITECTURE.md",
+      "bytes": 4986,
+      "sha256_16": "a29d0056c9fadb67"
+    },
+    {
+      "path": "docs/e2e-functional-audit/VOICE_INTERRUPTION_DECISION.json",
+      "bytes": 6139,
+      "sha256_16": "86ef72e8d0b0b6c7"
+    },
+    {
+      "path": "docs/e2e-functional-audit/api_journey_driver.py",
+      "bytes": 17583,
+      "sha256_16": "e565b7ff63775024"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/BROWSER_E2E_CERT.json",
+      "bytes": 13561,
+      "sha256_16": "cac2cbe1ad255735"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A1-login-form.png",
+      "bytes": 524404,
+      "sha256_16": "1eb8b70206c26660"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A2-invalid-login.png",
+      "bytes": 735926,
+      "sha256_16": "74bc680ab684a00f"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A3-owner-signed-in.png",
+      "bytes": 677363,
+      "sha256_16": "16f7199d09fdeaaa"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/A4-signed-out.png",
+      "bytes": 517016,
+      "sha256_16": "c09a4243613017c4"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B1-approval-center.png",
+      "bytes": 502990,
+      "sha256_16": "9f52d9e3fcc0e106"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B2-missions.png",
+      "bytes": 530821,
+      "sha256_16": "aacea17a560a70f3"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/B3-evidence.png",
+      "bytes": 337057,
+      "sha256_16": "3f73b0db3de2232b"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/C1-chat.png",
+      "bytes": 87733,
+      "sha256_16": "9be2f36dd3b7c3bc"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/DE1-voice.png",
+      "bytes": 139508,
+      "sha256_16": "12718bb9e2a7d01b"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F1-ops.png",
+      "bytes": 623326,
+      "sha256_16": "dd1bd34279debe96"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F2-readiness.png",
+      "bytes": 166501,
+      "sha256_16": "55e16a4fc3e59b2d"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F3-health.png",
+      "bytes": 201536,
+      "sha256_16": "92638a387554140d"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F4-diagnostics.png",
+      "bytes": 192377,
+      "sha256_16": "c01453f43eca9e08"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F5-alerts.png",
+      "bytes": 190099,
+      "sha256_16": "780242dd6b245c58"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F6-backups.png",
+      "bytes": 193050,
+      "sha256_16": "d5f4ecf0255850c3"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F7-evidence.png",
+      "bytes": 378216,
+      "sha256_16": "3d533e0f7aaef015"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/F8-notifications.png",
+      "bytes": 463450,
+      "sha256_16": "abdf2de731c018b2"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M1-login-mobile.png",
+      "bytes": 1291769,
+      "sha256_16": "874f767b96716c70"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M2-home-mobile.png",
+      "bytes": 404097,
+      "sha256_16": "d066c50e61f5ab46"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M3-missions-mobile.png",
+      "bytes": 683566,
+      "sha256_16": "8505e08de768e09e"
+    },
+    {
+      "path": "docs/e2e-functional-audit/browser/screenshots/M4-approvals-mobile.png",
+      "bytes": 458367,
+      "sha256_16": "68bb18248c0698a3"
+    },
+    {
+      "path": "docs/e2e-functional-audit/clean-clone/A1-login-form.png",
+      "bytes": 521174,
+      "sha256_16": "0c90c03711ec7708"
+    },
+    {
+      "path": "docs/e2e-functional-audit/clean-clone/A3-owner-signed-in.png",
+      "bytes": 679437,
+      "sha256_16": "2e3c6b8932e25ad6"
+    },
+    {
+      "path": "docs/e2e-functional-audit/clean-clone/BROWSER_E2E_CERT.json",
+      "bytes": 26528,
+      "sha256_16": "ea740e647dc4069c"
+    },
+    {
+      "path": "docs/e2e-functional-audit/security_audit.py",
+      "bytes": 12032,
+      "sha256_16": "1a7c50690e7b022d"
+    }
+  ],
+  "file_count": 46,
+  "total_bytes": 10780057,
+  "harnesses": [
+    "saathi-os/scripts/e2e_full_application_browser_cert.mjs",
+    "saathi-os/scripts/e2e_route_inventory.mjs",
+    "saathi-os/scripts/audio_review_session.mjs",
+    "docs/e2e-functional-audit/api_journey_driver.py",
+    "docs/e2e-functional-audit/security_audit.py"
+  ],
+  "regression_tests": [
+    "tests/test_e2e_functional_recovery.py",
+    "tests/test_m336_m343_regression_closure.py (strengthened)",
+    "saathi-os/lib/e2e-voice-route-cleanup.test.js",
+    "saathi-os/lib/e2e-voice-interruption.test.js",
+    "saathi-os/lib/e2e-local-only-binding.test.js"
+  ],
+  "redaction_policy": "No password, session token, credential hash or personal data appears in any file. Test identities are synthetic; passwords were generated at runtime, held only in the environment, and redacted before serialisation.",
+  "closure_certified_sha": "8e7dcfccc3f9d0da2bdb939b020e12fb8d6bca13",
+  "closure_note": "The clean clone was certified at 8e7dcfc, the last commit touching source or tests. Every later commit is evidence only."
+}

@@ -53,6 +53,7 @@ export default function MissionDetailPage() {
       paletteData={{ missions: d.missions.map((m) => normalizeMission(m, {})) }}
     >
       <RequireSession token={d.token} ready={d.ready}>
+        <div data-testid="mission-detail-page" />
         {notFound && (
           <div className="glass-frame glass-frame--danger" style={{ padding: "var(--space-5)" }} role="alert">
             <div className="eyebrow" style={{ color: "var(--signal-danger)" }}>Object not found</div>

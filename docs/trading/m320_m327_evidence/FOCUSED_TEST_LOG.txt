@@ -1,0 +1,5 @@
+COMMAND: python -m pytest -q tests/test_m320_m327_provider_contracts.py
+RESULT: PASS
+TOTAL: 82 passed
+WARNINGS: 7 in implementation worktree; 9 in clean clone
+NOTES: Warnings are dependency deprecation/config warnings; no test failed.

@@ -1,0 +1,1 @@
+{"milestone":"CRYPTO-DATA-1","verdict":"CRYPTO_PUBLIC_MARKET_DATA_CERTIFIED_WITH_LIMITATIONS","primary":"binance_public_spot","source_status":"official_public_read_only","limitations":["websocket_transport_deferred","live_probe_deferred","sustained_resource_measurement_deferred"],"authority":"read_only_market_data"}

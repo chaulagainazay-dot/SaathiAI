@@ -22,6 +22,7 @@ FORBIDDEN_URL_SUBSTRINGS = (
     "api.groq.com",
     "generativelanguage.googleapis.com",
     "openrouter.ai/api",
+    "integrate.api.nvidia.com",
 )
 
 FORBIDDEN_CALL_NAMES = frozenset({

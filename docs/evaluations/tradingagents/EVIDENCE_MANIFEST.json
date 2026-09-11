@@ -1,0 +1,183 @@
+{
+  "evaluation_id": "T-EVAL-TRADINGAGENTS",
+  "evaluation_date": "2026-08-29",
+  "type": "qualification_only_no_integration",
+  "saathios": {
+    "path": "/Users/macbookpro/SaathiAI",
+    "branch": "milestone/m312-m319-connectivity-governance",
+    "head_at_start": "954daa45a33635ae9995f0d96bc37dc5658848b4",
+    "pre_existing_dirty_paths": 31
+  },
+  "upstream": {
+    "url": "https://github.com/TauricResearch/TradingAgents.git",
+    "branch": "main",
+    "sha": "a33fd4c0f134485a43553a2c23a63cb14adbd88f",
+    "commit_date": "2026-07-18",
+    "latest_tag": "v0.3.1",
+    "license": "Apache-2.0",
+    "repo_size": "8.8MB",
+    "python_requires": ">=3.10",
+    "clone_location": "~/dev-toolkits/TradingAgents",
+    "inside_saathios": false,
+    "python_files": 137,
+    "total_lines": 16663
+  },
+  "isolation": {
+    "venv": "~/dev-toolkits/TradingAgents/.venv-eval",
+    "python": "3.12.13",
+    "installed_size": "385MB",
+    "packages": 115,
+    "saathios_venv_touched": false,
+    "dependencies_added_to_saathios": 0,
+    "source_copied_into_saathios": 0,
+    "api_keys_used": 0,
+    "live_trading": false,
+    "broker_calls": 0
+  },
+  "tests_executed": {
+    "command": "pytest tests -q (no API keys, offline)",
+    "passed": 576,
+    "skipped": 2,
+    "failed": 0,
+    "subtests_passed": 69,
+    "duration_seconds": 131.88,
+    "skip_reasons": [
+      "langchain_aws not installed",
+      "DEEPSEEK_API_KEY not set"
+    ]
+  },
+  "scores": {
+    "lookahead_protection_score": "6/10"
+  },
+  "terminal_verdict": "TRADINGAGENTS_RECOMMENDED_WITH_LIMITATIONS",
+  "final_classification": "ADAPT",
+  "authority_audit": {
+    "ECC_or_TradingAgents_trading_authority": "NONE",
+    "risk_override": "NONE",
+    "approval_authority": "NONE",
+    "execution_authority": "NONE",
+    "broker_authority": "NONE",
+    "ledger_mutation_authority": "NONE",
+    "runtime_ecc_or_tradingagents_dependency_in_financial_chain": 0,
+    "canonical_modules_modified": 0
+  },
+  "key_defects_found_upstream": [
+    {
+      "id": "LA-1",
+      "severity": "HIGH",
+      "summary": "Fundamentals filtered on fiscalDateEnding, not filing date; 30-75 day look-ahead",
+      "file": "tradingagents/dataflows/alpha_vantage_fundamentals.py"
+    },
+    {
+      "id": "LA-2",
+      "severity": "HIGH",
+      "summary": "Alpha Vantage OVERVIEW path ignores curr_date entirely; unbounded look-ahead",
+      "file": "tradingagents/dataflows/alpha_vantage_fundamentals.py"
+    },
+    {
+      "id": "SEC-1",
+      "severity": "HIGH",
+      "summary": "Untrusted news/Reddit/StockTwits text enters prompts, then decision log verbatim, then future prompts across tickers",
+      "file": "tradingagents/agents/utils/memory.py"
+    },
+    {
+      "id": "AUTH-1",
+      "severity": "HIGH",
+      "summary": "propagate() returns LLM Portfolio Manager rating as terminal decision; no deterministic plane",
+      "file": "tradingagents/graph/trading_graph.py:482"
+    },
+    {
+      "id": "DEP-1",
+      "severity": "LOW",
+      "summary": "backtrader and redis declared as dependencies but imported nowhere",
+      "file": "pyproject.toml"
+    }
+  ],
+  "documents": [
+    {
+      "file": "AGENT_ARCHITECTURE.md",
+      "sha256": "ab9ab24698f16142baed85c5744f8d53e2d35fa5661104445f37eccbf20b5f6b",
+      "bytes": 5474
+    },
+    {
+      "file": "COMPONENT_VERDICTS.md",
+      "sha256": "f6f5f2e336e91c3f0a9584859505afee34eb29003be8cb2b71a0d41a4c37632c",
+      "bytes": 8160
+    },
+    {
+      "file": "CURRENT_STATE.md",
+      "sha256": "658061712b243a95708553ce8862dd3ef0590657542310f51dc15338aa5523f7",
+      "bytes": 5616
+    },
+    {
+      "file": "DATAFLOW_AUDIT.md",
+      "sha256": "6f7a8331c80ec0357e97f4d20cd815f0926698895f74277230936b9d3f34a60f",
+      "bytes": 4246
+    },
+    {
+      "file": "DEPENDENCY_RESOURCE_AUDIT.md",
+      "sha256": "0942d319e9a14d25e101ca782f2b0dd8deb7c5e0b85adaa1ef954fc2546788d3",
+      "bytes": 4119
+    },
+    {
+      "file": "FINAL_RECOMMENDATION.md",
+      "sha256": "455e57ce9b0112b69025fcc60f796855840cea9d99d7cadf6a1787539a0b7876",
+      "bytes": 10071
+    },
+    {
+      "file": "GAP_MATRIX.md",
+      "sha256": "819ee0457b5bfd3d5e8d0660f4c4c6f5a3b8805a5bcd38a8d18c1417987ba2bd",
+      "bytes": 7054
+    },
+    {
+      "file": "GRAPH_CHECKPOINT_ANALYSIS.md",
+      "sha256": "44f310f861341ccfa73623d3809e3f2e3c7643c9e245383841939ba75c609484",
+      "bytes": 4848
+    },
+    {
+      "file": "INTEGRATION_ROADMAP.md",
+      "sha256": "243a218e11ba29302ea4ff353ab214820952b04407bf6cfdda17f430a1013778",
+      "bytes": 7570
+    },
+    {
+      "file": "LOOKAHEAD_AUDIT.md",
+      "sha256": "1f79e5674ecb311a471de6f882d9de6042dd116fe5bf8db4c62e0aa57ab3ba6b",
+      "bytes": 5767
+    },
+    {
+      "file": "MEMORY_REFLECTION_ANALYSIS.md",
+      "sha256": "268bf0522ac6920d565f79fb3710aeffe39c21bcd7b76c329207a29d7174961c",
+      "bytes": 6813
+    },
+    {
+      "file": "PROPOSED_ARCHITECTURE.md",
+      "sha256": "cbfcb57390e45e04ba4dfbf79aafb7ad37122a1d9bbacd1d99bdafc8f892fc08",
+      "bytes": 7545
+    },
+    {
+      "file": "PROVIDER_COMPARISON.md",
+      "sha256": "dc3f93667dbcf94ebadf8c5dde8cda81127825213d1610e578f757f6827ae5d5",
+      "bytes": 5685
+    },
+    {
+      "file": "RISK_AUTHORITY_COMPARISON.md",
+      "sha256": "aaf5f6ff9e9d276fd1ddc7959d3916af4eeb4e3bcae8851cf9ebd0cc32978fba",
+      "bytes": 5151
+    },
+    {
+      "file": "SECURITY_REVIEW.md",
+      "sha256": "4d1a9a41cde38477aad821395313d966532732b80d9a87043380dd62a4ee27c8",
+      "bytes": 5584
+    },
+    {
+      "file": "TEST_REPORT.md",
+      "sha256": "6d20c77e11bd05adea14843c18fbce22716c6dad2521d51b118b3bf1a49a0721",
+      "bytes": 4796
+    },
+    {
+      "file": "UPSTREAM_INVENTORY.md",
+      "sha256": "f65ff13da234f0e4f1e5db9e711161cd405fd8c0637d296ea3b5fe1fc0819bc2",
+      "bytes": 4042
+    }
+  ]
+}

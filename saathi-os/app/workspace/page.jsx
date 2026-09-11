@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
 import { workspaceTurn, fetchMissions, savePlan } from "@/lib/api";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", GREY = "#5b6478";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", GREY = "#5b6478";
 const MODES = [
   ["research", "Research", "read only"],
   ["planning", "Planning", "architecture, no code"],

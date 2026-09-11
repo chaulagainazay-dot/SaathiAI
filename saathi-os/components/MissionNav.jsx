@@ -61,7 +61,7 @@ export default function MissionNav({ missionName, missionType }) {
             style={{
               fontSize: 15,
               fontWeight: 600,
-              color: "var(--color-ink-100)",
+              color: "var(--text-primary)",
             }}
           >
             {missionName || "Mission"}
@@ -103,7 +103,7 @@ export default function MissionNav({ missionName, missionType }) {
                   whiteSpace: "nowrap",
                   textDecoration: "none",
                   color: isActive
-                    ? "var(--color-ink-100)"
+                    ? "var(--text-primary)"
                     : "var(--color-ink-400)",
                   background: isActive
                     ? "rgba(255,255,255,0.10)"

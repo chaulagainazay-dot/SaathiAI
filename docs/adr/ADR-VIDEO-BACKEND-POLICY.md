@@ -1,9 +1,11 @@
 # ADR: VideoBackendPolicy Engine
 
-**Date:** 2026-07-10  
-**Status:** ACCEPTED  
-**Context:** Phase 3.2 video production architecture; backend routing decisions  
+**Date:** 2026-07-10
+**Status:** ACCEPTED_WITH_LIMITATIONS (FM-C1 normalized)
+**Implementation status:** Policy engine design accepted; enforcement must remain under ExecutionGateway
+**Context:** Phase 3.2 video production architecture; backend routing decisions
 **Related:** ADR-CLAUDEVIDEO-RENDERING.md, ADR-OPENMONTAGE-SEPARATE-SERVICE.md, ADR-EXECUTIONGATEWAY-SPECIFICATION.md
+**Authority impact:** Routing policy only — not a second execution gateway
 
 ---
 
@@ -120,7 +122,7 @@ if intent.metadata.user_override:
         return TRY_FALLBACK(rationale="requested backend unavailable")
 else:
     # Policy-driven routing
-    
+
     if intent.metadata.urgency == "critical":
         # Must complete before deadline
         seconds_remaining = (intent.expires_at - now).total_seconds()
@@ -129,7 +131,7 @@ else:
             budget_override = intent.metadata.budget * 1.5
         else:
             backend = best_by_deadline(seconds_remaining)
-    
+
     elif intent.metadata.urgency == "high":
         # High priority, good budget
         if intent.metadata.budget >= 5.0:
@@ -138,7 +140,7 @@ else:
         else:
             backend = "claude_toolkit"
             fallback = ["openmontage_budget_limited"]
-    
+
     elif intent.metadata.urgency == "normal":
         # Balance cost and quality
         if intent.metadata.quality_tier in ["broadcast", "high"]:
@@ -149,7 +151,7 @@ else:
             fallback = ["openmontage"]
         else:
             backend = "claude_toolkit"
-    
+
     elif intent.metadata.urgency == "low":
         # Cost optimization
         if cloud_cost_today >= DAILY_BUDGET * 0.8:
@@ -186,27 +188,27 @@ return policy
 @dataclass
 class VideoBackendPolicyDecision:
     backend: Literal["claude_toolkit", "openmontage", "ollama", "none"]
-    
+
     # Routing
     fallback_chain: List[str]
-    
+
     # Constraints
     max_cost_usd: float
     max_duration_sec: int
     approval_required: bool
     approval_deadline: Optional[ISO8601]
-    
+
     # Options
     parallel_encoding: bool
     retry_budget: int
     timeout_sec: int
     quality_override: Optional[str]
-    
+
     # Observability
     rationale: str
     rule_matched: str
     confidence: float  # 0.0-1.0
-    
+
     # Timestamps
     decided_at: ISO8601
     valid_until: ISO8601
@@ -354,7 +356,7 @@ Policy engine must have:
 
 ---
 
-**Status:** ACCEPTED  
-**Implementation:** Begin Phase 3.2  
-**Owner:** Infrastructure Team  
+**Status:** ACCEPTED
+**Implementation:** Begin Phase 3.2
+**Owner:** Infrastructure Team
 **Review:** Policy rules must be approved by Finance (cost optimization) and Product (user experience)

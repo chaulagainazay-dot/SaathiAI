@@ -21,6 +21,11 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import {
+  certificateProvenance,
+  readRuntimeIdentity,
+  harnessWorktree,
+} from "./lib/cert-provenance.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const UI_ROOT = join(HERE, "..");
@@ -48,8 +53,15 @@ const privateLearnerResponse = "PRIVATE_LEARNER_RESPONSE_M77";
 mkdirSync(SCREENSHOTS, { recursive: true });
 mkdirSync(M64_OUT, { recursive: true });
 
+const HARNESS_FILE = "saathi-os/scripts/m77_voice_browser_cert.mjs";
+const COMMAND = "npm --prefix saathi-os run cert:m77";
+
+/** Identity of the services this run spawned; filled once both are healthy. */
+let runtimeIdentity = null;
+
 const report = {
-  schema: "m77.voice_browser_cert.v1",
+  schema: "m77.voice_browser_cert.v2",
+  provenance: null,
   capturedAt: new Date().toISOString(),
   mode: "production-build-loopback",
   hardGates: {},
@@ -723,6 +735,23 @@ async function main() {
     await waitHealthy(`${UI}/unlock`);
     gate("frontend_loopback", true);
 
+    // Record which code answered, while both spawned services are healthy. The
+    // certificate is worthless if it cannot say what it certified.
+    {
+      const identity = await readRuntimeIdentity({ ui: UI, api: API });
+      runtimeIdentity = { worktree: harnessWorktree(), ...identity };
+      gate(
+        "runtime_frontend_backend_sha_match",
+        Boolean(identity.frontend?.frontendSha) &&
+          identity.frontend?.frontendSha === identity.backend?.backendSha
+      );
+      gate(
+        "runtime_matches_harness_worktree",
+        identity.frontend?.worktreePath === runtimeIdentity.worktree.worktreePath &&
+          identity.backend?.worktreePath === runtimeIdentity.worktree.worktreePath
+      );
+    }
+
     await certifyAgentBrowser();
 
     browser = await chromium.launch({
@@ -817,6 +846,13 @@ async function main() {
       Object.values(bucket).some((value) => value?.ok === false)
     ) || Boolean(report.fatal);
   report.verdict = failed ? "FAIL" : "PASS";
+  report.provenance = certificateProvenance({
+    runtime: runtimeIdentity,
+    ui: UI,
+    api: API,
+    command: COMMAND,
+    harnessFile: HARNESS_FILE,
+  });
   report.generatedAudioRetained = false;
   report.tempDatabaseRetained = false;
   writeFileSync(

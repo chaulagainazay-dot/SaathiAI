@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from saathi.platform.tg.paper_simulation.conventions import convention_for, normalize_order
 from saathi.platform.tg.paper_simulation.errors import PaperSimError
 from saathi.platform.tg.paper_simulation.models import (
     AUTHORITY_VALUES,
@@ -75,6 +76,20 @@ class MatchingEngine:
             raise PaperSimError("INVALID_ORDER_TYPE", order_type)
         if quantity <= 0:
             raise PaperSimError("INVALID_QUANTITY", "quantity must be positive")
+
+        # OMS-MULTI-MARKET-1: venue-neutral convention gate. Crypto quantities are
+        # rounded down to their step; NEPSE quantities must be whole shares on the
+        # board lot. Equity/unknown symbols pass through unchanged (legacy behaviour).
+        conv = convention_for(symbol)
+        if not conv.passthrough:
+            norm = normalize_order(symbol, quantity)
+            if not norm.accepted:
+                raise PaperSimError(
+                    "CONVENTION_REJECT",
+                    f"{symbol}: {','.join(norm.reasons)}",
+                    detail={"reasons": list(norm.reasons), "asset_class": conv.asset_class.value},
+                )
+            quantity = float(norm.quantity)
 
         sess = self.exchange.get_session(symbol)
         if not sess.get("ok"):

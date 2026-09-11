@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 import secrets
+import sys
 from types import SimpleNamespace
 import threading
 import time
@@ -390,10 +391,20 @@ def test_rbac_registration_ownership_tenant_and_workspace_isolation(
 def test_macos_provider_uses_safe_argv_and_voxcpm_is_explicit_and_offline(
     platform_ctx, tmp_path, monkeypatch
 ):
+    """Portable contract: argv safety and VoxCPM offline defaults.
+
+    Uses fixture binaries for ``say`` and ``afconvert``. Health requires both
+    absolute executables on a Darwin-labelled system; without a fixture
+    converter Linux CI fails closed at ``provider_unavailable`` even though
+    the runner never invokes the real host tools.
+    """
     _, ctx = platform_ctx
     say = tmp_path / "say"
     say.write_text("#!/bin/sh\n")
     say.chmod(0o755)
+    afconvert = tmp_path / "afconvert"
+    afconvert.write_text("#!/bin/sh\n")
+    afconvert.chmod(0o755)
     calls = []
 
     def runner(argv, **kwargs):
@@ -423,7 +434,10 @@ def test_macos_provider_uses_safe_argv_and_voxcpm_is_explicit_and_offline(
         )
 
     system = MacOSSystemSpeechProvider(
-        executable=say, runner=runner, system_name="Darwin"
+        executable=say,
+        converter=afconvert,
+        runner=runner,
+        system_name="Darwin",
     )
     request = SpeechRequest.from_payload(
         ctx,
@@ -467,6 +481,41 @@ def test_macos_provider_uses_safe_argv_and_voxcpm_is_explicit_and_offline(
     assert vox.health()["state"] == "disabled"
     assert vox.capabilities()["cloning_state"] == "CAPABILITY_DISABLED"
     assert "ne" not in vox.capabilities()["languages"]
+
+
+def test_macos_provider_fails_closed_when_host_is_not_darwin(tmp_path):
+    """Non-macOS hosts never pretends the system ``say`` path is ready."""
+    say = tmp_path / "say"
+    say.write_text("#!/bin/sh\n")
+    say.chmod(0o755)
+    afconvert = tmp_path / "afconvert"
+    afconvert.write_text("#!/bin/sh\n")
+    afconvert.chmod(0o755)
+
+    def runner(argv, **kwargs):
+        raise AssertionError(f"runner must not be called on non-Darwin host: {argv}")
+
+    provider = MacOSSystemSpeechProvider(
+        executable=say,
+        converter=afconvert,
+        runner=runner,
+        system_name="Linux",
+    )
+    health = provider.health()
+    assert health["state"] == "unavailable"
+    assert health["runtime_verified"] is False
+    assert provider.capabilities()["synthesis"] is False
+
+
+@pytest.mark.skipif(
+    sys.platform != "darwin",
+    reason="macOS system speech integration against the real /usr/bin/say host binary",
+)
+def test_macos_native_say_binary_is_present_on_darwin():
+    """Host integration only: the certified macOS speech binary exists."""
+    native = Path("/usr/bin/say")
+    assert native.is_file()
+    assert native.name == "say"
 
 
 def test_voxcpm_gguf_adapter_uses_explicit_paths_and_maps_style_locally(

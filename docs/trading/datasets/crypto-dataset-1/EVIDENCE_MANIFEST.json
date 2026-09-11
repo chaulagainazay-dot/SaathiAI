@@ -1,0 +1,39 @@
+{
+  "milestone": "CRYPTO-DATASET-1",
+  "status": "CRYPTO_REAL_HISTORICAL_DATASET_CERTIFIED_WITH_LIMITATIONS",
+  "provider": "Binance",
+  "archive_host": "https://data.binance.vision",
+  "market_type": "SPOT",
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "interval": "1d",
+  "coverage": {"start": "2018-01-01", "end": "2025-12-31"},
+  "retrieved_at": "2026-09-03T01:09:56.972981+00:00",
+  "archives_expected": 192,
+  "archives_checksum_verified": 192,
+  "checksum_failures": 0,
+  "dataset_id": "binance-spot-1d-2018-01-01-2025-12-31-btcusdt-ethusdt",
+  "dataset_version": "sha256-0f1290db14ab0037e6a69e25bcd1d7928087629cf11630f0ac2c52dbb27768e8",
+  "canonical_content_sha256": "2e7df608235789aec05a3170cd70158e1d628d8118e058658c491de3b0640858",
+  "canonical_bars": {"total": 5844, "BINANCE:BTC/USDT": 2922, "BINANCE:ETH/USDT": 2922},
+  "continuity": {"missing_intervals": 0, "duplicates": 0, "conflicts": 0, "out_of_order": false},
+  "raw_writable_file_count": 0,
+  "persisted_reproducibility": "PASSED",
+  "acquisition_strategy_evaluations": 0,
+  "acquisition_test_periods_spent": 0,
+  "acquisition_log": "/tmp/saathios-crypto-dataset1-acquisition.log",
+  "acquisition_log_sha256": "2523a760f59f7e1b28f5f30aaeaf097be8f60678356e4a91a31ce1b51f2298fb",
+  "focused_tests_passed": 327,
+  "canonical_offline": {
+    "exit_code": 0,
+    "passed": 7944,
+    "skipped": 8,
+    "deselected": 12,
+    "log": "/tmp/saathios-crypto-dataset1-final.log",
+    "log_sha256": "0526c518ee543c068bc06f7586fe2f9f586e0280c9a72bcb6161ed699a27dbd4"
+  },
+  "limitations": [
+    "ARCHIVE_PUBLICATION_HISTORY_NOT_RECONSTRUCTED",
+    "BAR_CLOSE_AVAILABILITY_PRECISION",
+    "OFFICIAL_ARCHIVES_MAY_PUBLISH_LATER_REVISIONS"
+  ]
+}

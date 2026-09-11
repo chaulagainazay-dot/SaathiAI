@@ -51,6 +51,7 @@ export default function MissionsPage() {
       paletteData={{ missions }}
     >
       <RequireSession token={d.token} ready={d.ready}>
+        <div data-testid="missions-page" />
         <div className="ws-toolbar" style={{ marginBottom: "var(--space-4)" }}>
           <input
             value={q}
@@ -79,16 +80,16 @@ export default function MissionsPage() {
 
         {!d.loading && missions.length === 0 && (
           <div className="glass-frame" style={{ padding: "var(--space-5)" }}>
-            <p style={{ color: "var(--text-muted)" }}>No active records. No missions are accessible in this workspace yet.</p>
+            <p data-testid="missions-empty" style={{ color: "var(--text-muted)" }}>No active records. No missions are accessible in this workspace yet.</p>
           </div>
         )}
 
         {visible.length > 0 && (
-          <ul className="ws-grid" aria-label="Missions" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          <ul className="ws-grid" aria-label="Missions" data-testid="missions-list" style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {visible.map((m) => (
               <li key={m.id}>
                 <div className={`glass-frame ${(m.runtime?.signal || m.signal) === "danger" ? "glass-frame--danger" : (m.runtime?.signal || m.signal) === "attention" ? "glass-frame--authority" : (m.runtime?.signal || m.signal) === "active" ? "glass-frame--active" : ""}`}>
-                  <button className="ws-card" onClick={() => router.push(`/platform/missions/${m.id}`)} aria-label={`Open mission ${m.name}`}>
+                  <button className="ws-card" data-testid={`mission-card-${m.id}`} onClick={() => router.push(`/platform/missions/${m.id}`)} aria-label={`Open mission ${m.name}`}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <StatusPulse signal={m.runtime?.signal || m.signal} size={9} />
                       <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>{m.name}</span>

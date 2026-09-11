@@ -74,6 +74,15 @@ class PlaywrightTier(BrowserTier):
             browser, _ctx, page = self._page(pw)
             try:
                 page.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
+                # Many data tables are filled by AJAX after DOMContentLoaded, so a
+                # query that runs immediately sees an empty tbody and reports "no
+                # rows" rather than "not ready yet". Wait for the selector itself,
+                # but never fail on it: a page that genuinely has no match must
+                # still return an empty list rather than raising.
+                try:
+                    page.wait_for_selector(selector, timeout=min(timeout, 15) * 1000)
+                except Exception:
+                    pass
                 return [el.inner_text() for el in page.query_selector_all(selector)]
             finally:
                 browser.close()

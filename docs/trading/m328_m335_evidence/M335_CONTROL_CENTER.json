@@ -1,0 +1,308 @@
+{
+  "ok": true,
+  "milestone": "M335",
+  "title": "Operations Control Center",
+  "subtitle": "Read-only offline operations posture for SaathiOS Trading Guardian",
+  "safety_labels": [
+    "OFFLINE OPERATIONS DATA",
+    "READ-ONLY DASHBOARD",
+    "NO EXECUTION CONTROLS",
+    "NO DEPLOYMENT CONTROLS"
+  ],
+  "verdict_target": "PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS",
+  "max_state": "OPERATIONALLY_READY_OFFLINE",
+  "current_maturity": "OPERATIONALLY_READY_OFFLINE",
+  "panels": {
+    "system_health": {
+      "overall_state": "HEALTHY",
+      "component_count": 7,
+      "counts": {
+        "HEALTHY": 7,
+        "WARNING": 0,
+        "DEGRADED": 0,
+        "FAILED": 0,
+        "MAINTENANCE": 0
+      },
+      "domains": [
+        {
+          "domain": "dependency",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "module",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "platform",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "provider_registry",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "replay",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "scheduler",
+          "state": "HEALTHY",
+          "component_count": 1
+        },
+        {
+          "domain": "storage",
+          "state": "HEALTHY",
+          "component_count": 1
+        }
+      ],
+      "coverage_complete": true
+    },
+    "metrics": {
+      "series_count": 19,
+      "sample_count": 59,
+      "covered_kinds": [
+        "api_latency",
+        "cache_performance",
+        "database_performance",
+        "queue_depth",
+        "replay_performance",
+        "task_duration",
+        "ui_performance"
+      ],
+      "coverage_complete": true,
+      "breach_count": 0,
+      "threshold_breaches": []
+    },
+    "alerts": {
+      "count": 1,
+      "by_severity": {
+        "INFORMATIONAL": 1,
+        "WARNING": 0,
+        "CRITICAL": 0
+      },
+      "by_state": {
+        "OPEN": 1,
+        "ACKNOWLEDGED": 0,
+        "RESOLVED": 0
+      },
+      "open_critical": 0,
+      "destinations": [
+        "control_center",
+        "local_log",
+        "audit_history"
+      ]
+    },
+    "diagnostics": {
+      "subsystems": [
+        "provider_contracts",
+        "replay_engine",
+        "authority_system",
+        "approval_engine",
+        "storage",
+        "configuration",
+        "browser_certification_history"
+      ],
+      "subsystem_count": 7,
+      "on_demand": true,
+      "auto_remediation": false
+    },
+    "backups": {
+      "snapshot_count": 3,
+      "by_kind": {
+        "configuration": 1,
+        "replay_snapshot": 1,
+        "database": 1
+      },
+      "coverage_complete": true,
+      "recovery_runs": 0,
+      "recovery_successful": 0,
+      "cloud_backup": false
+    },
+    "replay_health": {
+      "ok": true,
+      "reason": "replay_deterministic",
+      "fixture_count": 6,
+      "deterministic": true
+    },
+    "authority_summary": {
+      "ok": true,
+      "hard_authority_keys": [
+        "REAL_CONNECTIVITY_AUTHORIZED",
+        "BROKER_CONNECTIVITY_AUTHORIZED",
+        "OAUTH_AUTHORIZED",
+        "CREDENTIAL_PROVISIONING_AUTHORIZED",
+        "ACCOUNT_ACCESS_AUTHORIZED",
+        "BALANCE_READ_AUTHORIZED",
+        "POSITION_READ_AUTHORIZED",
+        "ORDER_SUBMISSION_AUTHORIZED",
+        "ORDER_EXECUTION_AUTHORIZED",
+        "CANARY_ACTIVATION_AUTHORIZED",
+        "LIVE_TRADING_AUTHORIZED"
+      ],
+      "hard_authority_locks": {
+        "REAL_CONNECTIVITY_AUTHORIZED": false,
+        "BROKER_CONNECTIVITY_AUTHORIZED": false,
+        "OAUTH_AUTHORIZED": false,
+        "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+        "ACCOUNT_ACCESS_AUTHORIZED": false,
+        "BALANCE_READ_AUTHORIZED": false,
+        "POSITION_READ_AUTHORIZED": false,
+        "ORDER_SUBMISSION_AUTHORIZED": false,
+        "ORDER_EXECUTION_AUTHORIZED": false,
+        "CANARY_ACTIVATION_AUTHORIZED": false,
+        "LIVE_TRADING_AUTHORIZED": false
+      },
+      "inherited_authority_locks": {
+        "ACCOUNT_ACCESS_AUTHORIZED": false,
+        "AUTHENTICATION_AUTHORIZED": false,
+        "AUTOMATED_INVESTMENT_AUTHORITY": false,
+        "BALANCE_READ_AUTHORIZED": false,
+        "BROKER_CONNECTIVITY_AUTHORIZED": false,
+        "CANARY_ACTIVATION_AUTHORIZED": false,
+        "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+        "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+        "LIVE_TRADING_AUTHORIZED": false,
+        "OAUTH_AUTHORIZED": false,
+        "ORDER_EXECUTION_AUTHORIZED": false,
+        "ORDER_HISTORY_AUTHORIZED": false,
+        "ORDER_SUBMISSION_AUTHORIZED": false,
+        "POSITION_READ_AUTHORIZED": false,
+        "REAL_CONNECTIVITY_AUTHORIZED": false,
+        "TRANSFER_AUTHORIZED": false,
+        "WITHDRAWAL_AUTHORIZED": false
+      },
+      "all_locks_false": true,
+      "deny_overrides_allow": true,
+      "authority_does_not_implicitly_expand": true,
+      "approval_activates_connectivity": false,
+      "operations_layer_grants_authority": false
+    },
+    "certification_history": {
+      "ok": true,
+      "count": 3,
+      "records": [
+        {
+          "milestone": "M312-M319",
+          "path": "m312_m319_evidence/browser/M319_BROWSER_CERT.json",
+          "present": true,
+          "readable": true,
+          "ok": true,
+          "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+        },
+        {
+          "milestone": "M320-M327",
+          "path": "m320_m327_evidence/M327_CONTRACT_CERTIFICATION.json",
+          "present": true,
+          "readable": true,
+          "ok": true,
+          "verdict": "PROVIDER_CONTRACTS_AND_MOCK_CONNECTIVITY_CERTIFIED_WITH_LIMITATIONS"
+        },
+        {
+          "milestone": "M320-M327",
+          "path": "m320_m327_evidence/browser/M327_BROWSER_CERT.json",
+          "present": true,
+          "readable": true,
+          "ok": false,
+          "verdict": "M320_M327_BROWSER_CERT_FAILED"
+        }
+      ],
+      "read_only": true,
+      "history_mutated": false
+    }
+  },
+  "allowed_ui_actions": [
+    "load_system_health",
+    "load_metrics_summary",
+    "load_alert_history",
+    "acknowledge_alert",
+    "resolve_alert",
+    "run_offline_diagnostics",
+    "verify_backup_integrity",
+    "simulate_recovery",
+    "run_offline_load_validation",
+    "run_operations_certification"
+  ],
+  "forbidden_ui_controls": [
+    "credential_input",
+    "api_key_input",
+    "secret_input",
+    "oauth_button",
+    "login_button",
+    "real_provider_connect_button",
+    "live_connect_button",
+    "account_link_button",
+    "account_selector",
+    "order_form",
+    "paper_order_form",
+    "transfer_form",
+    "withdrawal_form",
+    "canary_activation",
+    "deployment_control",
+    "restart_service_button",
+    "scale_service_button",
+    "execute_recovery_button",
+    "kill_switch_override"
+  ],
+  "execution_controls": 0,
+  "deployment_controls": 0,
+  "mutating_operational_controls": 0,
+  "statements": [
+    "OFFLINE OPERATIONS DATA",
+    "READ-ONLY OPERATIONS DASHBOARD",
+    "NO EXECUTION CONTROLS",
+    "NO DEPLOYMENT CONTROLS",
+    "NO PROVIDER CONNECTION",
+    "NO ACCOUNT ACCESS",
+    "NO ORDER EXECUTION",
+    "NO EXTERNAL TELEMETRY OR CLOUD MONITORING",
+    "NO EMAIL, SMS, OR PUSH ALERTING",
+    "NO CLOUD BACKUP",
+    "DETERMINISTIC OFFLINE MEASUREMENTS ONLY"
+  ],
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "AUTHENTICATION_AUTHORIZED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "ORDER_HISTORY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "OFFLINE_OBSERVABILITY_ONLY": true,
+  "NO_EXTERNAL_TELEMETRY": true,
+  "NO_CLOUD_MONITORING": true,
+  "NO_EMAIL_ALERTS": true,
+  "NO_SMS_ALERTS": true,
+  "NO_PUSH_ALERTS": true,
+  "NO_CLOUD_BACKUP": true,
+  "NO_DEPLOYMENT_CONTROL": true,
+  "NO_EXECUTION_CONTROL": true,
+  "READ_ONLY_OPERATIONS_DASHBOARD": true,
+  "DETERMINISTIC_ENGINE": true,
+  "PRODUCTION_AUTHORIZED": false,
+  "DEPLOYMENT_AUTHORIZED": false,
+  "EXTERNAL_TELEMETRY_AUTHORIZED": false,
+  "CLOUD_MONITORING_AUTHORIZED": false,
+  "CLOUD_BACKUP_AUTHORIZED": false,
+  "PAPER_EXECUTION_AUTHORIZED": false,
+  "real_connectivity": false,
+  "authenticated": false,
+  "credentials_present": false,
+  "network_transport_available": false,
+  "offline_only": true,
+  "read_only": true,
+  "deterministic": true
+}

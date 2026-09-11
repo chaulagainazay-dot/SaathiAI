@@ -1,0 +1,8 @@
+{
+  "mission": "T-NEXT-4.1",
+  "mode": "PAPER",
+  "live_trading": false,
+  "network_egress": false,
+  "tests": ["tests/test_t_next_4_1_reconciliation_gate.py"],
+  "shadow_execution": "NOT_READY"
+}

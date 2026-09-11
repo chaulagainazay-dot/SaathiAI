@@ -1,0 +1,1838 @@
+{
+  "schema": "m343.private_alpha_launch_browser_cert.v1",
+  "milestone": "M336-M343",
+  "verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "ok": true,
+  "timestamp": "2026-08-01T11:55:48.014Z",
+  "branch": "milestone/m336-m343-private-alpha-readiness",
+  "head_sha": "bc6f28cedd207f96cfa7149ebd4fa61e1bf3064d",
+  "browser_engine": "chromium",
+  "browser_version": "151.0.7922.34",
+  "application_mode": "local Next.js production build + local Uvicorn platform API, both bound to 127.0.0.1",
+  "application_urls": {
+    "ui": "http://127.0.0.1:3343",
+    "api": "http://127.0.0.1:8343"
+  },
+  "tested_routes": [
+    "/platform",
+    "/platform/onboarding",
+    "/platform/missions",
+    "/platform/approvals",
+    "/operations/private-alpha-readiness"
+  ],
+  "total": 92,
+  "passed": 92,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "private_alpha_bootstrap_local_only",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "signin_failure_fails_closed",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "signin_success",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "workspace_binding_established",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "unauthorized_workspace_rejected",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "project_created",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "mission_creation",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "mission_validation",
+      "ok": true,
+      "detail": "mission_id=mis_84df8e9d98a74cec"
+    },
+    {
+      "name": "approval_request",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "approval_pending_state",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "unauthorized_approval_rejected",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "human_approval",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "mission_execution",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "evidence_and_audit_visible",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "mission_cancellation",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "failure_diagnostics",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "private_alpha_landing_state",
+      "ok": true,
+      "detail": "chars=3569"
+    },
+    {
+      "name": "private_alpha_badge_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "landing_no_public_registration_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "landing_no_broker_connectivity_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "landing_no_credential_input",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "landing_no_account_access_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "landing_no_order_execution_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "landing_no_live_trading_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "invite_required_onboarding",
+      "ok": true,
+      "detail": "S SaathiOS « OPERATE ⌂ Home ⌘ Command Center ◎ Missions ⬡ Agents ⟳ Automation WORK ▦ Projects ◈ Knowledge ▶ Studio RUN T"
+    },
+    {
+      "name": "onboarding_no_public_registration_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "onboarding_no_broker_connectivity_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "onboarding_no_credential_input",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "onboarding_no_account_access_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "onboarding_no_order_execution_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "onboarding_no_live_trading_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "local_platform_status_wording_corrected",
+      "ok": true,
+      "detail": "✓\nLOCAL PLATFORM ONLINE"
+    },
+    {
+      "name": "no_live_connected_claim",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mission_surface_reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "progress_visibility",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mission_completion_state_rendered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "missions_no_public_registration_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "missions_no_broker_connectivity_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "missions_no_credential_input",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "missions_no_account_access_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "missions_no_order_execution_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "missions_no_live_trading_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approval_surface_reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "approvals_no_public_registration_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approvals_no_broker_connectivity_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approvals_no_credential_input",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approvals_no_account_access_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approvals_no_order_execution_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "approvals_no_live_trading_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_page_loaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "private_alpha_limitations_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_status_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_visibility",
+      "ok": true,
+      "detail": "reliability panel reports the alert-bearing observability results"
+    },
+    {
+      "name": "backup_recovery_status_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "owner_review_required_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "release_not_automatic_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "public_production_not_authorized_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "readiness_no_public_registration_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_no_broker_connectivity_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_no_credential_input",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_no_account_access_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_no_order_execution_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "readiness_no_live_trading_control",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": "REAL_CONNECTIVITY_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": "BROKER_CONNECTIVITY_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": "CREDENTIAL_PROVISIONING_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_credential_validation_authorized_false",
+      "ok": true,
+      "detail": "CREDENTIAL_VALIDATION_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_oauth_authorized_false",
+      "ok": true,
+      "detail": "OAUTH_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_account_access_authorized_false",
+      "ok": true,
+      "detail": "ACCOUNT_ACCESS_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": "BALANCE_READ_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_position_read_authorized_false",
+      "ok": true,
+      "detail": "POSITION_READ_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": "ORDER_SUBMISSION_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": "ORDER_EXECUTION_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": "CANARY_ACTIVATION_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": "LIVE_TRADING_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_automated_investment_authority_false",
+      "ok": true,
+      "detail": "AUTOMATED_INVESTMENT_AUTHORITY=false"
+    },
+    {
+      "name": "authority_public_production_authorized_false",
+      "ok": true,
+      "detail": "PUBLIC_PRODUCTION_AUTHORIZED=false"
+    },
+    {
+      "name": "authority_public_registration_authorized_false",
+      "ok": true,
+      "detail": "PUBLIC_REGISTRATION_AUTHORIZED=false"
+    },
+    {
+      "name": "all_authority_locks_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_public_registration_enabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "broker_connectivity_none",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "order_execution_none",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "owner_review_not_automatable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "release_not_automatic",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "session_list_readable",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "sign_out",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "session_revocation_effective",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "no_forbidden_external_requests",
+      "ok": true,
+      "detail": "forbidden=0"
+    },
+    {
+      "name": "no_app_owned_failed_requests",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "no_uncaught_app_owned_console_errors",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "no_uncaught_page_errors",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "preexisting_shell_noise_attributed",
+      "ok": true,
+      "detail": "shell_request_failures=5; shell_console_errors=10"
+    }
+  ],
+  "screenshots": [
+    "private-alpha-landing.png",
+    "private-alpha-onboarding.png",
+    "private-alpha-missions.png",
+    "private-alpha-approvals.png",
+    "private-alpha-readiness.png",
+    "private-alpha-readiness-checklist.png"
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "app_console_errors": [],
+  "preexisting_shell_console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8343/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3343' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "page_errors": [],
+  "request_failures": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "app_request_failures": [],
+  "preexisting_shell_request_failures": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "network_requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/platform",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/main-app-11772d939ba05384.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7045-52f31a0152074a88.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4505-1a19580f36367645.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8187-e3da272430d69863.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/layout-1a5cb69cb1b502d9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/error-f511a990822cb776.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2099-5e98175f38010b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/platform/page-a12f457534239638.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/global-error-d8ca1fcf018f6130.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/projects",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/approvals",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/config",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/agent-bindings",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/executions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/attention",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/platform/onboarding",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/main-app-11772d939ba05384.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7045-52f31a0152074a88.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4505-1a19580f36367645.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8187-e3da272430d69863.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/layout-1a5cb69cb1b502d9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/error-f511a990822cb776.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2099-5e98175f38010b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/3850-d3b32c1ed0fd74c0.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7279-2fc5627ff36fc3fa.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/platform/onboarding/page-3d45dccd246b1571.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/global-error-d8ca1fcf018f6130.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/config",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/missions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/mission-runtimes/dashboard",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/approvals",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/agent-bindings",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/executions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/attention",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/platform/missions",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/main-app-11772d939ba05384.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7045-52f31a0152074a88.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4505-1a19580f36367645.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8187-e3da272430d69863.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/layout-1a5cb69cb1b502d9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/error-f511a990822cb776.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2099-5e98175f38010b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/3850-d3b32c1ed0fd74c0.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/platform/missions/page-d8c0c5affb397252.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/global-error-d8ca1fcf018f6130.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/missions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/mission-runtimes/dashboard",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/approvals",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/agent-bindings",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/executions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/attention",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/platform/approvals",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/main-app-11772d939ba05384.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7045-52f31a0152074a88.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4505-1a19580f36367645.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8187-e3da272430d69863.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/layout-1a5cb69cb1b502d9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/error-f511a990822cb776.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2099-5e98175f38010b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/3850-d3b32c1ed0fd74c0.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/platform/approvals/page-c100df5e2e111182.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/global-error-d8ca1fcf018f6130.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/approvals",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/missions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/mission-runtimes/dashboard",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/approvals",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/agent-bindings",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/executions",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/attention",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/runtime/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/operations/private-alpha-readiness",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/735474bcd865f0f2.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/css/e75206e4bd13ed93.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/webpack-5839cea90cc82c77.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/1255-cf02c4775860a5ab.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/main-app-11772d939ba05384.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8362-e8aad86638b1ba74.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2619-04bc32f026a0d946.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/5352-7bc344ee89636b23.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7045-52f31a0152074a88.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/7186-85ac53eb145231a9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/4505-1a19580f36367645.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/8187-e3da272430d69863.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/layout-1a5cb69cb1b502d9.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/error-f511a990822cb776.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/2268-32ef62166ab66355.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/operations/private-alpha-readiness/page-263a469822c23d98.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3343/_next/static/chunks/app/global-error-d8ca1fcf018f6130.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8343/api/v1/platform/private-alpha/readiness",
+      "resource_type": "fetch",
+      "status": 200
+    }
+  ],
+  "forbidden_external_requests": [],
+  "authority_values": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PUBLIC_PRODUCTION_AUTHORIZED": false,
+    "PUBLIC_REGISTRATION_AUTHORIZED": false
+  },
+  "maximum_state": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
+  "owner_review_status": "OWNER_REVIEW_REQUIRED",
+  "public_registration_enabled": false,
+  "broker_connectivity": "NONE",
+  "order_execution": "NONE",
+  "credential_controls_present": false,
+  "browser_storage_inspection": "NOT_PERFORMED_BY_BROWSER_CONTROL_SAFETY_POLICY",
+  "provider_credentials_injected": false,
+  "limitations": [
+    "A synthetic local SaathiOS owner session was used only to pass the existing SignInGate; it is not a provider, broker or exchange credential.",
+    "Browser cookies and storage values were not inspected under browser-control safety rules.",
+    "All application and API traffic was bound to localhost.",
+    "Mission, approval, execution, cancellation and revocation steps are driven through the local platform API and then verified in the rendered UI, because the private-alpha UI has no separate mutation surface for them.",
+    "The pre-existing SaathiOS app-shell approvals widget polls /api/v1/connectors/approvals/pending, which answers 401 without CORS headers on this local harness. Those failures and their console messages originate outside M336–M343 and are reported under preexisting_shell_request_failures and preexisting_shell_console_errors.",
+    "Forbidden-control checks assert absence across every certified route; they cannot prove absence on routes outside the private-alpha journey."
+  ],
+  "failures": []
+}

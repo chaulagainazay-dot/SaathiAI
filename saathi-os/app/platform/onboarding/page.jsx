@@ -103,6 +103,12 @@ export default function OnboardingPage() {
             {active.id === "notifications" && (
               <p style={{ color: "var(--text-secondary)" }}>Notifications are a derived view of authorized platform events. Preferences are local; browser notification permission is never requested automatically. Configure later in the Notification Center.</p>
             )}
+            {active.id === "voice" && (
+              <div style={{ display: "grid", gap: 8 }}>
+                <p style={{ color: "var(--text-secondary)" }}>Voice is optional. SaathiOS never requests microphone access during onboarding; discover installed local voices and review privacy limits before choosing a test.</p>
+                <button className="ws-chip" onClick={() => router.push("/settings/voice")}>Open Voice Settings →</button>
+              </div>
+            )}
             {active.id === "ready" && (
               <div style={{ display: "grid", gap: 10 }}>
                 <p style={{ color: "var(--text-secondary)" }}>You are ready. Recommended next action:</p>

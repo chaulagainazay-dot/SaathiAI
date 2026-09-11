@@ -1,0 +1,34 @@
+{
+  "schema": "m17.concurrency_repair.ci_reconciliation.v1",
+  "original_failed_run": {
+    "id": "31080359121",
+    "url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/31080359121",
+    "workflow": "reliability",
+    "event": "push",
+    "head_branch": "milestone/m344-m351-multi-agent-development-foundation",
+    "head_sha": "855c5e8c502597e00a2211653080ad2d98f943ca",
+    "critical_regressions": "failure",
+    "full_suite": "skipped",
+    "blocking_check": "scheduled_graph.concurrency_dedup",
+    "failure_signature": "assert 'failed' == 'succeeded' in test_concurrent_recover_creates_one_resumed_graph"
+  },
+  "repair_base": "855c5e8c502597e00a2211653080ad2d98f943ca",
+  "repair_branch": "fix/m17-scheduled-graph-concurrency",
+  "local_critical_regressions": "PASS",
+  "local_full_suite": "7097 passed, 1 skipped",
+  "note": "Local and GitHub CI both green after repair push.",
+  "repair_pr": {
+    "number": 17,
+    "url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/17",
+    "draft": true,
+    "base": "milestone/m344-m351-multi-agent-development-foundation",
+    "head": "fix/m17-scheduled-graph-concurrency",
+    "head_sha": "d543b2c86de9a330560ce4ed04fb06b05556ff8f",
+    "ci_run_id": "31094532429",
+    "ci_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/31094532429",
+    "critical_regressions": "pass",
+    "critical_regressions_duration": "23m20s",
+    "full_suite": "pass",
+    "full_suite_duration": "25m3s"
+  }
+}

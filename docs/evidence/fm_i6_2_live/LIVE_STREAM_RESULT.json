@@ -1,0 +1,9 @@
+{
+  "evidence": "fm_i6_2_live.stream_result.v1",
+  "status": "NOT_RUN",
+  "reason": "combined memory gate denied admission (MODEL_HEADROOM_LOW)",
+  "required_headroom_mib": 4021.5,
+  "available_reclaimable_mib": 2380.34,
+  "deficit_mib": 1641.16,
+  "inference_attempted": false
+}

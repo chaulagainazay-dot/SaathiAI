@@ -1,0 +1,1 @@
+{"milestone":"TA-1","verdict":"RESEARCH_EVIDENCE_SAFETY_CERTIFIED_WITH_LIMITATIONS","focused_tests":20,"canonical":{"passed":7882,"skipped":8,"deselected":12,"failed":0,"exit":0},"authority":"research_only","limitations":["persistence_api_wiring","specialist_roles","challenge_protocol"]}

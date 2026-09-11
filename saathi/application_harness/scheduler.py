@@ -359,9 +359,19 @@ class MissionScheduler:
         cat = "" if occ_state == L.OCC_SUCCEEDED else st
         summary = fcode if occ_state != L.OCC_SUCCEEDED else ""
         run_id = str(mission["run_count"]) if mission.get("run_count") else ""
-        self.ledger.finish_occurrence(occurrence_id, state=occ_state,
-                                      mission_run_id=run_id, failure_category=cat,
-                                      failure_summary=summary, now=now)
+        fin = self.ledger.finish_occurrence(occurrence_id, state=occ_state,
+                                            mission_run_id=run_id, failure_category=cat,
+                                            failure_summary=summary, now=now)
+        # Concurrent settlers: first writer wins; loser reloads authoritative state.
+        # A lost race to write SUCCEEDED must not surface as a false generic failure
+        # when the occurrence is already terminal succeeded; likewise a lost race
+        # after a genuine terminal is reported as idempotent with that terminal.
+        if not fin.get("ok") and str(fin.get("reason", "")).startswith("already_terminal:"):
+            occ = self.ledger.inspect_occurrence(occurrence_id) or {}
+            cur = occ.get("state", "")
+            return {"ok": cur == L.OCC_SUCCEEDED, "state": cur or occ_state,
+                    "mission_id": mission["mission_id"], "mission_state": st,
+                    "idempotent": True, "converged": cur == L.OCC_SUCCEEDED}
         return {"ok": occ_state == L.OCC_SUCCEEDED, "state": occ_state,
                 "mission_id": mission["mission_id"], "mission_state": st}
 

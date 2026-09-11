@@ -3,12 +3,21 @@
 
 # runtime data: voice profile, memory db, logs, uploaded files
 data/
+# Authoritative AgentDev role registry is package data, not runtime state.
+# Without these exceptions a broad `data/` rule hides roles.json from git and
+# clean CI checkouts raise registry_not_found for the entire agentdev suite.
+!saathi/agentdev/data/
+!saathi/agentdev/data/roles.json
 
 # python
 .venv/
 __pycache__/
 *.pyc
 *.egg-info/
+# uv lockfiles are local/tooling artifacts unless an approved milestone
+# intentionally adopts uv-managed dependency locking for the monorepo.
+uv.lock
+uv.lock.bak
 firebase-admin.json
 .superpowers/
 
@@ -84,3 +93,15 @@ docs/platform/m57_evidence/screenshots/
 
 # M264-M271 frozen historical snapshots (local only)
 data/platform/historical_snapshots/
+
+# ECC engineering harness (development plane only, never authoritative).
+# Runtime state, and vendor components synced from the pinned ecc@ecc plugin cache.
+# Reproduce with: scripts/ecc_profile_sync.sh   (manifest: .claude/ecc-profile.json)
+.ecc-data/
+.claude/skills/
+.claude/agents/
+.claude/commands/
+.claude/rules/ecc/
+# Runtime state. Written continuously by ordinary operation; never evidence.
+# See saathi/runtime_paths.py — docs/evidence/** stays the committed record.
+.runtime/

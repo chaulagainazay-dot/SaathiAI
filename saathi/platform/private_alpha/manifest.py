@@ -52,9 +52,12 @@ KNOWN_LIMITATIONS = [
 
 def _git_sha(full: bool = True) -> str:
     try:
-        args = ["git", "rev-parse", "HEAD" if full else "--short", "HEAD"]
-        if not full:
-            args = ["git", "rev-parse", "--short", "HEAD"]
+        # M336–M343: the previous form expanded to
+        # ["git", "rev-parse", "HEAD", "HEAD"] when full=True, so git printed the
+        # SHA twice and every release manifest, certification report and evidence
+        # file recorded "<sha>\n<sha>". Release and rollback runbooks reference
+        # the approved SHA, so this had to be exact.
+        args = ["git", "rev-parse", "HEAD"] if full else ["git", "rev-parse", "--short", "HEAD"]
         out = subprocess.run(
             args,
             cwd=str(ROOT),

@@ -1,0 +1,30 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_FEEDBACK_LOG",
+  "schema_version": "1.0.0",
+  "schema": "docs/private-alpha-quality/PRIVATE_ALPHA_FEEDBACK_SCHEMA.json",
+  "opened_at": "2026-08-02T18:45:00+05:45",
+  "build_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+
+  "status": "EMPTY_AWAITING_REAL_TESTERS",
+  "entries": [],
+  "entry_count": 0,
+
+  "why_empty": "No real invited tester session has taken place. Automation prepared the plan, the scripts and this log, but must not author feedback on behalf of a human or invent a tester observation. Every entry in this file must originate from an actual person completing an actual session.",
+
+  "sessions_completed": {
+    "owner": 0,
+    "operator": 0,
+    "viewer": 0,
+    "required_before_certification": { "owner": 1, "operator": 1, "viewer": 1, "complete_scripted_journeys": 3 }
+  },
+
+  "how_to_add_an_entry": [
+    "1. Run a session against a single known build SHA.",
+    "2. Record the tester's own words for expected vs actual. Do not paraphrase into a conclusion.",
+    "3. Assign severity using the definitions in the schema; when in doubt, rate higher and let triage lower it.",
+    "4. Set status NEW. Only the triager moves it onward.",
+    "5. Confirm privacy_classification before attaching any screenshot."
+  ],
+
+  "note_on_automation_found_defects": "Defects discovered by automation rather than by a tester are recorded separately in DEFECT_LOG.json so that real-user signal is never diluted with machine-found issues."
+}

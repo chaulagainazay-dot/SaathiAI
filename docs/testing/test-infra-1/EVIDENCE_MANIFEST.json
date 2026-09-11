@@ -1,0 +1,153 @@
+{
+  "mission": "TEST-INFRA-1 Offline Suite Hang Isolation & Complete Regression Certification",
+  "date": "2026-08-30",
+  "verdict": "TEST_INFRA_1_OFFLINE_SUITE_CERTIFIED",
+  "worktree": "/Users/macbookpro/SaathiAI-tnext4",
+  "branch": "feature/t-next-4-execution-integrity",
+  "starting_sha": "d644398554cded6418264a8414c122e1a7f81565",
+  "hang": {
+    "reproduced": true,
+    "original_signature": "pytest tests -q stalls at 32%, 0.0-0.6% CPU, no summary line",
+    "hanging_test": "tests/test_m18_4_insforge_migration.py::test_25_concurrent_claims_one_winner",
+    "trigger_test": "tests/test_m15_1_api.py::test_execution_history_owner_scoped",
+    "order_dependent": true,
+    "root_cause": "TEST_HANG_DB_LOCK",
+    "blocked_line": "saathi/security/store.py:241 executescript(_SCHEMA)",
+    "ruled_out": [
+      "TEST_HANG_NETWORK_DEPENDENCY",
+      "TEST_HANG_BROWSER_DEPENDENCY",
+      "TEST_HANG_ASYNC_LEAK",
+      "TEST_HANG_SUBPROCESS_LEAK",
+      "TEST_HANG_ENVIRONMENT_DEPENDENCY"
+    ],
+    "sockets_during_stall": 0,
+    "security_db_handles_during_stall": 25
+  },
+  "fix": {
+    "type": "FIX (not marker isolation)",
+    "production_files_changed": [
+      "saathi/security/store.py",
+      "saathi/providers/insforge/migration.py",
+      "saathi/providers/insforge/provider.py",
+      "saathi/mcp_governance/events.py"
+    ],
+    "test_infra_files_changed": [
+      "conftest.py",
+      "pyproject.toml",
+      "tests/test_m18_4_insforge_migration.py",
+      "tests/test_m17_1_live.py",
+      "tests/test_m17_9_live.py",
+      "tests/test_m80_conversation_service.py"
+    ],
+    "hanging_test_modified": false,
+    "timeouts_padded": false,
+    "tests_skipped_to_pass": false
+  },
+  "canonical_offline_command": "pytest tests -m \"not browser and not live and not external and not network\"",
+  "results": {
+    "offline_suite": {
+      "collected": 7644,
+      "selected": 7632,
+      "passed": 7630,
+      "failed": 0,
+      "skipped": 2,
+      "deselected": 12,
+      "xfailed": 0,
+      "warnings": 324,
+      "seconds": 668.23,
+      "summary_line_present": true
+    },
+    "full_unfiltered_suite": {
+      "passed": 7642,
+      "skipped": 2,
+      "failed": 0,
+      "seconds": 667.63
+    },
+    "t_next_4_execution_integrity": {
+      "passed": 82,
+      "failed": 0
+    },
+    "t_next_4_1_reconciliation_gate": {
+      "passed": 15,
+      "failed": 0
+    },
+    "combined_trading_regression": {
+      "passed": 340,
+      "failed": 0
+    },
+    "compileall": {
+      "syntax_errors": 0,
+      "brief_claimed_two": "not reproducible in this worktree"
+    },
+    "lint": {
+      "ruff": "absent everywhere, unconfigured",
+      "eslint": "declared in saathi-os/package.json, node_modules not installed"
+    }
+  },
+  "authority": {
+    "ExecutionGateway": "unchanged",
+    "TradingGuardian": "unchanged",
+    "PortfolioRiskEngine": "unchanged",
+    "PortfolioConstructionEngine": "unchanged",
+    "Approval": "unchanged",
+    "CanonicalFundLedger": "unchanged",
+    "NO_LIVE_TRADING": true,
+    "NO_REAL_BROKER": true,
+    "NO_WITHDRAWAL": true,
+    "NO_LEVERAGE": true,
+    "NO_LLM_EXECUTION_AUTHORITY": true,
+    "NO_TRADINGAGENTS_RUNTIME_DEPENDENCY": true
+  },
+  "documents": [
+    {
+      "file": "ASYNC_RESOURCE_AUDIT.md",
+      "sha256": "5738094a3efc80320d0f381da41115dffa4a4ac732aa736819b38d5deef8236a",
+      "bytes": 2867
+    },
+    {
+      "file": "BROWSER_TEST_INVENTORY.md",
+      "sha256": "cbfb88d6caed7d452048ce63f73b1fede20223563c9aca4412d6ad3bfe94cd36",
+      "bytes": 2254
+    },
+    {
+      "file": "FINAL_CERTIFICATION.md",
+      "sha256": "bf757567a60fe8ae31d5469067019c510f9b20dfcf37fd8b856312fca5ef8920",
+      "bytes": 3261
+    },
+    {
+      "file": "HANG_REPRODUCTION.md",
+      "sha256": "7d0b30e6df7227e3a10474d752bd6eb2107b6efa021f652a898c436844794cc7",
+      "bytes": 3123
+    },
+    {
+      "file": "LIMITATIONS.md",
+      "sha256": "be605e99546487d1dfe738e230d4a0e08cf1e320ed8bfd40303f29df3466422f",
+      "bytes": 3041
+    },
+    {
+      "file": "NETWORK_TEST_INVENTORY.md",
+      "sha256": "569dffc23f92a0ced19c33bc8068e6c8373a67789857ea5b929ac219f08e3305",
+      "bytes": 3222
+    },
+    {
+      "file": "OFFLINE_SUITE_CONTRACT.md",
+      "sha256": "3f32c1a0e6c7f287c4fa2cc08b534693ffdcd002dac81946f1cc7cb8f7b516ee",
+      "bytes": 3273
+    },
+    {
+      "file": "ROOT_CAUSE.md",
+      "sha256": "7bbef0fb5bc18923b69cafbd9eb19d03f2827a7ccbf20f94a97ac9589e9c4b04",
+      "bytes": 4985
+    },
+    {
+      "file": "SUITE_PARTITION_LOG.md",
+      "sha256": "a622ddaed986adb90492e0c77419e38ed5002b37d81056abe57a0e32beaaa4b1",
+      "bytes": 3723
+    },
+    {
+      "file": "TEST_REPORT.md",
+      "sha256": "70e29516b87149cbea81bcf5cf1ea55adfb0f9bc04af6fce0723418e1192a89d",
+      "bytes": 3513
+    }
+  ]
+}

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { Panel, Eyebrow } from "@/components/ui";
 import { fetchCeoOs, completeMission, sendChat, login, enrollVoice } from "@/lib/api";
-import { useVoice } from "@/lib/useVoice";
 
 const GOLD = "#E8B84B";
 const RULE = ["Decide", "Automate", "Learn", "Earn"];
@@ -55,8 +54,6 @@ export default function OperatingSystem() {
       setChat((c) => [...c, { role: "saathi", text: "Sorry — I couldn't reach my brain just now." }]);
     } finally { setBusy(false); }
   };
-  const voice = useVoice((transcript, reply) =>
-    setChat((c) => [...c, ...(transcript ? [{ role: "you", text: transcript }] : []), { role: "saathi", text: reply }]));
   const [enrolling, setEnrolling] = useState(false);
   const [enrollMsg, setEnrollMsg] = useState("");
 
@@ -205,17 +202,11 @@ export default function OperatingSystem() {
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
         <input value={ask} onChange={(e) => setAsk(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submitAsk()} disabled={busy || voice.busy}
-          placeholder={voice.recording ? "Listening…" : voice.busy ? "Transcribing…" : busy ? "Saathi is thinking…" : "Ask Saathi… (or hold 🎤)"}
+          onKeyDown={(e) => e.key === "Enter" && submitAsk()} disabled={busy}
+          placeholder={busy ? "Saathi is thinking…" : "Ask Saathi…"}
           style={{ flex: 1, padding: "12px 16px",
           borderRadius: 24, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
           color: "inherit", fontSize: 14 }} />
-        <button onPointerDown={voice.start} onPointerUp={voice.stop} onPointerLeave={voice.stop}
-          disabled={busy || voice.busy} title="Hold to speak"
-          style={{ width: 46, height: 46, borderRadius: "50%", border: "none", fontSize: 18, cursor: "pointer",
-            background: voice.recording ? "radial-gradient(circle at 38% 35%, #ffd0d0, #ff6b6b)" : "rgba(255,255,255,0.08)",
-            color: voice.recording ? "#0A1120" : "inherit",
-            boxShadow: voice.recording ? "0 0 20px rgba(255,107,107,0.7)" : "none" }}>🎤</button>
       </div>
       <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
         <button onClick={enroll} disabled={enrolling}

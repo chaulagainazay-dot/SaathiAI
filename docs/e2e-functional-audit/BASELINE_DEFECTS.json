@@ -1,0 +1,233 @@
+{
+  "record": "SAATHIOS_FULL_E2E_FUNCTIONAL_AUDIT_BASELINE_DEFECTS",
+  "baseline_sha": "1647e19",
+  "baseline_branch": "fix/saathios-ui-recovery",
+  "repair_branch": "fix/saathios-full-e2e-functional-recovery",
+  "environment": {
+    "backend": "http://127.0.0.1:8766 from /Users/macbookpro/SaathiAI-full-e2e",
+    "frontend": "http://127.0.0.1:3100 from /Users/macbookpro/SaathiAI-full-e2e/saathi-os",
+    "database": "isolated, created fresh in the repair worktree",
+    "identities": "synthetic owner / operator / viewer, runtime-generated passwords, never written to evidence"
+  },
+
+  "severity_counts": {
+    "BLOCKER": 2,
+    "CRITICAL": 0,
+    "HIGH": 2,
+    "MEDIUM": 1,
+    "LOW": 1,
+    "COSMETIC": 0
+  },
+
+  "defects": [
+    {
+      "id": "DEFECT-ENV-001",
+      "severity": "BLOCKER",
+      "ownership": "ENVIRONMENT_OPERATIONAL",
+      "title": "Live backend served from a stale branch with uncommitted changes",
+      "page": "whole application",
+      "role": "any",
+      "steps": [
+        "lsof -nP -iTCP:3000 -sTCP:LISTEN  -> next-server pid 12672",
+        "lsof -a -p 12672 -d cwd           -> /Users/macbookpro/SaathiAI-ui-recovery/saathi-os (branch fix/saathios-ui-recovery @ 1647e19)",
+        "lsof -nP -iTCP:8765 -sTCP:LISTEN  -> python -m saathi.server pid 1328",
+        "lsof -a -p 1328 -d cwd            -> /Users/macbookpro/SaathiAI (branch milestone/m312-m319-connectivity-governance @ 6639ca7, dirty)"
+      ],
+      "expected": "The API process serves the same commit as the UI process.",
+      "actual": "git diff --stat 6639ca7 1647e19 -- saathi/ => 35 files changed, 8791 insertions(+), 22 deletions(-). The running API predates every M320-M343 endpoint the running UI calls, and carries 4 uncommitted backend source files.",
+      "console_error": "n/a (server-side)",
+      "network_error": "404/401 on newer platform routes",
+      "reproducibility": "deterministic",
+      "suspected_source": "operator started the API from the primary repository while the UI was started from the recovery worktree",
+      "resolution": "FIXED_BY_ENVIRONMENT_CORRECTION",
+      "resolution_detail": "This audit runs an isolated backend from the repair worktree on port 8766, with the frontend rebuilt against it. pid 1328 was deliberately NOT killed (unrelated process, outside mission scope). The permanent fix is operational: start both processes from the same worktree.",
+      "regression_test": "docs/e2e-functional-audit/RECOVERY_BASELINE.json records the runtime provenance check that detects this."
+    },
+
+    {
+      "id": "DEFECT-005",
+      "severity": "BLOCKER",
+      "ownership": "APP_OWNED",
+      "category": "security-authentication-bypass",
+      "title": "Email alone issues a full session — the login gate could be walked straight through",
+      "page": "/platform (rendered console) and POST /api/v1/platform/auth/login",
+      "role": "any, including owner",
+      "steps": [
+        "curl -X POST http://127.0.0.1:8766/api/v1/platform/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"owner@e2e.local\"}'"
+      ],
+      "expected": "An account with a password must present that password. Anything else is refused.",
+      "actual": "HTTP 200 with a valid owner session token. The rendered /platform login form contained only an email input and a Login button, so this was reachable from the UI, not just the API.",
+      "root_cause": "saathi/platform/api.py:platform_login routes a request with no password and method LOCAL_PASSWORD to PlatformService.login — the M50 passwordless compatibility path — which performed no credential check at all. saathi/platform/service.py:login. The hardened path (alpha.py:authenticate_login, with abuse controls and generic failures) was simply never reached.",
+      "impact": "Complete defeat of authentication, RBAC and workspace isolation for a private-alpha, invite-only product. Knowing an invitee's email address was sufficient to assume that user's role.",
+      "reproducibility": "deterministic",
+      "resolution": "FIXED",
+      "fix": [
+        "saathi/platform/service.py — PlatformService.login now refuses any account that has a credential, raising AUTH_FAILED with the same generic message used for an unknown account (no enumeration) and writing an auth.login_failed audit record. Accounts with no credential keep the M50 behaviour, so backward compatibility is preserved.",
+        "saathi-os/app/platform/page.jsx — the console login form now has a masked password field (data-testid=platform-password), submits it on both Login and Bootstrap + login, clears it after use, and maps auth failures to an actionable message that never reveals whether the account exists."
+      ],
+      "verified_after_fix": {
+        "email only": "HTTP 401",
+        "empty password": "HTTP 401",
+        "wrong password": "HTTP 401",
+        "correct password": "HTTP 200"
+      },
+      "regression_tests": [
+        "tests/test_e2e_functional_recovery.py::test_passwordless_login_is_refused_for_a_credentialed_account",
+        "tests/test_e2e_functional_recovery.py::test_passwordless_refusal_does_not_reveal_why",
+        "tests/test_e2e_functional_recovery.py::test_correct_password_still_authenticates",
+        "tests/test_e2e_functional_recovery.py::test_wrong_password_is_rejected",
+        "tests/test_e2e_functional_recovery.py::test_empty_password_is_rejected_for_a_credentialed_account",
+        "tests/test_e2e_functional_recovery.py::test_m50_accounts_without_a_credential_keep_the_passwordless_path",
+        "tests/test_e2e_functional_recovery.py::test_setting_a_password_closes_the_passwordless_path_for_that_account",
+        "tests/test_e2e_functional_recovery.py::test_refused_passwordless_login_is_audited",
+        "browser cert [G] email-only login is refused for a credentialed account",
+        "browser cert [A] login form renders a password field"
+      ]
+    },
+
+    {
+      "id": "DEFECT-001",
+      "severity": "HIGH",
+      "ownership": "APP_OWNED",
+      "category": "correctness-error-handling",
+      "title": "Re-submitting a mission key returns HTTP 500 with a stack trace instead of a conflict",
+      "page": "POST /api/v1/platform/missions",
+      "role": "operator, owner",
+      "steps": [
+        "create a mission with key K",
+        "create a mission with the same key K in the same organization"
+      ],
+      "expected": "A clean conflict the UI can render — duplicate-submission prevention is an explicit private-alpha requirement.",
+      "actual": "HTTP 500 'Internal Server Error'. Server log: sqlite3.IntegrityError: UNIQUE constraint failed: missions.org_id, missions.key, with a full traceback.",
+      "root_cause": "saathi/platform/store.py:create_mission executed the INSERT bare. The UNIQUE (org_id, key) constraint at store.py:117 raised sqlite3.IntegrityError, which escaped through service.create_mission and the API layer uncaught. Sibling code already had the right idiom: create_agent_binding catches IntegrityError and raises ValueError, which BindingAdministrationService converts to a PlatformContextError.",
+      "impact": "A 500 on a routine double-submit; no actionable message for the operator; a stack trace in the server log, contrary to the fail-closed / no-stack-trace requirement.",
+      "reproducibility": "deterministic",
+      "resolution": "FIXED",
+      "fix": [
+        "saathi/platform/store.py — create_mission wraps the INSERT and raises ValueError on IntegrityError, matching create_agent_binding.",
+        "saathi/platform/service.py — create_mission converts that ValueError into PlatformContextError('MISSION_KEY_EXISTS'), and audits the denial.",
+        "saathi/platform/api.py — _err maps MISSION_KEY_EXISTS to HTTP 409."
+      ],
+      "verified_after_fix": "HTTP 409 {\"detail\":{\"code\":\"MISSION_KEY_EXISTS\",\"message\":\"mission key already exists in this organization\"}}",
+      "regression_tests": [
+        "tests/test_e2e_functional_recovery.py::test_duplicate_mission_key_raises_conflict_not_integrity_error",
+        "tests/test_e2e_functional_recovery.py::test_duplicate_mission_key_does_not_create_a_second_mission",
+        "tests/test_e2e_functional_recovery.py::test_distinct_mission_keys_still_create_missions",
+        "tests/test_e2e_functional_recovery.py::test_mission_key_exists_maps_to_http_409",
+        "browser cert [B] duplicate mission key returns a conflict, not a server error"
+      ]
+    },
+
+    {
+      "id": "DEFECT-003",
+      "severity": "HIGH",
+      "ownership": "APP_OWNED",
+      "category": "voice-output-lifecycle",
+      "title": "Assistant speech keeps playing after the user navigates to another route",
+      "page": "every route (VoiceOutputProvider is mounted in Shell)",
+      "role": "any",
+      "steps": [
+        "start assistant speech playback",
+        "navigate to a different route via client-side routing"
+      ],
+      "expected": "Route changes cancel speech and clean up audio (explicit certification requirement).",
+      "actual": "Speech continued. components/Shell.jsx mounts VoiceOutputProvider ABOVE the routed children, so it never unmounts on navigation and its existing unmount cleanup never ran. The Audio object is held in a ref and is not in the DOM tree, so nothing else stopped it either.",
+      "root_cause": "Provider lifetime is the whole shell, but the cleanup was written as if its lifetime were the page.",
+      "impact": "Assistant audio continues audibly on an unrelated page, and an in-flight server-side speech operation is left running rather than cancelled.",
+      "reproducibility": "deterministic by construction; confirmed in the browser certification",
+      "resolution": "FIXED",
+      "fix": "saathi-os/components/voice/VoiceOutputProvider.jsx — a usePathname() effect calls stop() when the pathname changes, guarded by a ref so it never fires on first render (which would cancel a freshly-started utterance). stop() already tears down local audio and cancels the remote operation.",
+      "regression_tests": [
+        "saathi-os/lib/e2e-voice-route-cleanup.test.js",
+        "browser cert [E] no audio is left playing after route change"
+      ]
+    },
+
+    {
+      "id": "DEFECT-004",
+      "severity": "HIGH",
+      "ownership": "APP_OWNED",
+      "category": "voice-input-lifecycle",
+      "title": "Microphone capture survives a route change",
+      "page": "every route (VoiceRuntimeProvider is mounted in Shell)",
+      "role": "any",
+      "steps": [
+        "start voice input (grant the microphone)",
+        "navigate to a different route via client-side routing"
+      ],
+      "expected": "Recording must not survive a route change; the microphone must be released. Explicitly listed as a state bug to fix in the voice-input audit.",
+      "actual": "The MediaStream stayed live and recognition kept running. Same root cause as DEFECT-003: VoiceRuntimeProvider is mounted above the routed children in Shell, so its unmount cleanup never ran on navigation.",
+      "impact": "The microphone stays hot on a page that has no voice surface — a privacy problem, and the state machine can get stuck listening.",
+      "reproducibility": "deterministic by construction",
+      "resolution": "FIXED",
+      "fix": "saathi-os/components/voice/VoiceRuntimeProvider.jsx — a usePathname() effect calls hardReset() on route change, guarded against the first render. hardReset stops recognition and calls track.stop() on every microphone track.",
+      "regression_tests": [
+        "saathi-os/lib/e2e-voice-route-cleanup.test.js"
+      ]
+    },
+
+    {
+      "id": "DEFECT-002",
+      "severity": "MEDIUM",
+      "ownership": "APP_OWNED",
+      "category": "approval-usability-fail-late",
+      "title": "An approval whose scope the tool can never satisfy is accepted, approved by a human, then rejected at dispatch as \"approval invalid\"",
+      "page": "POST /api/v1/platform/approvals then POST /api/v1/platform/execute",
+      "role": "operator requesting, owner deciding",
+      "steps": [
+        "request approval for m49.local_note_write with side_effect_class LOCAL_IRREVERSIBLE (the manifest declares LOCAL_REVERSIBLE)",
+        "owner approves it",
+        "execute the tool with that approval_id"
+      ],
+      "expected": "Either the request is refused with a message naming the offending field, or the execution succeeds.",
+      "actual": "The request was accepted (HTTP 200), the approval reached a human and was approved, and only at dispatch did the gateway return outcome BLOCKED / TOOL_APPROVAL_REQUIRED with safe_message 'approval invalid' — which names nothing. Execution state FAILED.",
+      "root_cause": "saathi/platform/service.py:request_approval stored caller-supplied authority / side_effect_class / capability verbatim. saathi/tool_runtime/contracts.py:is_valid_for matches all three against the tool manifest exactly, so a contradiction was guaranteed to fail — but only much later.",
+      "impact": "A dead-end journey that wastes a human approval decision and gives the operator no way to tell what was wrong. Fails closed, so this is a usability and audit-noise defect rather than a security one.",
+      "reproducibility": "deterministic",
+      "resolution": "FIXED",
+      "fix": "saathi/platform/service.py — _reject_unsatisfiable_approval_scope validates authority, side_effect_class and capability against the registered tool manifest at request time and raises VALIDATION_FAILED (HTTP 400) naming every mismatched field and the value the tool declares. Unregistered tool ids (dynamic connector grants) keep the previous permissive behaviour and are still validated at dispatch. Omitted fields remain permissive.",
+      "verified_after_fix": "HTTP 400 \"approval scope does not match the tool contract: side_effect_class 'LOCAL_IRREVERSIBLE' (tool declares 'LOCAL_REVERSIBLE')\"",
+      "regression_tests": [
+        "tests/test_e2e_functional_recovery.py::test_approval_rejects_side_effect_class_the_tool_cannot_satisfy",
+        "tests/test_e2e_functional_recovery.py::test_approval_rejects_capability_the_tool_does_not_declare",
+        "tests/test_e2e_functional_recovery.py::test_approval_rejects_authority_the_tool_does_not_declare",
+        "tests/test_e2e_functional_recovery.py::test_unsatisfiable_approval_is_never_persisted",
+        "tests/test_e2e_functional_recovery.py::test_manifest_consistent_approval_is_still_accepted",
+        "tests/test_e2e_functional_recovery.py::test_partially_specified_approval_scope_is_still_accepted",
+        "tests/test_e2e_functional_recovery.py::test_unregistered_tool_id_keeps_permissive_request_behaviour",
+        "browser cert [B] approval contradicting the tool contract is refused at request time"
+      ]
+    },
+
+    {
+      "id": "DEFECT-ENV-002",
+      "severity": "LOW",
+      "ownership": "ENVIRONMENT_OPERATIONAL",
+      "title": "100 prunable stale git worktrees from milestone M233",
+      "page": "n/a",
+      "role": "n/a",
+      "steps": ["git worktree list"],
+      "expected": "Only live worktrees listed.",
+      "actual": "100 entries under /private/var/folders/.../m233-worktree-*/clean-wt marked prunable.",
+      "impact": "Operational noise only. No effect on the application.",
+      "reproducibility": "deterministic",
+      "resolution": "REPORTED_NOT_FIXED",
+      "resolution_detail": "Pruning is a destructive action outside the scope of this mission. Recommended follow-up: `git worktree prune`."
+    }
+  ],
+
+  "investigated_and_found_correct": [
+    {
+      "observation": "Operator receives HTTP 403 from POST /runtime/executions/{id}/cancel",
+      "finding": "NOT_A_DEFECT — RUNTIME_OPERATE is deliberately granted to owner and admin only (saathi/platform/models.py:394). The operator role holds RUNTIME_EXECUTE but not RUNTIME_OPERATE. The initial audit assertion was wrong, not the application. Recorded in the RBAC matrix."
+    },
+    {
+      "observation": "Duplicate agent binding returns 403 BINDING_IDENTITY_EXISTS rather than 409",
+      "finding": "NOT_A_DEFECT for this mission — it fails closed with a named, actionable code and no stack trace. Only the mission path leaked a raw IntegrityError."
+    },
+    {
+      "observation": "One console error during the browser certification: 'Failed to load resource: 401 (Unauthorized)'",
+      "finding": "OWNED_AND_EXPECTED — emitted by the deliberate wrong-password login in Journey A. It is the browser reporting correct fail-closed behaviour. Not filtered away; attributed."
+    }
+  ]
+}

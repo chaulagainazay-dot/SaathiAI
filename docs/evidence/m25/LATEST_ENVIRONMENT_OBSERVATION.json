@@ -1,6 +1,6 @@
 {
   "schema": "m25.latest_environment_observation.v1",
-  "recorded_at": "2026-07-17T13:18:53+00:00",
+  "recorded_at": "2026-09-04T00:45:51+00:00",
   "verdict": "M25 BLOCKED \u2014 LIVE LOCAL PROVIDER ENVIRONMENT UNAVAILABLE",
   "live": false,
   "live_provider_certified": false,
@@ -11,13 +11,13 @@
   ],
   "environment": {
     "schema": "m25.environment_audit.v1",
-    "timestamp": "2026-07-17T13:18:53+00:00",
+    "timestamp": "2026-09-04T00:45:51+00:00",
     "provider": "ollama",
     "binary_path": "/usr/local/bin/ollama",
     "binary_present": true,
     "broken_symlink": false,
     "binary_real_target": "/Applications/Ollama.app/Contents/Resources/ollama",
-    "version": "ollama version is 0.32.1",
+    "version": "ollama version is 0.32.15\nWarning: client version is 0.33.2",
     "endpoint": "http://127.0.0.1:11434",
     "endpoint_source": "InferenceSettings.ollama_base_url",
     "endpoint_allowlisted": true,
@@ -29,27 +29,27 @@
     "runtime_reachable": true,
     "health_detail": "ok",
     "authentication_mode": "none_local",
-    "launch_agent_path": "/Users/macbookpro/Library/LaunchAgents/com.ajay.ollama.plist",
-    "launch_agent_state": "99306\t0\tcom.ollama.ollama",
+    "launch_agent_path": "",
+    "launch_agent_state": "",
     "startup_mechanism": "LaunchAgent com.ajay.ollama (not started by M25)",
-    "data_directory": "/Users/macbookpro/.ollama",
-    "filesystem_model_manifests": [
-      "registry.ollama.ai/library/qwen2.5/1.5b"
-    ],
+    "data_directory": "",
+    "filesystem_model_manifests": [],
     "installed_approved_models": [
+      "qwen2.5-coder:3b",
+      "gemma4:e2b",
       "qwen2.5:1.5b"
     ],
     "architecture": "arm64",
     "platform": "Darwin",
     "cpu": "Apple M2",
     "total_memory_gb": 8.0,
-    "available_memory_gb": 1.69,
+    "available_memory_gb": 1.76,
     "required_available_memory_gb": 1.8,
-    "shortfall_gb": 0.11,
+    "shortfall_gb": 0.04,
     "memory_safety_margin_gb": 0.8,
     "minimum_model_budget_gb": 1.0,
     "memory_ok": false,
-    "free_disk_gb": 72.8,
+    "free_disk_gb": 53.77,
     "install_performed": false,
     "service_started_by_m25": false,
     "models_pulled_by_m25": false,
@@ -83,15 +83,17 @@
     {
       "gate_id": "env_model",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "installed_approved=['qwen2.5:1.5b']; available(1.69) < safety_margin(0.8) + model_budget(1.0) = 1.8",
+      "detail": "installed_approved=['qwen3:4b', 'qwen2.5-coder:3b', 'gemma4:e2b', 'qwen3:8b', 'qwen2.5:1.5b']; available(1.75) < safety_margin(0.8) + model_budget(1.0) = 1.8",
       "evidence": {
-        "count": 1,
+        "count": 5,
         "installed_approved_models": [
+          "qwen2.5-coder:3b",
+          "gemma4:e2b",
           "qwen2.5:1.5b"
         ],
-        "available_memory_gb": 1.69,
+        "available_memory_gb": 1.75,
         "required_available_memory_gb": 1.8,
-        "shortfall_gb": 0.11,
+        "shortfall_gb": 0.05,
         "safety_margin_gb": 0.8,
         "minimum_model_budget_gb": 1.0,
         "production_safe_formula": "available_memory_gb >= safety_margin_gb + minimum_model_budget_gb"
@@ -101,7 +103,7 @@
     {
       "gate_id": "resource_memory",
       "status": "ENVIRONMENT_BLOCKED",
-      "detail": "available_gb=1.69 margin=0.8",
+      "detail": "available_gb=1.76 margin=0.8",
       "evidence": {},
       "blocking": true
     },
@@ -205,8 +207,8 @@
     }
   ],
   "live_cases": [],
-  "tip_commit": "0a25728d9b551c1d86f6e57a2e43beb5aec708b7",
-  "run_id": "aed168e407d241409587c1d7ea17fe65",
-  "certification_fingerprint": "sha256:b9521e643334c3c4758b7d08",
+  "tip_commit": "c1995a7cd3d1fb4abc9371d230038739a2599b93",
+  "run_id": "56622a6fdd6e4d209cb881bb55b76448",
+  "certification_fingerprint": "sha256:97d3b888d83222c94419d4e4",
   "privacy_status": "redacted_no_raw_prompts_or_outputs"
 }

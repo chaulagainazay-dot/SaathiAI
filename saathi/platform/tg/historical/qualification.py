@@ -102,12 +102,17 @@ class QualificationGates:
 
 
 def _dec(v: Any, default: str = "0") -> Decimal:
+    """Parse qualification evidence. FAIL CLOSED.
+
+    Previously swallowed every parse failure into ``default``, so malformed
+    evidence produced a zero metric that reads as a real measurement. Absence is
+    still the caller's declared default; garbage is now refused.
+    """
+    from saathi.platform.trading_models import D as _D
+
     if v is None:
         return Decimal(default)
-    try:
-        return Decimal(str(v))
-    except Exception:
-        return Decimal(default)
+    return _D(v, default)
 
 
 def build_gates_from_evidence(

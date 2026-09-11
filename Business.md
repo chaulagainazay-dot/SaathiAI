@@ -1,5 +1,28 @@
 # SaathiOS — Business
 
+## NEPSE normalized transaction import (NEPSE-TXN-1)
+
+* External NEPSE activity can now enter SaathiOS as a deterministic,
+  fully-accounted reconciliation proposal without becoming a second portfolio
+  or silently changing the books.
+* Stable IDs and surfaced duplicate/conflict states make repeated exports
+  auditable while Decimal and explicit date/availability semantics prevent
+  hidden financial coercion.
+* Real Meroshare, TMS, and Nepal Share compatibility remains unverified; no
+  broker, live order, account, withdrawal, leverage, or ledger-application
+  capability is created.
+
+## NEPSE historical-calendar integrity (NEPSE-CAL-1.1)
+
+* Historical NEPSE research no longer carries a hidden Western Monday-Friday
+  assumption; Sunday/Friday corrections are explicit and versioned.
+* Unknown holiday coverage is preserved as uncertainty, not converted into
+  claimed trading truth. This deliberately blocks certified backtests until a
+  genuine annual source is loaded while still allowing raw evidence ingestion.
+* Existing unversioned NEPSE artifacts are not silently relabelled. No live
+  trading, broker, approval, risk, portfolio, ledger, or reconciliation
+  authority is created by this migration.
+
 ## Connector certification as trust prerequisite (M30)
 
 * Live customer integrations (Gmail, Calendar, GitHub, Slack, payments) remain **deferred** until connectors pass behavioral conformance and operators enable rollout deliberately.
@@ -665,3 +688,11 @@ external risk.
 * Canary **eligibility** is not canary **authorization**. M39 never sets CANARY = GRANTED.
 * External token revocation remains a manual operator duty after any live exercise.
 * Production, rollout, ACTIVE, and write authority remain NOT GRANTED. Trading Guardian remains unengaged.
+## Venue-safe market-data identity (MD-1.1)
+
+* Market-data and historical registrations now preserve venue/market/instrument
+  consistency and fail closed on contradictions.
+* Omitted generic venues remain unknown rather than inheriting a US exchange;
+  NEPSE-specific imports retain NEPSE conventions and calendar semantics.
+* This is research/data-contract hardening only: no broker, live feed, order, or
+  ledger capability is added.

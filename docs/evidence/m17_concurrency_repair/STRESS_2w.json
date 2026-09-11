@@ -1,0 +1,16 @@
+{
+  "contention_false_failures": 0,
+  "duplicate_graphs": 0,
+  "duration_s": 7.8059,
+  "failed_iterations": [],
+  "failures": 0,
+  "iterations": 100,
+  "ok": true,
+  "orphan_states": 0,
+  "seed": 1,
+  "successes": 100,
+  "timeout": 30.0,
+  "timeouts": 0,
+  "worker_errors": 0,
+  "workers": 2
+}

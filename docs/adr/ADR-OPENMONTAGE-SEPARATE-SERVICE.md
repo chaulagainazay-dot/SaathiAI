@@ -1,9 +1,12 @@
 # ADR: Run OpenMontage as Separate Service (Scenario 1)
 
-**Date:** 2026-07-10  
-**Status:** APPROVED (Stage 1)  
-**Context:** M5.1 (Infrastructure stabilization) character animation for Mr. Yeti  
-**Decision:** Embed OpenMontage as **separate HTTP service**, NOT forked/embedded library  
+**Date:** 2026-07-10
+**Status:** ACCEPTED_WITH_LIMITATIONS (FM-C1 normalized from “APPROVED (Stage 1)”)
+**Implementation status:** Separate-service isolation decision remains; live deploy depends on environment
+**Context:** M5.1 (Infrastructure stabilization) character animation for Mr. Yeti
+**Decision:** Embed OpenMontage as **separate HTTP service**, NOT forked/embedded library
+**Authority impact:** AGPL isolation only; does not replace ExecutionGateway
+
 
 ---
 
@@ -148,7 +151,7 @@ GET /api/v1/projects/{project_id}/costs
 class OpenMontageExecutor:
     def __init__(self, service_url):
         self.service_url = service_url
-    
+
     def execute_character_animation(self, mission_id, actor_id, scene_input):
         """Invoke pipeline, return project_id"""
         response = requests.post(
@@ -161,14 +164,14 @@ class OpenMontageExecutor:
             }
         )
         return response.json()["project_id"]
-    
+
     def get_status(self, project_id):
         """Poll pipeline status"""
         response = requests.get(
             f"{self.service_url}/api/v1/projects/{project_id}"
         )
         return response.json()
-    
+
     def approve_checkpoint(self, project_id, decision):
         """Submit human approval"""
         response = requests.post(
@@ -182,7 +185,7 @@ class OpenMontageExecutor:
 ```python
 class OpenMontageToolIntent:
     """Wraps OpenMontage project invocation as ToolIntent"""
-    
+
     @staticmethod
     def to_tool_intent(mission_id, actor_id, scene_input):
         return ToolIntent.builder()
@@ -219,7 +222,7 @@ services:
       - "8765:8765"
     environment:
       OPENMONTAGE_SERVICE_URL: http://openmontage:8000
-  
+
   openmontage:
     build:
       context: ./openmontage
@@ -241,17 +244,17 @@ services:
 
 ### Positive
 
-✅ **AGPL Compliance:** No copyleft trigger. SaathiOS license unrestricted.  
-✅ **Vendor Independence:** Can replace OpenMontage with alternative video service later.  
-✅ **Clean Architecture:** Orchestration (SaathiOS) separate from rendering (OpenMontage).  
-✅ **Scalability:** Can run multiple OpenMontage workers, load balance behind reverse proxy.  
-✅ **Maintainability:** OpenMontage updates don't require SaathiOS refactoring.  
+✅ **AGPL Compliance:** No copyleft trigger. SaathiOS license unrestricted.
+✅ **Vendor Independence:** Can replace OpenMontage with alternative video service later.
+✅ **Clean Architecture:** Orchestration (SaathiOS) separate from rendering (OpenMontage).
+✅ **Scalability:** Can run multiple OpenMontage workers, load balance behind reverse proxy.
+✅ **Maintainability:** OpenMontage updates don't require SaathiOS refactoring.
 
 ### Tradeoffs
 
-⚠️ **Network Latency:** ~100-500ms per API call (acceptable for M5.1).  
-⚠️ **Operational Complexity:** Two services to deploy/monitor.  
-⚠️ **Health Checks:** Must monitor both SaathiOS + OpenMontage service.  
+⚠️ **Network Latency:** ~100-500ms per API call (acceptable for M5.1).
+⚠️ **Operational Complexity:** Two services to deploy/monitor.
+⚠️ **Health Checks:** Must monitor both SaathiOS + OpenMontage service.
 
 ---
 
@@ -275,11 +278,11 @@ services:
 
 ## Implementation Timeline
 
-**Stage 1 (Current):** ADR approval, architecture documentation  
-**Stage 2:** Build OpenMontage HTTP wrapper + ExecutionGateway adapter  
-**Stage 2:** Integration tests (SaathiOS ↔ OpenMontage)  
-**Stage 2:** Deploy to test environment  
-**M5.2:** Production deployment (character animation for Baadar)  
+**Stage 1 (Current):** ADR approval, architecture documentation
+**Stage 2:** Build OpenMontage HTTP wrapper + ExecutionGateway adapter
+**Stage 2:** Integration tests (SaathiOS ↔ OpenMontage)
+**Stage 2:** Deploy to test environment
+**M5.2:** Production deployment (character animation for Baadar)
 
 ---
 
@@ -290,6 +293,6 @@ services:
 
 ---
 
-**Approved by:** Production Readiness Review  
-**Date:** 2026-07-10  
+**Approved by:** Production Readiness Review
+**Date:** 2026-07-10
 **Status:** Ready for Stage 2 implementation

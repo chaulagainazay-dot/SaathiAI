@@ -1,0 +1,33 @@
+{
+  "mission": "MD-1.1",
+  "starting_head": "3c1d7d9d3ca050356ef5f8c1ae0cbaabdef7ec8c",
+  "status": "CERTIFIED_WITH_LIMITATIONS",
+  "verdict": "MD_1_1_VENUE_CONSISTENCY_CERTIFIED_WITH_LIMITATIONS",
+  "canonical_identity": "venue",
+  "generic_real_venue_default": false,
+  "source_schema_status": "SOURCE_SCHEMA_UNVERIFIED",
+  "focused_tests": {"md_1_1": 15, "market_data_nepse_historical": 274, "authority": 328},
+  "full_offline_regression": {"passed": 7858, "skipped": 8, "deselected": 12, "failed": 0},
+  "storage_gate": {"free_before_gb": 10.9, "free_after_gb": 7.8, "hard_block_gb": 5.0, "blocked": false},
+  "post_fix_offline_rerun": {"status": "OFFLINE_REGRESSION_BLOCKED_STORAGE", "free_gb": 7.8, "preferred_floor_gb": 10.0},
+  "authority": {
+    "ledger_mutations": 0,
+    "position_mutations": 0,
+    "cash_mutations": 0,
+    "oms_orders": 0,
+    "execution_gateway_calls": 0,
+    "trading_guardian_calls": 0,
+    "portfolio_construction_calls": 0,
+    "portfolio_risk_calls": 0,
+    "network_calls": 0,
+    "broker_connections": 0,
+    "live_orders": 0
+  },
+  "explicit_defaults_remaining": [
+    {"location": "saathi/platform/tg/market_data/service.py", "value": "US/XNAS", "safe_because": "explicit synthetic fixture registration"},
+    {"location": "saathi/platform/tg/market_data/calendar.py", "value": "XNAS/XNYS/CRYPTO", "safe_because": "named calendar bootstrap entries, never omission fallback"},
+    {"location": "saathi/platform/tg/historical/import_service.py", "value": "BINANCE/NEPSE/US", "safe_because": "adapter-specific derivation after explicit adapter selection"}
+  ],
+  "working_tree_committed_at_evidence_generation": false,
+  "safety_status": ["NO_LIVE_TRADING", "NO_REAL_BROKER", "NO_LEDGER_MUTATION_FROM_IMPORT", "NO_WITHDRAWAL", "NO_LEVERAGE", "NO_LLM_EXECUTION_AUTHORITY"]
+}

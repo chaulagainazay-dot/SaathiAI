@@ -25,6 +25,23 @@ from .manifest import (
 
 ROOT = Path(__file__).resolve().parents[3]
 
+# M336–M343 — installable build artifacts vs host prerequisites.
+#
+# `.venv` and `saathi-os/node_modules` are OUTPUTS of installation, not
+# preconditions of it. Classifying their absence as a required host-prerequisite
+# FAIL made prepare() — the private-alpha installer preflight — permanently
+# unable to succeed on any checkout where installation had not already been
+# performed in place (fresh clone, git worktree, clean-clone certification, or a
+# newly invited tester's machine), which in turn blocked init_first_run(),
+# upgrade_preflight() and the M165 certification gate.
+#
+# These checks are NOT removed, downgraded or silenced: they still run, still
+# report FAIL status, and still emit their full remediation text. They are
+# aggregated into a separate deterministic field, `install_complete`, so callers
+# can distinguish "this host cannot run SaathiOS" (ok=False) from "dependencies
+# have not been installed yet" (install_complete=False).
+INSTALLABLE_CHECKS = ("python_venv", "frontend_deps")
+
 
 def _port_in_use(port: int, host: str = "127.0.0.1") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -76,13 +93,27 @@ def prepare(*, install_deps: bool = False) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     remediations: list[str] = []
     ok = True
+    install_complete = True
 
     def add(name: str, status: str, detail: str = "", required: bool = True) -> None:
-        nonlocal ok
+        nonlocal ok, install_complete
+        installable = name in INSTALLABLE_CHECKS
         checks.append(
-            {"check": name, "status": status, "detail": detail, "required": required}
+            {
+                "check": name,
+                "status": status,
+                "detail": detail,
+                "required": required,
+                "installable": installable,
+            }
         )
-        if status == "FAIL" and required:
+        if status != "FAIL":
+            return
+        if installable:
+            # Reported, remediated, and surfaced via install_complete — but it is
+            # an un-run install step, not an unusable host.
+            install_complete = False
+        elif required:
             ok = False
 
     # OS / arch
@@ -159,7 +190,9 @@ def prepare(*, install_deps: bool = False) -> dict[str, Any]:
                 if nm.is_dir():
                     checks[-1]["status"] = "PASS"
                     checks[-1]["detail"] = "installed during prepare"
-                    ok = all(c["status"] != "FAIL" or not c["required"] for c in checks)
+                    install_complete = not any(
+                        c["status"] == "FAIL" and c.get("installable") for c in checks
+                    )
             except Exception as exc:
                 remediations.append(f"npm install failed: {exc}")
 
@@ -251,8 +284,13 @@ def prepare(*, install_deps: bool = False) -> dict[str, Any]:
     add("paid_providers", "PASS", "not activated during prepare")
     add("production", "PASS", "production_authorized=false")
 
+    pending_install = [
+        c["check"] for c in checks if c["status"] == "FAIL" and c.get("installable")
+    ]
     return {
         "ok": ok,
+        "install_complete": install_complete,
+        "pending_install_steps": pending_install,
         "checks": checks,
         "remediations": remediations,
         "created_directories": created,
@@ -315,6 +353,8 @@ def doctor() -> dict[str, Any]:
         "saathi_public_listeners": saathi_public,
         "public_listener_regression": bool(saathi_public),
         "ok": prep.get("ok") and not saathi_public,
+        "install_complete": prep.get("install_complete"),
+        "pending_install_steps": prep.get("pending_install_steps") or [],
         "production_authorized": False,
     }
 
@@ -345,6 +385,7 @@ def init_first_run(
 
     prep = prepare(install_deps=False)
     if not prep.get("ok"):
+        # Host prerequisites are unmet — first run must not proceed.
         return {"ok": False, "error": "PREPARE_FAILED", "prepare": prep}
 
     cfg = load_config()
@@ -354,6 +395,8 @@ def init_first_run(
             "already_initialized": True,
             "first_run_completed": True,
             "config": cfg.to_public(),
+            "install_complete": prep.get("install_complete"),
+            "pending_install_steps": prep.get("pending_install_steps") or [],
             "notice": "PRODUCTION DISABLED",
         }
 
@@ -367,6 +410,11 @@ def init_first_run(
         "already_initialized": False,
         "owner": None,
         "demo": {},
+        # Onboarding may legitimately run before dependencies are installed; the
+        # caller is told exactly which install steps remain rather than being
+        # blocked with an opaque PREPARE_FAILED.
+        "install_complete": prep.get("install_complete"),
+        "pending_install_steps": prep.get("pending_install_steps") or [],
         "notice": "PRODUCTION DISABLED · NO API CREDENTIALS COLLECTED · LOCAL ONLY",
     }
 

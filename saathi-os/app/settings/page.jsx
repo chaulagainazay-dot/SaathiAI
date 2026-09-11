@@ -135,6 +135,20 @@ export default function SettingsPage() {
 
         <Card>
           <Heading level={2} size="md">
+            Voice Settings
+          </Heading>
+          <Text tone="muted" size="sm" as="p">
+            Discover local system voices, test playback, and control explicit microphone access.
+          </Text>
+          <Link href="/settings/voice">
+            <Button size="sm" variant="outline">
+              Open Voice Settings
+            </Button>
+          </Link>
+        </Card>
+
+        <Card>
+          <Heading level={2} size="md">
             Security & credentials
           </Heading>
           <Text tone="muted" size="sm" as="p">

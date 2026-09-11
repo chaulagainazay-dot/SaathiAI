@@ -1,0 +1,113 @@
+{
+  "schema": "m343.test_results.v1",
+  "milestone": "M336-M343",
+  "branch": "milestone/m336-m343-private-alpha-readiness",
+  "summary": "backend 6007 passed / 0 failed; frontend 342 passed / 0 failed; production build clean",
+
+  "backend": {
+    "command": "pytest tests -p no:randomly -q --no-header -rf",
+    "passed": 6007,
+    "failed": 0,
+    "skipped": 1,
+    "duration_sec": 946.24,
+    "log": "docs/private-alpha/m336_m343_evidence/M343_FULL_BACKEND_LOG.txt",
+    "baseline_at_predecessor": {
+      "sha": "6cdf72661834242eb4901f7eaf44a4425957db37",
+      "passed": 5945,
+      "failed": 8,
+      "skipped": 1,
+      "log": "docs/private-alpha/m336_m343_evidence/M336_BASELINE_FULL_BACKEND_LOG.txt"
+    },
+    "delta": {
+      "failures_closed": 8,
+      "failures_introduced": 0,
+      "tests_added": 54,
+      "note": "5945 + 54 added + 8 previously failing = 6007 passing."
+    }
+  },
+
+  "backend_run_history": [
+    {
+      "run": "concurrent with the 61-minute soak",
+      "result": "1 failed, 6006 passed, 1 skipped",
+      "failure": "tests/test_m17_1_live.py::test_live_browser_dom_and_click",
+      "classification": "PRE-EXISTING CONTENTION-SENSITIVE FLAKE, NOT INTRODUCED BY THIS BRANCH",
+      "proof": [
+        "git diff 6cdf726..HEAD -- saathi/computer_agent/ tests/test_m17_1_live.py is empty",
+        "the same test fails at the untouched predecessor SHA 6cdf726 under the same load",
+        "it passes on an idle machine at this SHA: 9/9",
+        "root cause: LiveBrowserDriver.launch() polls the DevTools endpoint 50 times at 0.1 s, a hard 5-second budget for a real Brave browser to start headless; under contention _ws stays None"
+      ],
+      "action": "recorded, not hidden, and not fixed by raising a timeout to make a suite green",
+      "reported_in": "LIMITATIONS.json operational_findings_not_fixed_in_this_milestone"
+    },
+    {
+      "run": "idle machine, definitive",
+      "result": "6007 passed, 1 skipped, 0 failed",
+      "duration_sec": 946.24
+    }
+  ],
+
+  "focused_milestone_suites": {
+    "command": "pytest tests/test_m57_local.py tests/test_m157_private_alpha.py tests/test_ops.py tests/test_m336_m343_regression_closure.py tests/test_m339_private_alpha_journey.py tests/test_m341_soak_safety.py",
+    "passed": 109,
+    "failed": 0,
+    "log": "docs/private-alpha/m336_m343_evidence/M343_FOCUSED_TEST_LOG.txt"
+  },
+
+  "inherited_failures": {
+    "m57_local": 0,
+    "m157_private_alpha": 0,
+    "release_gate": 0,
+    "total_remaining": 0,
+    "before": 8
+  },
+
+  "tests_added": {
+    "tests/test_m336_m343_regression_closure.py": 18,
+    "tests/test_m339_private_alpha_journey.py": 25,
+    "tests/test_m341_soak_safety.py": 11,
+    "saathi-os/lib/m336_private_alpha_readiness.test.js": 24,
+    "backend_total": 54,
+    "frontend_total": 24
+  },
+
+  "frontend": {
+    "command": "npm test",
+    "passed": 342,
+    "failed": 0,
+    "baseline_at_predecessor": 318,
+    "note": "318 predecessor tests plus the 24 added here."
+  },
+
+  "production_build": {
+    "command": "npm run build",
+    "ok": true,
+    "detail": "clean; /operations/private-alpha-readiness at 3.55 kB, 159 kB first load",
+    "log": "docs/private-alpha/m336_m343_evidence/M343_PRODUCTION_BUILD_LOG.txt",
+    "note": "The browser-certification harness rebuilds separately against the certification API port, because Next.js inlines NEXT_PUBLIC_* at build time. That is a distinct artifact from this one."
+  },
+
+  "browser_certification": {
+    "command": "npm run cert:m343",
+    "verdict": "PRIVATE_ALPHA_LAUNCH_READINESS_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+    "passed": 92,
+    "failed": 0,
+    "browser": "Chromium 151.0.7922.34",
+    "report": "docs/private-alpha/m336_m343_evidence/M343_BROWSER_CERT.json"
+  },
+
+  "soak": {
+    "verdict": "PRIVATE_ALPHA_SOAK_PASSED",
+    "minutes": 61.36,
+    "operations": 938247,
+    "errors": 0,
+    "report": "docs/private-alpha/m336_m343_evidence/M341_SOAK_CONCURRENCY_RECOVERY_REPORT.json"
+  },
+
+  "release_gate": {
+    "exit_code": 0,
+    "exit_name": "EXIT_READY",
+    "before": "EXIT_SECURITY (3)"
+  }
+}

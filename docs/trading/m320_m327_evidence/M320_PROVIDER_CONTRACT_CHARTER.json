@@ -1,0 +1,70 @@
+{
+  "schema_version": "m320.provider_contracts.charter.v1",
+  "milestone": "M320-M327",
+  "name": "Credentialless Provider Contracts & Mock Connectivity",
+  "scope": "provider_neutral_deterministic_offline_only",
+  "guarantees": {
+    "contract_presence_grants_authority": false,
+    "capability_declaration_grants_permission": false,
+    "permission_activates_connectivity": false,
+    "connectivity_grants_account_access": false,
+    "account_access_grants_order_authority": false
+  },
+  "allowed_transports": [
+    "mock",
+    "replay"
+  ],
+  "capability_states": [
+    "SUPPORTED_OFFLINE",
+    "UNSUPPORTED",
+    "FORBIDDEN_BY_GOVERNANCE",
+    "UNAVAILABLE"
+  ],
+  "allowed_session_states": [
+    "DISCONNECTED",
+    "MOCK_READY",
+    "REPLAY_READY",
+    "UNAVAILABLE",
+    "FAULTED",
+    "CLOSED"
+  ],
+  "forbidden_session_states": [
+    "AUTHENTICATED",
+    "LOGGED_IN",
+    "ACCOUNT_CONNECTED",
+    "BROKER_CONNECTED",
+    "LIVE",
+    "TRADING_READY",
+    "EXECUTION_READY"
+  ],
+  "hard_authority": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "AUTHENTICATION_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_HISTORY_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false
+  },
+  "isolation_assertions": {
+    "NO_REAL_PROVIDER_CONNECTION": true,
+    "NO_REAL_CREDENTIALS": true,
+    "NO_ACCOUNT_ACCESS": true,
+    "NO_ORDER_EXECUTION": true,
+    "MOCK_DATA_ONLY": true,
+    "REPLAY_DATA_ONLY": true,
+    "NETWORK_TRANSPORT_DISABLED": true
+  },
+  "maximum_state": "MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY",
+  "maturity": "MOCK_CONNECTIVITY_ONLY"
+}

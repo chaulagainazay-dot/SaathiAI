@@ -1,0 +1,105 @@
+{
+  "evidence": "fm_i6_2_memory_gate.memory_metrics.v1",
+  "milestone": "FM-I6.2-MG",
+  "captured_at": "2026-08-07T09:16:28+05:45",
+  "baseline_sha": "54a4665e7bbc6e113c18ec50d150245934603991",
+  "branch": "hardening/fm-i6.2-ollama-live-certification",
+  "inference_performed": false,
+  "host_mutations": false,
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "cpu_count_logical": 8,
+    "total_memory_bytes": 8589934592,
+    "total_memory_gib": 8.0,
+    "uptime_note": "approximately 43 minutes at first inventory",
+    "page_size_bytes": 16384
+  },
+  "ollama": {
+    "serve_pid": 983,
+    "bind": "127.0.0.1:11434",
+    "wildcard": false,
+    "rss_kib": 22608,
+    "percent_mem": 0.3,
+    "loaded_models": [],
+    "selected_model_pin": "qwen2.5:1.5b",
+    "selected_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "selected_size_bytes": 986061892
+  },
+  "firewall": {
+    "global_state": "enabled (State = 1)",
+    "observed_separately": true
+  },
+  "metric_kinds": {
+    "pure_free_percent": "calculated from vm_stat Pages free / hw.memsize",
+    "reclaimable_percent": "calculated (free+inactive+speculative)/hw.memsize — matches LocalModelHarness free_percent field",
+    "darwin_memory_pressure_free_percent": "directly reported by /usr/bin/memory_pressure",
+    "swap": "directly reported by sysctl vm.swapusage",
+    "compressor": "directly reported by vm_stat Pages occupied by compressor"
+  },
+  "samples": [
+    {
+      "captured_at": "2026-08-07T09:16:28+05:45",
+      "pages": {
+        "free": 3846,
+        "active": 140677,
+        "inactive": 139881,
+        "speculative": 75,
+        "wired": 81341,
+        "purgeable": 3543,
+        "compressor_occupied": 121863,
+        "compressor_stored": 277002,
+        "swapins": 0,
+        "swapouts": 0,
+        "pageins": 1682933,
+        "pageouts": 9445
+      },
+      "pure_free_percent": 0.734,
+      "pure_free_mib": 60.1,
+      "reclaimable_percent_of_ram": 27.428,
+      "reclaimable_mib": 2246.9,
+      "purgeable_mib": 55.4,
+      "active_mib": 2198.1,
+      "wired_mib": 1271.0,
+      "compressor_occupied_mib": 1904.1,
+      "darwin_memory_pressure_free_percent": 58,
+      "swapusage_raw": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)",
+      "harness_current_gate_would_pass": true,
+      "pure_free_20_would_pass": false
+    },
+    {
+      "captured_at": "2026-08-07T09:16:31+05:45",
+      "pages": {
+        "free": 4198,
+        "active": 140502,
+        "inactive": 139862,
+        "speculative": 80,
+        "wired": 81298,
+        "purgeable": 3621,
+        "compressor_occupied": 121751,
+        "compressor_stored": 275380,
+        "swapins": 0,
+        "swapouts": 0,
+        "pageins": 1682939,
+        "pageouts": 9445
+      },
+      "pure_free_percent": 0.801,
+      "pure_free_mib": 65.6,
+      "reclaimable_percent_of_ram": 27.493,
+      "reclaimable_mib": 2252.2,
+      "darwin_memory_pressure_free_percent": 58,
+      "swapusage_raw": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)",
+      "harness_current_gate_would_pass": true,
+      "pure_free_20_would_pass": false
+    }
+  ],
+  "observation": {
+    "pure_free_fluctuates": true,
+    "pure_free_range_percent": [0.7, 0.8],
+    "reclaimable_stable_near_percent": 27.5,
+    "darwin_pressure_free_stable_percent": 58,
+    "swap_used_mib": 0,
+    "note": "Pure free stayed << 20% while reclaimable, Darwin free%, and swap stayed healthy. A pure-free≥20% gate would false-block this idle host."
+  },
+  "top_rss_consumers_note": "Brave renderer ~8.6% RSS, Brave main ~2.6%, Claude app ~2.4%; Ollama serve ~0.3%. Measured via ps; not terminated."
+}

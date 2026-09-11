@@ -1,0 +1,103 @@
+{
+  "evidence": "fm_i6_1.runtime_boundary.v1",
+  "milestone": "FM-I6.1",
+  "captured_at": "2026-08-07T08:01:00+05:45",
+  "baseline_sha": "228f6efbc94402fc2a4129cb038b34d5ec7f8f51",
+  "branch": "implementation/fm-i6-bounded-local-model-harness",
+  "production_certified": false,
+  "automatic_reconfiguration": false,
+  "automatic_process_control": false,
+  "runtime": {
+    "selected": "OLLAMA_SELECTED",
+    "version": "0.32.5",
+    "api_version_endpoint": {"version": "0.32.5"},
+    "process_ownership": "USER_MANAGED_RUNTIME",
+    "processes": [
+      {
+        "pid": 979,
+        "user": "macbookpro",
+        "command": "/usr/local/bin/ollama serve",
+        "elapsed": "02-19:35:19",
+        "bind": "127.0.0.1:11434"
+      },
+      {
+        "pid": 1010,
+        "user": "macbookpro",
+        "command": "/Applications/Ollama.app/Contents/Resources/ollama serve",
+        "elapsed": "02-19:35:18",
+        "bind": "*:11434 (IPv6 / dual-stack display)"
+      }
+    ],
+    "loaded_models": [],
+    "firewall_global_state": "disabled (State = 0)"
+  },
+  "bindings": {
+    "lsof": [
+      "TCP 127.0.0.1:11434 (LISTEN) pid=979",
+      "TCP *:11434 (LISTEN) pid=1010"
+    ],
+    "netstat": [
+      "tcp4  127.0.0.1.11434 LISTEN ollama:979",
+      "tcp46 *.11434 LISTEN ollama:1010"
+    ],
+    "classification": "TRUE_WILDCARD_EXPOSURE",
+    "not_display_artifact": true,
+    "connect_probes": {
+      "127.0.0.1:11434": "open",
+      "::1:11434": "open",
+      "192.168.1.89:11434": "open",
+      "global_ipv6_examples:11434": "open"
+    },
+    "saathios_client_target": "http://127.0.0.1:11434",
+    "live_gate": "LIVE_OLLAMA_BINDING_UNSAFE",
+    "operator_action_required": true
+  },
+  "model_pin": {
+    "name": "qwen2.5:1.5b",
+    "required_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "observed_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "size_bytes": 986061892,
+    "match": true,
+    "role_qualified": false
+  },
+  "installed_models": [
+    "qwen3:4b",
+    "qwen2.5-coder:3b",
+    "gemma4:e2b",
+    "qwen3:8b",
+    "qwen2.5:1.5b"
+  ],
+  "memory_gate": {
+    "total_bytes": 8589934592,
+    "free_percent_approx": 18.8,
+    "available_mib_approx": 1540.9,
+    "min_free_percent": 20,
+    "min_available_mib": 1024.0,
+    "ok": false,
+    "reason": "free_percent below 20% floor (available MiB above floor alone is insufficient)"
+  },
+  "live_gates": {
+    "runtime_available": true,
+    "endpoint_validation_client": "pass (127.0.0.1 only)",
+    "digest_match": true,
+    "model_pin": true,
+    "memory_gate": false,
+    "concurrency_policy": true,
+    "binding_gate": false,
+    "overall_live_allowed": false,
+    "skip_reasons": [
+      "LIVE_OLLAMA_BINDING_UNSAFE: true wildcard exposure on *:11434 / LAN+global IPv6",
+      "RESOURCE_PRESSURE: free_percent≈18.8% < 20%"
+    ]
+  },
+  "live_inference": {
+    "attempted": false,
+    "result": "SKIPPED",
+    "reason": "binding and memory gates failed"
+  },
+  "mock_certification": {
+    "suite": "tests/test_fm_i6_local_model_harness.py + FM-I1..I4 harness regressions",
+    "result": "184 passed, 1 skipped (live)",
+    "authoritative": true
+  }
+}

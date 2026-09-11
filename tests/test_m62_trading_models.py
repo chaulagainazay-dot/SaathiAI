@@ -24,9 +24,26 @@ from saathi.platform.trading_guardian import (
 # ── decimal correctness ──────────────────────────────────────────────────────
 def test_decimal_coercion_no_binary_float():
     assert D("0.1") + D("0.2") == Decimal("0.3")   # would fail with float
-    assert D(None) == Decimal("0")
-    assert D("garbage") == Decimal("0")
+    assert D(None) == Decimal("0")                 # declared optional path
     assert isinstance(D(5), Decimal)
+
+
+def test_decimal_coercion_fails_closed_on_garbage():
+    """FINANCIAL-NUMERIC-1: this previously asserted D("garbage") == Decimal("0").
+
+    That contract is the defect: a value that fails to parse arrived downstream as
+    a valid-looking zero, indistinguishable from a real zero, on paths reaching
+    cash reservation, Guardian risk inputs and safety metrics. Garbage is refused;
+    absence remains the caller's declared default.
+    """
+    import pytest as _pytest
+
+    from saathi.platform.trading_models import InvalidFinancialValue
+
+    with _pytest.raises(InvalidFinancialValue):
+        D("garbage")
+    assert D(None) == Decimal("0")
+    assert D("0") == Decimal("0")
 
 
 def test_position_and_account_decimal_math():

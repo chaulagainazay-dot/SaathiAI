@@ -1,0 +1,193 @@
+{
+  "schema": "m338.private_alpha_contract.v1",
+  "milestone": "M338",
+  "title": "SaathiOS private-alpha product contract",
+  "release_version": "0.1.0-private-alpha.1",
+  "channel": "private-alpha",
+  "branch": "milestone/m336-m343-private-alpha-readiness",
+  "supersedes": null,
+  "composed_from": [
+    "docs/PRIVATE_ALPHA_LIMITATIONS.md",
+    "docs/PRIVATE_ALPHA_SECURITY.md",
+    "docs/PRIVATE_ALPHA_PRIVACY.md",
+    "docs/PRIVATE_ALPHA_FIRST_RUN.md",
+    "saathi/platform/private_alpha/manifest.py (release manifest)",
+    "saathi/platform/private_alpha/lifecycle.py (launcher safety contract)"
+  ],
+
+  "audience": {
+    "admitted": [
+      {
+        "role": "owner",
+        "description": "The single human who owns this SaathiOS installation. Bootstrapped once via bootstrap_owner_secure. Holds owner-required approval authority.",
+        "provisioning": "platform bootstrap (first run), one per installation"
+      },
+      {
+        "role": "approved_internal_operator",
+        "description": "A person the owner has explicitly provisioned into an organization and workspace with an operator role. May create and run allowed missions.",
+        "provisioning": "owner-issued invite or owner-performed provisioning only"
+      },
+      {
+        "role": "invited_tester",
+        "description": "A specifically invited external tester, scoped to one organization and one workspace, typically with viewer or operator role.",
+        "provisioning": "owner-issued invite only; invite is single-use and bound to an email"
+      }
+    ],
+    "excluded": [
+      "anonymous users",
+      "public self-registration",
+      "search-engine or link-discovered visitors",
+      "any identity not explicitly provisioned by the owner"
+    ],
+    "public_self_registration": {
+      "enabled": false,
+      "authority_flag": "PUBLIC_REGISTRATION_AUTHORIZED=false",
+      "may_be_enabled_later": "only by an explicit, separately authorized milestone; never by automation and never as a side effect of this milestone"
+    },
+    "invite_only": true,
+    "max_concurrent_testers_supported": "bounded by the single-host 8 GB reference machine; see M341 soak and concurrency evidence"
+  },
+
+  "environment": {
+    "topology": "single host, single machine",
+    "network_posture": "localhost-only (127.0.0.1 backend on 8765, localhost frontend on 3000)",
+    "public_binding": "prohibited — no 0.0.0.0 bind, no tunnel, no ngrok, no DNS record",
+    "deployment": "local or an explicitly owner-approved private environment; no public deployment",
+    "production_claim": "NONE — PUBLIC_PRODUCTION_AUTHORIZED=false",
+    "broker_connectivity": "NONE — BROKER_CONNECTIVITY_AUTHORIZED=false",
+    "financial_execution": "NONE — ORDER_SUBMISSION_AUTHORIZED=false, ORDER_EXECUTION_AUTHORIZED=false, LIVE_TRADING_AUTHORIZED=false",
+    "provider_calls": "mock providers, replay fixtures and local deterministic tools only; REAL_CONNECTIVITY_AUTHORIZED=false",
+    "external_tools": "no unrestricted tool execution; every tool runs through the ExecutionGateway with the registered-tool authority boundary",
+    "credentials": "no real trading, broker or paid-provider credentials are requested, accepted or stored",
+    "supported_host": {
+      "operating_system": "macOS",
+      "cpu_architecture": "arm64",
+      "python": ["3.11", "3.12"],
+      "node_min": "18",
+      "disk_headroom_gb": 5,
+      "recommended_memory_gb": 8
+    },
+    "data_location": "data/platform/platform.db and data/alpha/* on the operator's own machine; nothing leaves the host"
+  },
+
+  "supported_journey": {
+    "id": "PRIVATE_ALPHA_JOURNEY_V1",
+    "steps": [
+      {"step": 1, "name": "operator_opens_saathios", "surface": "bin/saathi-local start → http://localhost:3000"},
+      {"step": 2, "name": "user_is_invited_or_provisioned", "authority": "owner only"},
+      {"step": 3, "name": "user_authenticates", "surface": "platform sign-in; invalid credentials fail closed"},
+      {"step": 4, "name": "org_and_workspace_context_established", "surface": "platform context binding"},
+      {"step": 5, "name": "user_enters_or_creates_allowed_project"},
+      {"step": 6, "name": "user_creates_mission"},
+      {"step": 7, "name": "mission_is_validated"},
+      {"step": 8, "name": "required_approval_is_requested"},
+      {"step": 9, "name": "authorized_human_approves_or_rejects", "authority": "human actor only; the LLM may never approve"},
+      {"step": 10, "name": "approved_mission_executes_through_allowed_local_or_mock_tools"},
+      {"step": 11, "name": "progress_is_observable"},
+      {"step": 12, "name": "output_and_evidence_are_recorded"},
+      {"step": 13, "name": "mission_can_be_cancelled"},
+      {"step": 14, "name": "failure_can_be_diagnosed"},
+      {"step": 15, "name": "session_can_be_revoked"},
+      {"step": 16, "name": "audit_trail_can_be_inspected"},
+      {"step": 17, "name": "backup_and_recovery_evidence_can_be_generated"},
+      {"step": 18, "name": "user_signs_out"}
+    ],
+    "certification_evidence": "docs/private-alpha/m336_m343_evidence/M339_PRIVATE_ALPHA_E2E_JOURNEY.json"
+  },
+
+  "explicitly_unsupported": [
+    "public sign-up or open registration",
+    "public production deployment",
+    "real-money operations of any kind",
+    "external broker or exchange connection",
+    "live trading",
+    "paper execution through an external provider",
+    "automatic approval of any kind",
+    "self-approval where maker-checker applies",
+    "unrestricted filesystem access",
+    "unrestricted network access",
+    "unrestricted tool execution",
+    "claims of general autonomy without limits",
+    "multi-host or multi-device sync",
+    "guaranteed uptime or an SLA",
+    "cloud backup, cloud monitoring or external telemetry",
+    "email, SMS or push alerting",
+    "a public application marketplace",
+    "paid AI provider activation during first run"
+  ],
+
+  "authority_locks": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "PUBLIC_PRODUCTION_AUTHORIZED": false,
+    "PUBLIC_REGISTRATION_AUTHORIZED": false
+  },
+
+  "llm_authority_boundary": {
+    "may": [
+      "guide onboarding",
+      "explain permissions",
+      "draft missions",
+      "explain why an approval is needed",
+      "summarise mission progress",
+      "explain failures",
+      "prepare diagnostic summaries",
+      "prepare release checklists",
+      "draft incident summaries"
+    ],
+    "may_not": [
+      "invite users without authority",
+      "approve users",
+      "grant roles",
+      "approve its own missions",
+      "bypass approvals",
+      "change workspace scope",
+      "restore revoked sessions",
+      "mark owner review complete",
+      "deploy",
+      "publish",
+      "connect providers",
+      "access accounts",
+      "execute orders",
+      "authorize live trading"
+    ]
+  },
+
+  "ui_disclosure_requirements": {
+    "private_alpha_status_visible": true,
+    "limitations_visible": true,
+    "invite_required_messaging": true,
+    "no_public_registration_control": true,
+    "no_broker_connectivity_control": true,
+    "no_credential_input": true,
+    "no_order_execution_control": true,
+    "no_live_trading_control": true,
+    "platform_status_wording": "Local platform status must never read as broker connectivity, live market access, account connection, execution readiness or live trading. Global connectivity labels are corrected in M340.",
+    "owner_review_markers": ["OWNER_REVIEW_REQUIRED", "PRIVATE_ALPHA_RELEASE_NOT_AUTOMATIC", "PUBLIC_PRODUCTION_NOT_AUTHORIZED"]
+  },
+
+  "release_governance": {
+    "release_is_automatic": false,
+    "owner_review_required": true,
+    "owner_review_may_be_marked_by_automation": false,
+    "release_gate_must_pass": true,
+    "browser_certification_required": true,
+    "clean_clone_certification_required": true,
+    "runbooks_required": ["release", "rollback", "incident", "tester guide"]
+  },
+
+  "maximum_state": "PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY",
+  "does_not_authorize": "public production deployment",
+  "verdict": "M338_PRIVATE_ALPHA_CONTRACT_DEFINED"
+}

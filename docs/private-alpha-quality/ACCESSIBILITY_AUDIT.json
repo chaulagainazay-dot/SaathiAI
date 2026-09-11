@@ -1,0 +1,71 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_ACCESSIBILITY_AUDIT",
+  "audited_at": "2026-08-02T18:35:00+05:45",
+  "build_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+  "browser": "Brave Browser 150 (Chromium 150), macOS 26.5.1",
+  "surface_audited": "/platform unauthenticated sign-in surface (shell + sign-in form + voice panel)",
+  "coverage": "PARTIAL - 1 of 145 routes. Authenticated approval and mission actions could not be audited because no session was obtainable.",
+
+  "results": {
+    "unlabeled_inputs": { "count": 0, "status": "PASS" },
+    "unlabeled_authentication_fields": { "count": 0, "status": "PASS", "requirement": "mission requires zero", "detail": "email and password inputs both carry accessible names" },
+    "buttons_without_accessible_name": { "count": 0, "of_total": 49, "status": "PASS" },
+    "images_missing_alt": { "count": 0, "status": "PASS" },
+    "h1_count": { "value": 1, "status": "PASS" },
+    "heading_order": { "value": [1, 2], "status": "PASS", "detail": "no skipped levels observed" },
+    "landmarks": { "nav": 4, "main": 1, "status": "PASS" },
+    "live_regions": { "count": 2, "status": "PASS", "detail": "platform error uses role=alert, so expiry recovery is announced" },
+    "positive_tabindex_values": { "count": 0, "status": "PASS", "detail": "no tab-order hijacking" },
+    "keyboard_trap": { "found": false, "status": "PASS" },
+    "visible_focus_indicator": {
+      "status": "PASS",
+      "detail": "Real keyboard Tab moved focus to the 'Ask Saathi' button, matched :focus-visible, and rendered outline: solid 2px rgb(143,180,255). 12 :focus-visible rules exist including a global :where(a,button,input,select,textarea,[tabindex]):focus-visible.",
+      "measurement_correction": "An initial programmatic .focus() sweep reported 0 of 25 controls with a focus ring. That was a FALSE POSITIVE: programmatic focus deliberately does not match :focus-visible. The finding was retracted after keyboard verification."
+    },
+    "reduced_motion_support": { "status": "PASS", "detail": "prefers-reduced-motion media rules present in the stylesheet" },
+    "focusable_control_count": 43
+  },
+
+  "findings": [
+    {
+      "id": "A11Y-001",
+      "severity": "P2",
+      "category": "accessibility",
+      "title": "No skip-navigation link",
+      "detail": "No skip link was found on the audited surface. With 4 nav landmarks and 43 focusable controls, a keyboard or screen-reader user must traverse the full sidebar before reaching main content on every route.",
+      "requirement_reference": "Phase 7 lists 'skip navigation' as a required audit item",
+      "status": "CONFIRMED",
+      "fix_applied": false,
+      "rationale_not_fixed": "Shell-wide layout change. Out of scope for a bounded session that could not regression-test authenticated routes."
+    },
+    {
+      "id": "A11Y-002",
+      "severity": "P2",
+      "category": "accessibility",
+      "title": "32 of 49 interactive controls are below the 44x44 px touch target guideline",
+      "detail": "Measured at the 819 px viewport. Affects status chips, breadcrumb segments and compact shell controls.",
+      "status": "CONFIRMED",
+      "caveat": "Guideline applies most strictly to touch input. True phone-viewport behaviour could not be measured (see mobile audit), so real-world severity on a phone is unconfirmed.",
+      "fix_applied": false
+    }
+  ],
+
+  "required_targets": {
+    "no_blocker_or_critical_accessibility_defect": "MET - no P0 or P1 accessibility defect found on the audited surface",
+    "no_unlabeled_authentication_fields": "MET",
+    "no_keyboard_trap": "MET",
+    "no_inaccessible_approval_action": "NOT_VERIFIED - requires authentication",
+    "no_inaccessible_mission_action": "NOT_VERIFIED - requires authentication"
+  },
+
+  "not_audited": [
+    "Screen-reader announcement quality with VoiceOver",
+    "Colour contrast ratios (requires pixel sampling across themes)",
+    "Colour-independent meaning of the signal-pulse status system",
+    "Dialog and menu focus management (no dialog reachable unauthenticated)",
+    "Error-to-field programmatic association on validation failures",
+    "144 of 145 routes"
+  ],
+
+  "verdict": "PASS_WITH_LIMITATIONS on the audited surface. Two P2 findings recorded, zero P0/P1. Coverage is explicitly incomplete and must not be read as a whole-application accessibility certification."
+}

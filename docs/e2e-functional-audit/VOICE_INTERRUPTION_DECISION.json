@@ -1,0 +1,93 @@
+{
+  "record": "SAATHIOS_VOICE_INTERRUPTION_DECISION",
+  "phase": "PHASE_10_VOICE_RUNTIME_AND_BARGE_IN_DECISION",
+  "decision": "OPTION_A_IMPLEMENTED",
+  "label": "VOICE_INPUT_INTERRUPTS_OUTPUT",
+  "also_accurate_as": "PUSH_TO_INTERRUPT",
+  "explicitly_not_claimed": [
+    "full duplex",
+    "universal barge-in",
+    "acoustic ducking",
+    "continuous voice-activity interruption while output plays"
+  ],
+
+  "correction_to_prior_report": {
+    "prior_claim": "PLATFORM_BARGE_IN = NOT_IMPLEMENTED",
+    "why_it_was_wrong": "The prior audit read stopPlayback in the chat component and the Stop control in the platform dock, and concluded the platform runtime had no interruption at all. Closer inspection of VoiceRuntimeProvider shows interrupt() already cancelled output, told the server, and only then resumed capture — the ordering Option A requires. The classification was too harsh.",
+    "what_was_genuinely_wrong": "The interrupt path was reachable only when runtime.speaking was true, and that flag is derived exclusively from the server voice session. Audio played through VoiceOutputProvider from any other surface left it false."
+  },
+
+  "implementations_inspected": [
+    {
+      "path": "saathi-os/components/chat/VoiceControl.jsx",
+      "stack": "legacy chat voice",
+      "input": "window.SpeechRecognition / webkitSpeechRecognition",
+      "output": "window.speechSynthesis + SpeechSynthesisUtterance",
+      "interruption": "onresult calls stopPlayback(), which calls speechSynthesis.cancel() and reports stop_latency_ms to POST /api/v1/voice/sessions/{id}/interrupt",
+      "classification": "true barge-in on detected speech, within this stack only"
+    },
+    {
+      "path": "saathi-os/components/voice/VoiceRuntimeProvider.jsx",
+      "stack": "platform voice runtime (M336-M343, private-alpha path)",
+      "input": "window.SpeechRecognition after an explicit getUserMedia gesture",
+      "output": "delegated to VoiceOutputProvider — server-side TTS, polled operation, WAV blob in a detached Audio element",
+      "interruption_before_repair": "interrupt() cancelled output correctly, but toggleMic only reached it when runtime.speaking was true",
+      "classification_after_repair": "VOICE_INPUT_INTERRUPTS_OUTPUT"
+    },
+    {
+      "path": "saathi-os/components/voice/VoiceOutputProvider.jsx",
+      "role": "single owner of assistant audio playback and of the server speech operation lifecycle",
+      "note": "speak() already awaits stop() before starting a new operation, so two responses cannot speak at once. This was already correct."
+    }
+  ],
+
+  "defect": {
+    "id": "DEFECT-007",
+    "severity": "HIGH",
+    "ownership": "APP_OWNED",
+    "title": "Microphone could open while assistant audio was still playing",
+    "root_cause": "lib/voice-runtime.js derives `speaking` as `session.state === \"RESPONDING\" || session.playbackState === \"playing\"` — purely server-session state. VoiceOutputProvider plays audio started from chat, IELTS feedback or the voice dock without that server session entering RESPONDING, so `runtime.speaking` stayed false and toggleMic skipped the interrupt branch entirely, going straight to startBrowserRecognition.",
+    "impact": "Two audio states overlapped: the speaker kept playing while the microphone opened. Beyond the poor experience, an open microphone capturing the device's own speech output is an acoustic feedback path.",
+    "reproducibility": "deterministic by construction — any playback not driven by the server voice session",
+    "resolution": "FIXED"
+  },
+
+  "repair": {
+    "file": "saathi-os/components/voice/VoiceRuntimeProvider.jsx",
+    "change": "toggleMic now awaits voiceOutput.stop() unconditionally before ensureSession() and startBrowserRecognition(), so capture never begins until playback has actually stopped, whichever subsystem started it. voiceOutput added to the dependency array so the callback cannot close over a stale stop().",
+    "why_this_shape": "Smallest correct repair. It reuses the existing single owner of playback rather than introducing shared audio state or any streaming architecture, which the mission explicitly rules out for this closure.",
+    "guarantees": [
+      "current speech output is cancelled immediately on microphone start",
+      "speaker state moves to stopped before capture begins",
+      "the cancellation is awaited, so there is no race",
+      "no two audio states overlap",
+      "output does not resume automatically when the microphone is released",
+      "route change cleans both (DEFECT-003 / DEFECT-004)",
+      "logout cleans both (PLATFORM_CONTEXT_EVENT, plus server-side cancel on logout)"
+    ],
+    "unchanged": "The server-session interrupt() path keeps its existing ordering — stop local audio, record the interrupt server-side, then resume capture."
+  },
+
+  "tests": {
+    "file": "saathi-os/lib/e2e-voice-interruption.test.js",
+    "count": 6,
+    "covers": [
+      "runtime.speaking still reflects only the server session (pins the premise)",
+      "toggleMic cancels output before opening the microphone",
+      "the cancellation is awaited",
+      "voiceOutput is declared as a dependency",
+      "the server-session interrupt path retains its ordering",
+      "releasing the microphone does not restart output"
+    ],
+    "result": "6 passed",
+    "full_frontend_suite_after": "371 passed, 0 failed",
+    "nature": "source-contract tests, matching lib/ielts.test.js. They pin wiring and ordering. Audible confirmation belongs to the owner audio review."
+  },
+
+  "residual_limitation": {
+    "item": "Interruption while output plays requires a deliberate microphone press",
+    "classification": "REQUIRES_PRODUCT_DECISION",
+    "detail": "The platform runtime does not listen continuously during playback, so it cannot interrupt on detected speech the way the legacy chat component does. Adding that would need continuous capture during playback plus echo cancellation — a streaming-architecture change explicitly out of scope for this closure.",
+    "owner_verification": "Checklist item 16 in MANUAL_AUDIO_CHECKLIST.md covers which surface was tested."
+  }
+}

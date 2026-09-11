@@ -1,0 +1,225 @@
+{"prompt_id": "mix_001", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "आजको portfolio risk explain गर"}
+{"prompt_id": "mix_002", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मेरो pending approvals show गर"}
+{"prompt_id": "mix_003", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Trading Guardian को current status के छ?"}
+{"prompt_id": "mix_004", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Portfolio rebalance proposal खोल"}
+{"prompt_id": "mix_005", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "आजको NAV र drawdown compare गर"}
+{"prompt_id": "mix_006", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, यो mission cancel गर"}
+{"prompt_id": "mix_007", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "System health check गर"}
+{"prompt_id": "mix_008", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मलाई today को major market risks देखाऊ"}
+{"prompt_id": "mix_009", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "ExecutionGateway healthy छ?"}
+{"prompt_id": "mix_010", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "आज Saathi मा के काम pending छ?"}
+{"prompt_id": "mix_011", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मेरो portfolio को आजको risk कस्तो छ?"}
+{"prompt_id": "mix_012", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Trading Guardian ठीकसँग चलिरहेको छ?"}
+{"prompt_id": "mix_013", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "आजको market update छोटकरीमा भन"}
+{"prompt_id": "mix_014", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "यो response रोक"}
+{"prompt_id": "mix_015", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, current NAV कति छ?"}
+{"prompt_id": "mix_016", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Open command center र system health देखाऊ"}
+{"prompt_id": "mix_017", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel that response र फेरि सुन"}
+{"prompt_id": "mix_018", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "मेरो active missions list गर"}
+{"prompt_id": "mix_019", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Drawdown कति छ today?"}
+{"prompt_id": "mix_020", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Risk budget कति खर्च भयो?"}
+{"prompt_id": "mix_021", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Position size five percent राख"}
+{"prompt_id": "mix_022", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "आजको drawdown seven point five percent छ?"}
+{"prompt_id": "mix_023", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "NPR fifty thousand भन्दा माथि नजाऊ"}
+{"prompt_id": "mix_024", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Buy five hundred shares भन्दा बढी नगर्नु"}
+{"prompt_id": "mix_025", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Stop loss fifteen percent सेट गर"}
+{"prompt_id": "mix_026", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Cash balance कति छ?"}
+{"prompt_id": "mix_027", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Paper order status देखाऊ"}
+{"prompt_id": "mix_028", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Hedge position review गर"}
+{"prompt_id": "mix_029", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Portfolio weight change explain गर"}
+{"prompt_id": "mix_030", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "P and L today compare गर"}
+{"prompt_id": "mix_031", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Agent runtime healthy छ कि छैन?"}
+{"prompt_id": "mix_032", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Provider connection check गर"}
+{"prompt_id": "mix_033", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Voice session restart गर"}
+{"prompt_id": "mix_034", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Approval queue देखाऊ"}
+{"prompt_id": "mix_035", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मेरो तीन approvals pending छन्?"}
+{"prompt_id": "mix_036", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Research brief short मा दे"}
+{"prompt_id": "mix_037", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Mission priority reorder गर"}
+{"prompt_id": "mix_038", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "यो agent task pause गर"}
+{"prompt_id": "mix_039", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Don't execute anything, just observe"}
+{"prompt_id": "mix_040", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "बस, अहिले नगर्नु"}
+{"prompt_id": "mix_041", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "आजको exposure कति percent छ?"}
+{"prompt_id": "mix_042", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Trading Guardian alerts clear छन्?"}
+{"prompt_id": "mix_043", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मेरो risk budget remaining कति छ?"}
+{"prompt_id": "mix_044", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Portfolio मा largest position कुन हो?"}
+{"prompt_id": "mix_045", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "आजको market regime कस्तो छ?"}
+{"prompt_id": "mix_046", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Model health र voice runtime check गर"}
+{"prompt_id": "mix_047", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Pending missions count कति छ?"}
+{"prompt_id": "mix_048", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Approval without execution only देखाऊ"}
+{"prompt_id": "mix_049", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Rebalance proposal summary दे"}
+{"prompt_id": "mix_050", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Stop talking and listen"}
+{"prompt_id": "mix_051", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "यो action cancel गर immediately"}
+{"prompt_id": "mix_052", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "NAV yesterday सँग compare गर"}
+{"prompt_id": "mix_053", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Cash versus invested ratio बताऊ"}
+{"prompt_id": "mix_054", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Take profit level review गर"}
+{"prompt_id": "mix_055", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Paper trading mode on छ?"}
+{"prompt_id": "mix_056", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Guardian policy status देखाऊ"}
+{"prompt_id": "mix_057", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Execution path blocked छ कि छैन?"}
+{"prompt_id": "mix_058", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Agent handoff complete भयो?"}
+{"prompt_id": "mix_059", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Mission evidence link देखाऊ"}
+{"prompt_id": "mix_060", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Voice barge-in test गर"}
+{"prompt_id": "mix_061", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Quiet mode on गर"}
+{"prompt_id": "mix_062", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Fast summary of portfolio risk दे"}
+{"prompt_id": "mix_063", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Long answer नदेऊ, short status दे"}
+{"prompt_id": "mix_064", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "आजको top three risks list गर"}
+{"prompt_id": "mix_065", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Five percent भन्दा बढी exposure नराख"}
+{"prompt_id": "mix_066", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Fifteen shares किन्नुहोस् भन्ने proposal देखाऊ"}
+{"prompt_id": "mix_067", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Zero point five percent fee हो?"}
+{"prompt_id": "mix_068", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "One point five percent drawdown ok छ?"}
+{"prompt_id": "mix_069", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Fifty thousand NPR cash राख"}
+{"prompt_id": "mix_070", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Five lakh NPR भन्दा माथि investment नजाऊ"}
+{"prompt_id": "mix_071", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Seven point two five percent yield हो?"}
+{"prompt_id": "mix_072", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Three approvals बाँकी छन् confirm गर"}
+{"prompt_id": "mix_073", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Position count fifteen छ?"}
+{"prompt_id": "mix_074", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Risk ratio zero point seven five छ?"}
+{"prompt_id": "mix_075", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "P and L negative छ कि positive?"}
+{"prompt_id": "mix_076", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Hedge notional कति छ?"}
+{"prompt_id": "mix_077", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Budget remaining in NPR बताऊ"}
+{"prompt_id": "mix_078", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Command center dashboard खोल"}
+{"prompt_id": "mix_079", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "System degraded छ?"}
+{"prompt_id": "mix_080", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Runtime memory pressure छ?"}
+{"prompt_id": "mix_081", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Ollama idle छ कि running?"}
+{"prompt_id": "mix_082", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Local STT status देखाऊ"}
+{"prompt_id": "mix_083", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Browser fallback active छ?"}
+{"prompt_id": "mix_084", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Privacy class local हो?"}
+{"prompt_id": "mix_085", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Transcript partial execute नगर्नु"}
+{"prompt_id": "mix_086", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Observe only mode confirm गर"}
+{"prompt_id": "mix_087", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Plan only, execute नगर्नु"}
+{"prompt_id": "mix_088", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Approval required message देखाऊ"}
+{"prompt_id": "mix_089", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Cancel previous assistant response"}
+{"prompt_id": "mix_090", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Resume after false interruption"}
+{"prompt_id": "mix_091", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "आजको portfolio exposure explain गर"}
+{"prompt_id": "mix_092", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "मेरो cash position show गर"}
+{"prompt_id": "mix_093", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Trading Guardian log summary दे"}
+{"prompt_id": "mix_094", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, risk budget reset नगर्नु"}
+{"prompt_id": "mix_095", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Mission complete status के छ?"}
+{"prompt_id": "mix_096", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Agent output review गर"}
+{"prompt_id": "mix_097", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Provider health yellow छ?"}
+{"prompt_id": "mix_098", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Voice input local हो कि browser?"}
+{"prompt_id": "mix_099", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Rebalance weight five percent हो?"}
+{"prompt_id": "mix_100", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Drawdown one point five percent भयो?"}
+{"prompt_id": "mix_101", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "NPR five thousand fee हो?"}
+{"prompt_id": "mix_102", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Stop, यो proposal approve नगर"}
+{"prompt_id": "mix_103", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया आजको portfolio risk explain गर", "variant_of": "mix_001"}
+{"prompt_id": "mix_104", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, आजको portfolio risk explain गर", "variant_of": "mix_001"}
+{"prompt_id": "mix_105", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब आजको portfolio risk explain गर", "variant_of": "mix_001"}
+{"prompt_id": "mix_106", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया मेरो pending approvals show गर", "variant_of": "mix_002"}
+{"prompt_id": "mix_107", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, मेरो pending approvals show गर", "variant_of": "mix_002"}
+{"prompt_id": "mix_108", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब मेरो pending approvals show गर", "variant_of": "mix_002"}
+{"prompt_id": "mix_109", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Trading Guardian को current status के छ?", "variant_of": "mix_003"}
+{"prompt_id": "mix_110", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Trading Guardian को current status के छ?", "variant_of": "mix_003"}
+{"prompt_id": "mix_111", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Trading Guardian को current status के छ?", "variant_of": "mix_003"}
+{"prompt_id": "mix_112", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Portfolio rebalance proposal खोल", "variant_of": "mix_004"}
+{"prompt_id": "mix_113", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Portfolio rebalance proposal खोल", "variant_of": "mix_004"}
+{"prompt_id": "mix_114", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Portfolio rebalance proposal खोल", "variant_of": "mix_004"}
+{"prompt_id": "mix_115", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया आजको NAV र drawdown compare गर", "variant_of": "mix_005"}
+{"prompt_id": "mix_116", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, आजको NAV र drawdown compare गर", "variant_of": "mix_005"}
+{"prompt_id": "mix_117", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब आजको NAV र drawdown compare गर", "variant_of": "mix_005"}
+{"prompt_id": "mix_118", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Saathi, यो mission cancel गर", "variant_of": "mix_006"}
+{"prompt_id": "mix_119", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Saathi, यो mission cancel गर", "variant_of": "mix_006"}
+{"prompt_id": "mix_120", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया System health check गर", "variant_of": "mix_007"}
+{"prompt_id": "mix_121", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, System health check गर", "variant_of": "mix_007"}
+{"prompt_id": "mix_122", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब System health check गर", "variant_of": "mix_007"}
+{"prompt_id": "mix_123", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया मलाई today को major market risks देखाऊ", "variant_of": "mix_008"}
+{"prompt_id": "mix_124", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, मलाई today को major market risks देखाऊ", "variant_of": "mix_008"}
+{"prompt_id": "mix_125", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब मलाई today को major market risks देखाऊ", "variant_of": "mix_008"}
+{"prompt_id": "mix_126", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया ExecutionGateway healthy छ?", "variant_of": "mix_009"}
+{"prompt_id": "mix_127", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, ExecutionGateway healthy छ?", "variant_of": "mix_009"}
+{"prompt_id": "mix_128", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब ExecutionGateway healthy छ?", "variant_of": "mix_009"}
+{"prompt_id": "mix_129", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया आज Saathi मा के काम pending छ?", "variant_of": "mix_010"}
+{"prompt_id": "mix_130", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, आज Saathi मा के काम pending छ?", "variant_of": "mix_010"}
+{"prompt_id": "mix_131", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब आज Saathi मा के काम pending छ?", "variant_of": "mix_010"}
+{"prompt_id": "mix_132", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया मेरो portfolio को आजको risk कस्तो छ?", "variant_of": "mix_011"}
+{"prompt_id": "mix_133", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, मेरो portfolio को आजको risk कस्तो छ?", "variant_of": "mix_011"}
+{"prompt_id": "mix_134", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब मेरो portfolio को आजको risk कस्तो छ?", "variant_of": "mix_011"}
+{"prompt_id": "mix_135", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Trading Guardian ठीकसँग चलिरहेको छ?", "variant_of": "mix_012"}
+{"prompt_id": "mix_136", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Trading Guardian ठीकसँग चलिरहेको छ?", "variant_of": "mix_012"}
+{"prompt_id": "mix_137", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Trading Guardian ठीकसँग चलिरहेको छ?", "variant_of": "mix_012"}
+{"prompt_id": "mix_138", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया आजको market update छोटकरीमा भन", "variant_of": "mix_013"}
+{"prompt_id": "mix_139", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, आजको market update छोटकरीमा भन", "variant_of": "mix_013"}
+{"prompt_id": "mix_140", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब आजको market update छोटकरीमा भन", "variant_of": "mix_013"}
+{"prompt_id": "mix_141", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया यो response रोक", "variant_of": "mix_014"}
+{"prompt_id": "mix_142", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, यो response रोक", "variant_of": "mix_014"}
+{"prompt_id": "mix_143", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब यो response रोक", "variant_of": "mix_014"}
+{"prompt_id": "mix_144", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Saathi, current NAV कति छ?", "variant_of": "mix_015"}
+{"prompt_id": "mix_145", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Saathi, current NAV कति छ?", "variant_of": "mix_015"}
+{"prompt_id": "mix_146", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Open command center र system health देखाऊ", "variant_of": "mix_016"}
+{"prompt_id": "mix_147", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Open command center र system health देखाऊ", "variant_of": "mix_016"}
+{"prompt_id": "mix_148", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Open command center र system health देखाऊ", "variant_of": "mix_016"}
+{"prompt_id": "mix_149", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Cancel that response र फेरि सुन", "variant_of": "mix_017"}
+{"prompt_id": "mix_150", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Cancel that response र फेरि सुन", "variant_of": "mix_017"}
+{"prompt_id": "mix_151", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Cancel that response र फेरि सुन", "variant_of": "mix_017"}
+{"prompt_id": "mix_152", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया मेरो active missions list गर", "variant_of": "mix_018"}
+{"prompt_id": "mix_153", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, मेरो active missions list गर", "variant_of": "mix_018"}
+{"prompt_id": "mix_154", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब मेरो active missions list गर", "variant_of": "mix_018"}
+{"prompt_id": "mix_155", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Drawdown कति छ today?", "variant_of": "mix_019"}
+{"prompt_id": "mix_156", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Drawdown कति छ today?", "variant_of": "mix_019"}
+{"prompt_id": "mix_157", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Drawdown कति छ today?", "variant_of": "mix_019"}
+{"prompt_id": "mix_158", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Risk budget कति खर्च भयो?", "variant_of": "mix_020"}
+{"prompt_id": "mix_159", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Risk budget कति खर्च भयो?", "variant_of": "mix_020"}
+{"prompt_id": "mix_160", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Risk budget कति खर्च भयो?", "variant_of": "mix_020"}
+{"prompt_id": "mix_161", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "कृपया Position size five percent राख", "variant_of": "mix_021"}
+{"prompt_id": "mix_162", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Saathi, Position size five percent राख", "variant_of": "mix_021"}
+{"prompt_id": "mix_163", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "अब Position size five percent राख", "variant_of": "mix_021"}
+{"prompt_id": "mix_164", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "कृपया आजको drawdown seven point five percent छ?", "variant_of": "mix_022"}
+{"prompt_id": "mix_165", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Saathi, आजको drawdown seven point five percent छ?", "variant_of": "mix_022"}
+{"prompt_id": "mix_166", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "अब आजको drawdown seven point five percent छ?", "variant_of": "mix_022"}
+{"prompt_id": "mix_167", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "कृपया NPR fifty thousand भन्दा माथि नजाऊ", "variant_of": "mix_023"}
+{"prompt_id": "mix_168", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "Saathi, NPR fifty thousand भन्दा माथि नजाऊ", "variant_of": "mix_023"}
+{"prompt_id": "mix_169", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": false, "text": "अब NPR fifty thousand भन्दा माथि नजाऊ", "variant_of": "mix_023"}
+{"prompt_id": "mix_170", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "कृपया Buy five hundred shares भन्दा बढी नगर्नु", "variant_of": "mix_024"}
+{"prompt_id": "mix_171", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Saathi, Buy five hundred shares भन्दा बढी नगर्नु", "variant_of": "mix_024"}
+{"prompt_id": "mix_172", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "अब Buy five hundred shares भन्दा बढी नगर्नु", "variant_of": "mix_024"}
+{"prompt_id": "mix_173", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "कृपया Stop loss fifteen percent सेट गर", "variant_of": "mix_025"}
+{"prompt_id": "mix_174", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "Saathi, Stop loss fifteen percent सेट गर", "variant_of": "mix_025"}
+{"prompt_id": "mix_175", "language_class": "MIX", "category": "codeswitch", "contains_numbers": true, "contains_financial_terms": true, "text": "अब Stop loss fifteen percent सेट गर", "variant_of": "mix_025"}
+{"prompt_id": "mix_176", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Cash balance कति छ?", "variant_of": "mix_026"}
+{"prompt_id": "mix_177", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Cash balance कति छ?", "variant_of": "mix_026"}
+{"prompt_id": "mix_178", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Cash balance कति छ?", "variant_of": "mix_026"}
+{"prompt_id": "mix_179", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Paper order status देखाऊ", "variant_of": "mix_027"}
+{"prompt_id": "mix_180", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Paper order status देखाऊ", "variant_of": "mix_027"}
+{"prompt_id": "mix_181", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Paper order status देखाऊ", "variant_of": "mix_027"}
+{"prompt_id": "mix_182", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Hedge position review गर", "variant_of": "mix_028"}
+{"prompt_id": "mix_183", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Hedge position review गर", "variant_of": "mix_028"}
+{"prompt_id": "mix_184", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Hedge position review गर", "variant_of": "mix_028"}
+{"prompt_id": "mix_185", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Portfolio weight change explain गर", "variant_of": "mix_029"}
+{"prompt_id": "mix_186", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Portfolio weight change explain गर", "variant_of": "mix_029"}
+{"prompt_id": "mix_187", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Portfolio weight change explain गर", "variant_of": "mix_029"}
+{"prompt_id": "mix_188", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया P and L today compare गर", "variant_of": "mix_030"}
+{"prompt_id": "mix_189", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, P and L today compare गर", "variant_of": "mix_030"}
+{"prompt_id": "mix_190", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब P and L today compare गर", "variant_of": "mix_030"}
+{"prompt_id": "mix_191", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Agent runtime healthy छ कि छैन?", "variant_of": "mix_031"}
+{"prompt_id": "mix_192", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Agent runtime healthy छ कि छैन?", "variant_of": "mix_031"}
+{"prompt_id": "mix_193", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Agent runtime healthy छ कि छैन?", "variant_of": "mix_031"}
+{"prompt_id": "mix_194", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Provider connection check गर", "variant_of": "mix_032"}
+{"prompt_id": "mix_195", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Provider connection check गर", "variant_of": "mix_032"}
+{"prompt_id": "mix_196", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Provider connection check गर", "variant_of": "mix_032"}
+{"prompt_id": "mix_197", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Voice session restart गर", "variant_of": "mix_033"}
+{"prompt_id": "mix_198", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Voice session restart गर", "variant_of": "mix_033"}
+{"prompt_id": "mix_199", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Voice session restart गर", "variant_of": "mix_033"}
+{"prompt_id": "mix_200", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया Approval queue देखाऊ", "variant_of": "mix_034"}
+{"prompt_id": "mix_201", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, Approval queue देखाऊ", "variant_of": "mix_034"}
+{"prompt_id": "mix_202", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब Approval queue देखाऊ", "variant_of": "mix_034"}
+{"prompt_id": "mix_203", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "कृपया मेरो तीन approvals pending छन्?", "variant_of": "mix_035"}
+{"prompt_id": "mix_204", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "Saathi, मेरो तीन approvals pending छन्?", "variant_of": "mix_035"}
+{"prompt_id": "mix_205", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": true, "text": "अब मेरो तीन approvals pending छन्?", "variant_of": "mix_035"}
+{"prompt_id": "mix_206", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Research brief short मा दे", "variant_of": "mix_036"}
+{"prompt_id": "mix_207", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Research brief short मा दे", "variant_of": "mix_036"}
+{"prompt_id": "mix_208", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Research brief short मा दे", "variant_of": "mix_036"}
+{"prompt_id": "mix_209", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Mission priority reorder गर", "variant_of": "mix_037"}
+{"prompt_id": "mix_210", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Mission priority reorder गर", "variant_of": "mix_037"}
+{"prompt_id": "mix_211", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Mission priority reorder गर", "variant_of": "mix_037"}
+{"prompt_id": "mix_212", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया यो agent task pause गर", "variant_of": "mix_038"}
+{"prompt_id": "mix_213", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, यो agent task pause गर", "variant_of": "mix_038"}
+{"prompt_id": "mix_214", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब यो agent task pause गर", "variant_of": "mix_038"}
+{"prompt_id": "mix_215", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया Don't execute anything, just observe", "variant_of": "mix_039"}
+{"prompt_id": "mix_216", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, Don't execute anything, just observe", "variant_of": "mix_039"}
+{"prompt_id": "mix_217", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब Don't execute anything, just observe", "variant_of": "mix_039"}
+{"prompt_id": "mix_218", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "कृपया बस, अहिले नगर्नु", "variant_of": "mix_040"}
+{"prompt_id": "mix_219", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "Saathi, बस, अहिले नगर्नु", "variant_of": "mix_040"}
+{"prompt_id": "mix_220", "language_class": "MIX", "category": "codeswitch", "contains_numbers": false, "contains_financial_terms": false, "text": "अब बस, अहिले नगर्नु", "variant_of": "mix_040"}
+{"prompt_id": "int_003", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "बस।"}
+{"prompt_id": "int_006", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "यो रोक।"}
+{"prompt_id": "int_012", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "होइन।"}
+{"prompt_id": "int_015", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "रोक्नुहोस्।"}
+{"prompt_id": "int_016", "language_class": "MIX", "category": "interrupt", "contains_numbers": false, "contains_financial_terms": false, "text": "नगर्नुहोस्।"}

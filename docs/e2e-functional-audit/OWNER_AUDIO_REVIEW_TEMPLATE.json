@@ -1,0 +1,99 @@
+{
+  "record": "SAATHIOS_OWNER_AUDIO_REVIEW",
+  "status": "AWAITING_OWNER_INPUT",
+  "note": "Automation prepared this file and must not fill it in. Audible quality is a human judgement. Replace each AWAITING_OWNER_INPUT with true, false, or a short note.",
+  "ui_base": "http://127.0.0.1:3000",
+  "api_base": "http://127.0.0.1:8766",
+  "reviewed_by": "AWAITING_OWNER_INPUT",
+  "reviewed_at": "AWAITING_OWNER_INPUT",
+  "browser_and_os": "AWAITING_OWNER_INPUT",
+  "voices_available": "AWAITING_OWNER_INPUT (run speechSynthesis.getVoices().length in the console)",
+  "phrases": {
+    "english": "Hello Ajay. SaathiOS voice output is working correctly.",
+    "nepali": "नमस्ते अजय। साथी ओएसको आवाज परीक्षण भइरहेको छ।",
+    "mixed": "SaathiOS अहिले local private alpha mode मा चलिरहेको छ।"
+  },
+  "checks": {
+    "english_audible": {
+      "check": "English speech is audible",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "english_understandable": {
+      "check": "English speech is understandable",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "nepali_audible_or_safe_fallback": {
+      "check": "Nepali is audible, or a clear fallback is shown (silence is a defect)",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "mixed_language_acceptable": {
+      "check": "Mixed Nepali/English is handled acceptably",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "stop_halts_speech": {
+      "check": "Stop halts speech immediately, not at end of sentence",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "replay_does_not_overlap": {
+      "check": "Replay does not overlap the previous playback",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "new_response_cancels_old_speech": {
+      "check": "A new response cancels the old speech",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "route_change_stops_speech": {
+      "check": "Navigating to another page stops speech",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "logout_stops_speech": {
+      "check": "Logging out stops speech",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "microphone_indicator_accurate": {
+      "check": "The browser microphone indicator matches the app's state",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "microphone_stops_and_releases": {
+      "check": "Stopping the mic releases it (browser indicator goes out)",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "no_hidden_recording": {
+      "check": "No recording happens without a visible indicator",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "microphone_start_interrupts_output": {
+      "check": "Pressing the mic while audio plays stops the audio first (VOICE_INPUT_INTERRUPTS_OUTPUT)",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "volume_acceptable": {
+      "check": "Volume is comfortable at normal system volume",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    },
+    "persona_label_correct": {
+      "check": "Persona name and avatar are correct and consistent",
+      "result": "AWAITING_OWNER_INPUT",
+      "note": ""
+    }
+  },
+  "surface_tested": {
+    "check": "Which voice surface did you test — platform voice runtime, or chat VoiceControl? They differ; see VOICE_INTERRUPTION_DECISION.json.",
+    "result": "AWAITING_OWNER_INPUT"
+  },
+  "verdict": "AWAITING_OWNER_INPUT (accepted_for_private_alpha | defects_raised)",
+  "defects_raised": []
+}

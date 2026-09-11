@@ -62,9 +62,16 @@ def _cfg(**over) -> InsForgeConfig:
 
 
 def _svc(tmp_path, **cfg_over) -> MigrationService:
+    import httpx
+
     store = ConnectorStore(db_path=tmp_path / "appr.db")
     ledger = MigrationLedger(tmp_path / "ledger.sqlite")
     cfg = _cfg(**cfg_over)
+
+    def transport(request):
+        if request.url.path == "/api/database/tables":
+            return httpx.Response(200, json={"tables": []})
+        return httpx.Response(404, json={"error": "not_found"})
 
     def write_exec(req, plan):
         return {
@@ -76,7 +83,9 @@ def _svc(tmp_path, **cfg_over) -> MigrationService:
 
     return MigrationService(
         config=cfg,
-        provider=InsForgeProvider(config=cfg, audit=False),
+        provider=InsForgeProvider(
+            config=cfg, transport=httpx.MockTransport(transport), audit=False,
+        ),
         ledger=ledger,
         approval_store=store,
         write_executor=write_exec,

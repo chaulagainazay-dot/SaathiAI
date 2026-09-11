@@ -109,6 +109,20 @@ class TestSecurityStore:
         assert latest["hash"] == "hash1"
         assert latest["strength_score"] == 4
 
+    def test_active_owner_password_status_is_boolean_only(self, store):
+        assert store.active_owner_has_password() is False
+        uid = store.get_or_create_owner()
+        store.save_password(uid, "hash1", strength_score=4)
+        assert store.active_owner_has_password() is True
+
+    def test_active_owner_password_verification_stays_inside_store(self, store):
+        uid = store.get_or_create_owner()
+        stored = authsec.hash_password("Owner-only-test-42!")
+        store.save_password(uid, stored, strength_score=4)
+        assert store.verify_active_owner_password("Owner-only-test-42!") is True
+        assert store.verify_active_owner_password("not-the-password") is False
+
+
     def test_session_crud(self, store):
         uid = store.get_or_create_owner()
         store.session_create(uid, "hash123", browser="Chrome", ip_address="1.2.3.4")

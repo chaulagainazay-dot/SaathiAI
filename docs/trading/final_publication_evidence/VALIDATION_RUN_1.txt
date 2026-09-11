@@ -1,0 +1,27 @@
+=== 1 FOCUSED M312-M319 ===
+..............................                                           [100%]
+30 passed in 0.37s
+EXIT:0
+=== 2 REGRESSION M304-M311 ===
+.......                                                                  [100%]
+7 passed in 0.24s
+EXIT:0
+=== 3 CG CERTIFY + AUTHORITY ===
+True TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS failures []
+{'REAL_CONNECTIVITY_AUTHORIZED': False, 'LIVE_TRADING_AUTHORIZED': False, 'ORDER_SUBMISSION_AUTHORIZED': False, 'CANARY_ACTIVATION_AUTHORIZED': False, 'OAUTH_AUTHORIZED': False, 'ACCOUNT_ACCESS_AUTHORIZED': False}
+=== 4 FRONTEND UNIT ===
+▶ M312 connectivity governance UI
+  ✔ page exists and is governance-only (1.0915ms)
+  ✔ has no secret-entry fields (1.141208ms)
+  ✔ renders authority and maturity markers (0.091042ms)
+  ✔ has refuse controls not connect/order activation (0.08375ms)
+✔ M312 connectivity governance UI (3.260666ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.175917
+EXIT:0

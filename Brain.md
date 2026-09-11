@@ -28,6 +28,35 @@ If the answer is the latter, the feature belongs in the product layer, not the p
 
 ## 3. Current Platform State
 
+### NEPSE-TXN-1 normalized transaction import (2026-08-31)
+
+* **What:** Bounded provisional Meroshare, TMS, and Nepal Share adapters now
+  normalize external activity into immutable `NEPSEExternalTransaction`
+  proposals with Decimal money, stable identity, duplicate classification,
+  deterministic reason codes, and complete row accounting.
+* **Authority:** Every accepted row resolves through the canonical NEPSE
+  instrument master. Import does not mutate the Fund Ledger, positions, cash,
+  OMS, Trading Guardian, construction, risk, or execution systems.
+* **Trust:** All three source schemas remain `SOURCE_SCHEMA_UNVERIFIED`; genuine
+  headers are still required by NEPSE-SCHEMA-1. Unknown descriptions stay
+  `UNKNOWN` and original text is preserved.
+* **Evidence:** `docs/trading/nepse/txn-1/`.
+
+### NEPSE-CAL-1.1 Calendar consumer migration (2026-08-30)
+
+* **What:** Historical import, backtest, market-data quality/staleness, bar
+  alignment, and paper-session consumers now use the canonical NEPSE
+  Sunday-Thursday weekly rule. The legacy Monday-Friday implementation and
+  illustrative holiday dates are no longer executable policy.
+* **Trust model:** Holiday coverage remains unknown until genuine versioned
+  annual data is supplied. Raw import may preserve potential sessions with
+  provenance; certified NEPSE backtests require complete coverage and fail
+  closed.
+* **Compatibility:** Old unversioned NEPSE artifacts remain explicitly
+  legacy-invalid and are never relabelled canonical. No trading, approval,
+  risk, construction, ledger, or reconciliation authority changed.
+* **Evidence:** `docs/trading/nepse/cal-1-1/`.
+
 ### M80–M86 Live Conversational Intelligence (2026-07-28)
 
 * **What:** Live Voice now uses real model-backed multi-turn conversation via
@@ -2229,3 +2258,12 @@ READ_ONLY, credential-free, OFF/SHADOW only.
 * **Never** accepts plaintext tokens in CLI/evidence/Git. Never grants CANARY/ACTIVE/rollout/production/write.
 * **Provider:** `github_meta` only — `GET /user`, `GET /meta`. Per-session budget ≤ 3.
 * **M40 not started.** Trading Guardian UNENGAGED.
+### MD-1.1 venue consistency (2026-08-31)
+
+* Canonical market-data identity now validates `instrument_id`, venue, market,
+  and asset class together. Generic omissions remain `UNKNOWN`; explicit NEPSE
+  identity derives `NEPSE`, and no path defaults to XNAS.
+* Historical NEPSE imports enforce NPR, Asia/Kathmandu, and the canonical
+  calendar. Explicit US/XNAS fixtures remain isolated and intentional.
+* **Authority:** identity hardening is data-only; no ledger, approval, guardian,
+  construction, risk, OMS, broker, or execution semantics changed.

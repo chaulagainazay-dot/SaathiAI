@@ -319,8 +319,8 @@ class InsForgeProvider:
 
         # SecurityStore audit (best-effort)
         try:
-            from saathi.security.store import SecurityStore
-            SecurityStore().audit(
+            from saathi.security.store import get_store
+            get_store().audit(
                 f"insforge.{res.operation}",
                 ok=res.ok,
                 user_id="system",

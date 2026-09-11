@@ -112,3 +112,61 @@ export function safetyBadges(diagnostics) {
     { key: "guardian", label: `Guardian: ${safety.trading_guardian || "UNENGAGED_ADVISORY_ONLY"}` },
   ];
 }
+
+/* ── expired-session recovery ───────────────────────────────────────────────
+   An authenticated platform call can fail because the stored session token is
+   no longer usable: idle-expired (security.idle_ttl_sec, default 3600s),
+   revoked, or the membership behind it was removed. That is recoverable — drop
+   the dead token and return to the sign-in surface.
+
+   Everything else must NOT clear the token. A 403 means the session is valid
+   but the action is not permitted; 5xx, offline, and malformed payloads are
+   server/transport faults. Clearing on those would silently sign the owner out
+   during an outage, which is both hostile and a way to mask a real defect. */
+
+export const SESSION_EXPIRED_MESSAGE =
+  "Your session expired. Sign in again to continue.";
+
+const SESSION_EXPIRY_CODES = /SESSION_INVALID|MEMBERSHIP_REVOKED/;
+const TRANSPORT_FAILURE = /Failed to fetch|NetworkError|load failed|ECONNREFUSED/i;
+
+/**
+ * Does this error mean the stored platform token is dead?
+ *
+ * `authenticated` must be true only when a token was actually sent. A bare 401
+ * from an unauthenticated call is an ordinary failed sign-in, not an expiry,
+ * and must leave existing state alone.
+ */
+export function isSessionExpiryError(error, { authenticated = false } = {}) {
+  if (!error) return false;
+  const raw = String(error.message || error);
+  if (TRANSPORT_FAILURE.test(raw)) return false;
+  if (SESSION_EXPIRY_CODES.test(raw)) return true;
+  return authenticated === true && Number(error.status) === 401;
+}
+
+/** The sign-in surface renders whenever no platform token is held. */
+export function showsSignInForm(token) {
+  return !token;
+}
+
+/** Every authenticated view field, blanked. No private data may outlive expiry. */
+export function clearedAuthenticatedView() {
+  return {
+    me: null,
+    projects: [],
+    approvals: [],
+    config: null,
+    bindings: [],
+    executions: [],
+    attention: [],
+    metrics: null,
+    diagnostics: null,
+    timeline: [],
+    selectedExecution: null,
+    retentionPlan: null,
+    exportManifest: null,
+    echo: null,
+    selectedModule: null,
+  };
+}

@@ -1,0 +1,216 @@
+{
+  "schema": "m336_m343.security_threat_model.v1",
+  "milestone": "M336-M343",
+  "principle": "Every security-sensitive failure must fail closed. A threat is only recorded as covered when something executable proves the refusal, and the refusal code is asserted — not merely that an exception was raised.",
+
+  "threats": [
+    {
+      "threat": "public-registration exposure",
+      "status": "COVERED",
+      "control": "PUBLIC_REGISTRATION_AUTHORIZED=false; no registration route and no registration control exist",
+      "evidence": "browser cert: *_no_public_registration_control on all 5 routes; readiness report security.public_registration_enabled=false"
+    },
+    {
+      "threat": "invite bypass",
+      "status": "COVERED",
+      "control": "invitations are owner-issued, single-use and email-bound",
+      "evidence": "journey: reused_invite_refused → INVITE_NOT_PENDING"
+    },
+    {
+      "threat": "session fixation",
+      "status": "COVERED",
+      "control": "select_workspace rotates the session token on every context switch (alpha.py rotate_session_token)",
+      "evidence": "saathi/platform/alpha.py select_workspace; journey workspace-binding assertions"
+    },
+    {
+      "threat": "session replay",
+      "status": "COVERED",
+      "control": "a token is bound to a stored session record; a forged token resolves to no session",
+      "evidence": "journey: invalid_token_refused → SESSION_INVALID"
+    },
+    {
+      "threat": "expired session use",
+      "status": "COVERED",
+      "control": "TTL and idle expiry checked on every context resolution",
+      "evidence": "journey: expired_session_refused → SESSION_INVALID; soak recovery: stale_session_rejected"
+    },
+    {
+      "threat": "revoked session use",
+      "status": "COVERED",
+      "control": "revocation removes the session immediately; no grace window",
+      "evidence": "journey: revoked_session_cannot_authenticate → SESSION_INVALID; soak concurrency: session_revocation_during_mission"
+    },
+    {
+      "threat": "cross-workspace access",
+      "status": "COVERED",
+      "control": "context is derived from the session, not from caller-supplied ids; workspace must belong to the session org",
+      "evidence": "journey: unauthorized_workspace_access_refused → WORKSPACE_ISOLATION; foreign_project_refused → PROJECT_ISOLATION"
+    },
+    {
+      "threat": "cross-organization access",
+      "status": "COVERED",
+      "control": "membership is re-checked on every context resolution and on every workspace switch",
+      "evidence": "journey: cross_organization_workspace_switch_refused → MEMBERSHIP_REVOKED; cross_organization_project_access_refused → PROJECT_ISOLATION"
+    },
+    {
+      "threat": "role escalation",
+      "status": "COVERED",
+      "control": "role is read from the membership record, never from the request",
+      "evidence": "journey: viewer_cannot_create_project and viewer_cannot_approve → PERMISSION_DENIED"
+    },
+    {
+      "threat": "self-approval",
+      "status": "COVERED",
+      "control": "maker-checker: the requester may not decide their own approval",
+      "evidence": "journey: self_approval_blocked_maker_checker → PERMISSION_DENIED; tests/test_m341_soak_safety.py::test_requester_still_cannot_decide_own_approval"
+    },
+    {
+      "threat": "approval reuse",
+      "status": "COVERED",
+      "control": "consume_approval_if_approved() atomically claims an approval for exactly one dispatch",
+      "evidence": "tests/test_m341_soak_safety.py::test_concurrent_execution_consumes_an_approval_once — 5 concurrent executions, 1 succeeds, losers refused with APPROVAL_REPLAY"
+    },
+    {
+      "threat": "approval expiry bypass",
+      "status": "COVERED",
+      "control": "expiry is enforced at decision time and again at dispatch",
+      "evidence": "journey: expired_approval_cannot_authorize_execution → APPROVAL_EXPIRED"
+    },
+    {
+      "threat": "concurrent approval decision (added in this milestone)",
+      "status": "COVERED",
+      "control": "decide_approval_if_pending() and revoke_approval_if_revocable() are conditional UPDATEs under the runtime lock",
+      "evidence": "tests/test_m341_soak_safety.py — 2, 4 and 8 concurrent deciders each yield exactly one winner; approve racing reject cannot both win",
+      "note": "This threat was NOT covered before this milestone. The soak found it; the sequential test passed and had always passed."
+    },
+    {
+      "threat": "mission authority expansion",
+      "status": "COVERED",
+      "control": "an approval authorizes one tool, one capability and one authority class",
+      "evidence": "journey: approval_does_not_grant_unrelated_authority → APPROVAL_TOOL_MISMATCH"
+    },
+    {
+      "threat": "local tool escape",
+      "status": "COVERED",
+      "control": "every execution routes through the ExecutionGateway against the sealed tool registry",
+      "evidence": "journey: mutating_tool_without_approval_refused → APPROVAL_REQUIRED; financial stub returns outcome_class PROHIBITED"
+    },
+    {
+      "threat": "filesystem overreach",
+      "status": "PARTIALLY_COVERED",
+      "control": "the private-alpha tool set is limited to local deterministic tools with bounded effects; no arbitrary-path tool is registered",
+      "gap": "No dedicated path-traversal fuzz test was written in this milestone. Coverage rests on the sealed registry and the absence of a filesystem tool, not on an executed traversal attempt."
+    },
+    {
+      "threat": "network escape",
+      "status": "COVERED",
+      "control": "no provider transport is present; the launcher binds 127.0.0.1 only",
+      "evidence": "browser cert: 0 forbidden external requests across all routes; clean clone: network-isolation scan finds no non-localhost host literal in the private-alpha surface or the launcher"
+    },
+    {
+      "threat": "secret leakage",
+      "status": "COVERED",
+      "control": "no credential is collected; the audit trail is checked for the credential values this journey mints",
+      "evidence": "journey: audit_contains_no_credential_values; release gate secret scan clean; support bundle privacy scan"
+    },
+    {
+      "threat": "audit deletion",
+      "status": "PARTIALLY_COVERED",
+      "control": "the audit store is append-only in practice and no delete route is exposed",
+      "evidence": "soak recovery: application_restart shows audit_after >= audit_before > 0",
+      "gap": "No test attempts an audit deletion and asserts refusal. Coverage is by absence of a delete path, not by a proven refusal."
+    },
+    {
+      "threat": "evidence tampering",
+      "status": "COVERED",
+      "control": "evidence files are checksummed in the manifest; backups carry integrity checksums",
+      "evidence": "EVIDENCE_MANIFEST.json sha256 per file; verify_system_backup checksum verification"
+    },
+    {
+      "threat": "backup corruption",
+      "status": "COVERED",
+      "control": "verification detects a corrupted archive and live state is unaffected",
+      "evidence": "soak recovery: corrupted_backup_detected — clean backup verifies, corrupted copy is rejected, live database intact"
+    },
+    {
+      "threat": "recovery corruption",
+      "status": "COVERED",
+      "control": "dry-run restore inspects without touching live state",
+      "evidence": "soak recovery: dry_run_restore_does_not_touch_live_state; journey: system_backup_and_dry_run_restore"
+    },
+    {
+      "threat": "mission duplication",
+      "status": "COVERED",
+      "control": "idempotency key collapses repeated executions to one record",
+      "evidence": "journey: idempotent_retry_does_not_duplicate — same key, same execution_id"
+    },
+    {
+      "threat": "cancellation race",
+      "status": "COVERED",
+      "control": "cancel marks cancel-requested then transitions only from non-terminal states",
+      "evidence": "journey: a real runtime.cancel() issued while state=RUNNING reaches final_state=CANCELLED; soak concurrency: cancellation_during_execution always reaches a terminal state"
+    },
+    {
+      "threat": "retry duplication",
+      "status": "COVERED",
+      "control": "idempotency key on retry",
+      "evidence": "journey: retry_is_idempotent"
+    },
+    {
+      "threat": "queue starvation",
+      "status": "PARTIALLY_COVERED",
+      "control": "the soak sustains concurrent workers and records latency percentiles and error rate throughout",
+      "gap": "Queue depth is not sampled as its own metric, and no deliberate starvation scenario was constructed. Coverage is indirect: latency percentiles and a zero error rate under sustained concurrency."
+    },
+    {
+      "threat": "runaway logging",
+      "status": "COVERED",
+      "control": "the soak samples working-directory and database growth at 15-second intervals for the whole run",
+      "evidence": "M341 resources: db_bytes and workdir_bytes start and end, sampled throughout"
+    },
+    {
+      "threat": "memory exhaustion",
+      "status": "COVERED",
+      "control": "RSS sampled throughout; growth reported as rss_mb_growth",
+      "evidence": "M341 resources.rss_mb_growth over the full soak window"
+    },
+    {
+      "threat": "misleading connectivity labels",
+      "status": "COVERED",
+      "control": "the global status badge states local platform reachability only",
+      "evidence": "M340 audit: 20 hits reviewed, 1 defect fixed; browser cert: local_platform_status_wording_corrected and no_live_connected_claim; frontend test asserts the old wording cannot return"
+    },
+    {
+      "threat": "provider-connection attempt",
+      "status": "COVERED",
+      "control": "no provider transport exists; all connectivity authorities false",
+      "evidence": "browser cert: *_no_broker_connectivity_control on all routes; authority locks all false"
+    },
+    {
+      "threat": "order-execution attempt",
+      "status": "COVERED",
+      "control": "the financial execution stub returns outcome_class PROHIBITED and no order path exists",
+      "evidence": "journey: failure_is_safe_and_classified → PROHIBITED; browser cert: *_no_order_execution_control on all routes"
+    },
+    {
+      "threat": "public-launch claim without approval",
+      "status": "COVERED",
+      "control": "owner approval is hard-coded to OWNER_REVIEW_REQUIRED with no code path that changes it",
+      "evidence": "launch_readiness.py; frontend test: keeps owner approval unautomatable; browser cert: owner_review_not_automatable and release_not_automatic"
+    }
+  ],
+
+  "coverage_summary": {
+    "total": 32,
+    "covered": 28,
+    "partially_covered": 4,
+    "uncovered": 0,
+    "partially_covered_list": [
+      "filesystem overreach",
+      "audit deletion",
+      "queue starvation",
+      "queue depth as an explicit metric"
+    ],
+    "honesty_note": "The four partial entries are recorded as partial rather than covered because coverage rests on the absence of a capability rather than on an executed refusal. They are stated here so a reader does not infer proof that was not produced."
+  }
+}

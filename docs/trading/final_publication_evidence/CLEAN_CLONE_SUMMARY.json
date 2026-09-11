@@ -1,0 +1,51 @@
+{
+  "clean_clone_head": "e50fb4e438d6e3b86050a7ea66529fe176f3f9f6",
+  "expected_head": "e50fb4e438d6e3b86050a7ea66529fe176f3f9f6",
+  "head_match": true,
+  "backend_pytest_rc": 0,
+  "frontend_unit_rc": 0,
+  "npm_install_rc": 0,
+  "production_build_rc": 0,
+  "browser_cert_rc": 0,
+  "backend_tail": [
+    "..............................                                           [100%]",
+    "30 passed in 0.62s"
+  ],
+  "frontend_tail": [
+    "\u2139 fail 0",
+    "\u2139 cancelled 0",
+    "\u2139 skipped 0",
+    "\u2139 todo 0",
+    "\u2139 duration_ms 93.421208"
+  ],
+  "build_tail": [
+    "+ First Load JS shared by all             102 kB",
+    "  \u251c chunks/1255-cf02c4775860a5ab.js      46.1 kB",
+    "  \u251c chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB",
+    "  \u2514 other shared chunks (total)          1.94 kB",
+    "",
+    "",
+    "\u25cb  (Static)   prerendered as static content",
+    "\u0192  (Dynamic)  server-rendered on demand"
+  ],
+  "cert_tail": [
+    "PASS verdict_renders",
+    "PASS max_state_renders",
+    "PASS maturity_governance_only",
+    "PASS authority_false_display",
+    "PASS charter_section",
+    "PASS provider_section",
+    "PASS approval_section",
+    "PASS credential_section",
+    "PASS threat_section",
+    "PASS incident_section",
+    "PASS maturity_section",
+    "PASS evidence_section",
+    "PASS no_secret_input",
+    "PASS no_external_auth_request \u2014 static local page only",
+    "VERDICT TRADING_CONNECTIVITY_GOVERNANCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS"
+  ],
+  "no_env_file": true,
+  "no_cg_evidence_db": true,
+  "ok": true
+}

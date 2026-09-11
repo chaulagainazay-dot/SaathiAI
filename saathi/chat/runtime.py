@@ -22,6 +22,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import os
 import logging
 import threading
 import time
@@ -357,6 +358,23 @@ def _execute_router_transport(
     timeout_i = int(max(1, min(float(ireq.timeout_seconds), 300)))
     router = ModelRouter(is_available=hp.env_availability)
     chain = router.route(ModelLabel.STANDARD, privacy=privacy, prefer=Prefer.QUALITY)
+    # Optional operator allowlist narrows cloud selection without changing the
+    # default (empty = existing governed chain). Values are provider families
+    # or full canonical router names; unknown entries fail closed by yielding no
+    # candidate rather than widening selection.
+    allowlist_raw = os.getenv("SAATHI_PROVIDER_ALLOWLIST", "")
+    if allowlist_raw.strip():
+        allowed = {item.strip().lower() for item in allowlist_raw.split(",") if item.strip()}
+        chain = [
+            spec for spec in chain
+            if spec.name.lower() in allowed or spec.name.split("/", 1)[0].lower() in allowed
+        ]
+    # Explicit provider selection remains governed: the requested router name
+    # is narrowed to the canonical registry entry, then normal policy/kill and
+    # availability checks still apply below.  No provider is auto-enabled.
+    requested_provider = (getattr(ireq, "engine_hint", "") or "").strip().lower()
+    if requested_provider:
+        chain = [spec for spec in chain if spec.name.lower() == requested_provider]
     if not chain:
         code, msg = map_chat_failure("no_provider", "No available provider")
         return ChatCompletionResult(
