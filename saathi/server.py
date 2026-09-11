@@ -556,11 +556,26 @@ async def connectors_account_add(request: Request):
     from saathi.connectors.accounts import default_store
     if not body.get("provider"):
         return {"ok": False, "error": "provider required"}
-    a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
-                            email=body.get("email", ""), scopes=body.get("scopes") or [],
-                            secret=body.get("secret") or None, status=body.get("status", "connected"))
+    # A caller registering an account cannot declare the provider accepted it.
+    # `status` is deliberately NOT read from the body: the store refuses
+    # CONNECTED at creation, and letting the request pick any other state would
+    # just move the same false claim one field along.
+    from saathi.connectors.accounts import AccountStatus
+    try:
+        a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
+                                email=body.get("email", ""), scopes=body.get("scopes") or [],
+                                secret=body.get("secret") or None)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
     a.pop("secret", None)
-    return {"ok": True, "account": a}
+    return {
+        "ok": True,
+        "account": a,
+        # Said outright so a UI cannot read a successful write as a live
+        # connection: storing a credential is configuration, not confirmation.
+        "verified": False,
+        "next": f"status is {AccountStatus.AUTH_REQUIRED.value} until the provider verifies it",
+    }
 
 
 @app.post("/api/v1/connectors/accounts/{aid}/mission")
