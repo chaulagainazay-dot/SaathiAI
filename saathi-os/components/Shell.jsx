@@ -24,6 +24,7 @@ import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
 import VoiceOutputDock from "./voice/VoiceOutputDock";
 import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
 import VoiceRuntimeDock from "./voice/VoiceRuntimeDock";
+import AuthGate from "./AuthGate";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
@@ -166,6 +167,7 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
+      <AuthGate />
       {!dedicatedCaptureRoute && <VoiceRuntimeDock />}
       <VoiceOutputDock />
       <CommandPalette

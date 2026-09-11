@@ -396,6 +396,52 @@ class SecurityStore:
         self.db.commit()
         return cur.rowcount
 
+    def session_prune(self, user_id: str) -> dict:
+        """Hard-delete expired AND revoked sessions. Returns {expired, revoked}.
+
+        Live sessions (not expired, not revoked) are never touched. Safe to run
+        opportunistically (e.g. on each login) for a private single-owner install.
+        """
+        now = self._now()
+        exp = self.db.execute(
+            "DELETE FROM sessions WHERE user_id=? AND revoked=0 AND expires_at <= ?",
+            (user_id, now),
+        ).rowcount
+        rev = self.db.execute(
+            "DELETE FROM sessions WHERE user_id=? AND revoked=1",
+            (user_id,),
+        ).rowcount
+        self.db.commit()
+        return {"expired": exp, "revoked": rev}
+
+    def session_counts(self, user_id: str) -> dict:
+        """Non-secret session metadata for owner diagnostics — no tokens leaked."""
+        now = self._now()
+        rows = self.db.execute(
+            "SELECT revoked, expires_at, first_seen FROM sessions WHERE user_id=?",
+            (user_id,),
+        ).fetchall()
+        active = expired = revoked = 0
+        oldest_active = None
+        for r in rows:
+            d = dict(r)
+            if d.get("revoked"):
+                revoked += 1
+            elif (d.get("expires_at") or 0) <= now:
+                expired += 1
+            else:
+                active += 1
+                fs = d.get("first_seen") or now
+                if oldest_active is None or fs < oldest_active:
+                    oldest_active = fs
+        return {
+            "active": active,
+            "expired": expired,
+            "revoked": revoked,
+            "total": len(rows),
+            "oldest_active_age_seconds": (int(now - oldest_active) if oldest_active else 0),
+        }
+
     def session_rename(self, session_id: str, label: str) -> bool:
         cur = self.db.execute("UPDATE sessions SET label=? WHERE id=?",
                               (label[:60], session_id))

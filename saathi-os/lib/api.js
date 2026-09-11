@@ -20,10 +20,39 @@ export function setSessionToken(t) { try { if (t) localStorage.setItem("saathi_s
 /** Whether a Baadar session token is present in this browser. */
 export function hasSessionToken() { return Boolean(_tok()); }
 export function clearSessionToken() { try { localStorage.removeItem("saathi_session"); } catch {} }
+// Auth endpoints manage their own 401s (wrong password, session probe) and must
+// NOT trigger stale-session recovery — otherwise a bad login would look like a
+// revoked session.
+function _isAuthEndpoint(url) {
+  const u = String(url);
+  return u.includes("/api/v1/auth/login")
+      || u.includes("/api/v1/auth/session")   // covers /session and /sessions*
+      || u.includes("/api/v1/auth/logout")
+      || u.includes("/api/v1/auth/reset")
+      || u.includes("/api/v1/auth/forgot")
+      || u.includes("/api/v1/auth/passkey");
+}
+
+// Central authenticated fetch. On a genuine auth 401 for a request that CARRIED
+// a token, clear the stale token and fire `saathi:auth-required` ONCE — no
+// retry, no auto-replay of the original request. Behaviour is otherwise
+// identical to a plain fetch (backward compatible: still resolves to Response).
 export function afetch(url, opts = {}) {
   const h = { ...(opts.headers || {}) };
   const t = _tok(); if (t) h["x-baadar-session"] = t;
-  return fetch(url, { credentials: "include", ...opts, headers: h });
+  return fetch(url, { credentials: "include", ...opts, headers: h }).then((res) => {
+    if (res.status === 401 && t && !_isAuthEndpoint(url)) {
+      try { localStorage.removeItem("saathi_session"); } catch {}
+      try {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("saathi:auth-required", {
+            detail: { url: String(url), method: (opts.method || "GET").toUpperCase() },
+          }));
+        }
+      } catch {}
+    }
+    return res;   // caller still handles the response; no automatic retry
+  });
 }
 
 

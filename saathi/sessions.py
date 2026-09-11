@@ -141,6 +141,47 @@ def revoke_all(except_token: str = "") -> int:
     return _store().session_revoke_all(_owner_id(), except_hash=keep_th)
 
 
+def prune() -> dict:
+    """Hard-delete the owner's expired + revoked sessions. Returns {expired, revoked}."""
+    return _store().session_prune(_owner_id())
+
+
+def counts() -> dict:
+    """Non-secret session counts for owner diagnostics (no token material)."""
+    return _store().session_counts(_owner_id())
+
+
+def revoke_all_including_current() -> int:
+    """Owner emergency: revoke EVERY session incl. the caller's own."""
+    return _store().session_revoke_all(_owner_id(), except_hash="")
+
+
+def status(token: str) -> dict:
+    """Validity + non-secret metadata of one token's session. Never returns the token.
+
+    `id` is token_hash[:12] — a bounded, irreversible fingerprint, safe to surface."""
+    if not token:
+        return {"authenticated": False, "session": None}
+    th = _hash(token)
+    rec = _store().session_by_hash(th)
+    valid = validate(token, touch=False)
+    if not rec:
+        return {"authenticated": valid, "session": None}
+    return {
+        "authenticated": valid,
+        "session": {
+            "id": rec.get("id", th[:12]),
+            "created_at": rec.get("first_seen", 0),
+            "last_used_at": rec.get("last_seen", 0),
+            "expires_at": rec.get("expires_at", 0),
+            "remember_me": bool(rec.get("remember_me", 1)),
+            "revoked": bool(rec.get("revoked", 0)),
+            "browser": rec.get("browser", "Unknown"),
+            "device_name": rec.get("device_name", "Unknown"),
+        },
+    }
+
+
 def rename(session_id: str, label: str) -> bool:
     return _store().session_rename(session_id, label)
 

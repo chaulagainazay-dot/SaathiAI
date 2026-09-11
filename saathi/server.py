@@ -1924,6 +1924,11 @@ async def _auth(request, call_next):
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
+            # Session validity probe — must be reachable WITHOUT auth so the
+            # frontend can detect a stale/absent token cleanly (returns
+            # {authenticated:false}, never a 401, never token material). Exact
+            # match only: the plural /api/v1/auth/sessions* stays gated.
+            or path == "/api/v1/auth/session"
             or path == "/api/v1/auth/forgot"
             or path.startswith("/api/v1/auth/reset")
             or path.startswith("/api/v1/auth/passkey")
@@ -1968,6 +1973,15 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
             or path == "/api/v1/workspace"
+            # Voice auth policy (deliberate, not accidental): only the two
+            # stateless, ephemeral endpoints used by the always-on mic are
+            # exempt — /voice/command and /voice/transcribe. Everything else
+            # under /api/v1/voice/* stays gated: /voice/enroll writes a
+            # biometric voiceprint, and the voice_os router (/voice/sessions,
+            # /turns, /preferences, …) carries conversation + authority state.
+            # The frontend already authenticates those via afetch()
+            # (lib/api.js enrollVoice, components/chat/VoiceControl.jsx), so do
+            # NOT add them here — that would drop auth on sensitive operations.
             or path == "/api/v1/voice/command"
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
@@ -2060,6 +2074,13 @@ def login(body: LoginIn, request: Request):
                             device_name=device_name, failed_attempts=0)
     token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
     sid = sessions.session_id(token)
+    # Opportunistic lifecycle hygiene: drain expired + revoked rows on each
+    # login so the session table stays bounded without a background job.
+    try:
+        _p = sessions.prune()
+        _LAST_PRUNE.update({"at": time.time(), **_p})
+    except Exception:
+        pass
     authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
     # Record security event
     from saathi.security.timeline import get_timeline
@@ -2322,6 +2343,84 @@ async def rename_session(sid: str, request: Request):
     body = await request.json()
     label = (body.get("label") or "")[:60]
     return {"ok": sessions.rename(sid, label)}
+
+
+# ── Session lifecycle & auth recovery (M — session-lifecycle milestone) ──────
+def _bearer(request) -> str:
+    """The caller's session token from cookie or header (never logged)."""
+    cookies = getattr(request, "cookies", None) or {}
+    return cookies.get("baadar_session") or request.headers.get("x-baadar-session", "")
+
+
+# Tracks the last opportunistic/explicit prune result for owner diagnostics.
+_LAST_PRUNE: dict = {"at": 0.0, "expired": 0, "revoked": 0}
+
+
+@app.get("/api/v1/auth/session")
+def auth_session(request: Request):
+    """Validate the caller's current token and return NON-SECRET session metadata.
+
+    Whitelisted so the frontend can check auth state on startup WITHOUT tripping
+    the 401 gate. Returns `{authenticated: bool, session: {...}|null}` — an invalid
+    or stale token yields `authenticated: false` (a clean signal), never a 401 and
+    never any token material."""
+    return _sessions_mod().status(_bearer(request))
+
+
+def _sessions_mod():
+    from saathi import sessions
+    return sessions
+
+
+@app.get("/api/v1/auth/sessions/diagnostics")
+def sessions_diagnostics(request: Request):
+    """Owner-facing session diagnostics — counts + current session + last prune.
+
+    No raw tokens; `current.id` is a bounded irreversible fingerprint."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    st = sessions.status(_bearer(request))
+    return {
+        "counts": sessions.counts(),
+        "current": st.get("session"),
+        "last_prune": dict(_LAST_PRUNE),
+    }
+
+
+@app.post("/api/v1/auth/sessions/prune")
+def sessions_prune(request: Request):
+    """Owner-triggered hard prune of expired + revoked sessions."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    res = sessions.prune()
+    _LAST_PRUNE.update({"at": time.time(), **res})
+    from saathi import authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    authsec.audit("session_prune", ok=True, ip=ip, ua=request.headers.get("user-agent", ""),
+                  detail=f"expired_{res['expired']}_revoked_{res['revoked']}")
+    return {"ok": True, "pruned": res, "counts": sessions.counts()}
+
+
+@app.post("/api/v1/auth/sessions/revoke-all-including-current")
+def revoke_all_including_current(request: Request):
+    """Owner emergency: revoke EVERY session including the caller's own, then
+    clear the caller's cookie. The caller must sign in again afterwards."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    from saathi import authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    count = sessions.revoke_all_including_current()
+    authsec.audit("revoke_all_including_current", ok=True, ip=ip,
+                  ua=request.headers.get("user-agent", ""), detail=f"revoked_{count}")
+    r = JSONResponse({"ok": True, "revoked": count})
+    r.delete_cookie("baadar_session", samesite="none", secure=True)
+    return r
 
 
 # ── Phase 2: Passkey Management ──────────────────────────────────────────────
@@ -3533,7 +3632,7 @@ async def studio_voice(body: VoiceIn, request: Request):
     from pathlib import Path as _Path
     voices_dir = _Path.home() / "SaathiAI" / "voices_output"
     voices_dir.mkdir(exist_ok=True)
-    output_path = voices_dir / f"voice_{int(_time.time())}.mp3"
+    output_path = voices_dir / f"voice_{int(time.time())}.mp3"
     try:
         from gtts import gTTS
         tts = gTTS(text=body.text[:1000], lang="en", tld=body.accent, slow=False)
