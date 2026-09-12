@@ -190,3 +190,34 @@ def test_cap_eviction_is_auditable_via_revoke(sessions):
     sessions.enforce_cap(keep_token=toks[-1], cap=2)
     pruned = sessions.prune()
     assert pruned["revoked"] >= 2  # evicted rows are revoked, then hard-pruned
+
+
+# ── Issue 2: cap migration is consent-gated (login never silently collapses) ──
+def test_cap_not_enforced_before_migration(sessions):
+    toks = [sessions.create(ua=f"s{i}") for i in range(15)]
+    assert sessions.policy_migrated() is False
+    # login-time enforcement is a no-op until explicit migration
+    evicted = sessions.enforce_cap_if_migrated(keep_token=toks[-1])
+    assert evicted == 0
+    assert sessions.counts()["active"] == 15  # historical untouched
+
+
+def test_explicit_migration_collapses_then_marks(sessions):
+    toks = [sessions.create(ua=f"s{i}") for i in range(15)]
+    res = sessions.migrate_sessions(keep_token=toks[-1], cap=10)
+    assert res["already_migrated"] is False
+    assert sessions.policy_migrated() is True
+    assert sessions.counts()["active"] == 10
+    assert sessions.validate(toks[-1], touch=False) is True  # current preserved
+
+
+def test_cap_enforced_after_migration_on_login(sessions):
+    sessions.mark_policy_migrated()
+    toks = [sessions.create(ua=f"s{i}") for i in range(13)]
+    evicted = sessions.enforce_cap_if_migrated(keep_token=toks[-1])
+    assert evicted == 3  # 13 - 10
+    assert sessions.counts()["active"] == 10
+
+
+def test_default_cap_is_ten(sessions):
+    assert sessions.MAX_ACTIVE_SESSIONS == 10

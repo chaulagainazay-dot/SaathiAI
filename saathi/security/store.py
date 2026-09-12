@@ -206,6 +206,13 @@ VALUES
     ('role-admin',  'Admin',  '["read","write","delete","invite"]', 1750963200),
     ('role-member', 'Member', '["read","write"]', 1750963200),
     ('role-viewer', 'Viewer', '["read"]', 1750963200);
+
+-- Generic local key/value settings (e.g. one-time session-policy migration marker).
+CREATE TABLE IF NOT EXISTS app_kv (
+    key         TEXT PRIMARY KEY,
+    value       TEXT,
+    updated_at  REAL
+);
 """
 
 _INDEXES = """
@@ -413,6 +420,19 @@ class SecurityStore:
         ).rowcount
         self.db.commit()
         return {"expired": exp, "revoked": rev}
+
+    # ── generic kv (local settings / migration markers) ──────────────────────
+    def kv_get(self, key: str) -> "str | None":
+        row = self.db.execute("SELECT value FROM app_kv WHERE key=?", (key,)).fetchone()
+        return row["value"] if row else None
+
+    def kv_set(self, key: str, value: str) -> None:
+        self.db.execute(
+            "INSERT INTO app_kv (key, value, updated_at) VALUES (?,?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            (key, value, self._now()),
+        )
+        self.db.commit()
 
     def session_enforce_cap(self, user_id: str, cap: int, keep_hash: str = "") -> int:
         """Bound active sessions to `cap` via LRU eviction (revoke oldest by

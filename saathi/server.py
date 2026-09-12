@@ -2084,7 +2084,7 @@ def login(body: LoginIn, request: Request):
     # Bounded concurrency: keep the newest N active sessions (LRU eviction),
     # never the one just minted. Prevents hundreds of live owner sessions.
     try:
-        _evicted = sessions.enforce_cap(keep_token=token)
+        _evicted = sessions.enforce_cap_if_migrated(keep_token=token)
         if _evicted:
             authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
     except Exception:
@@ -2191,7 +2191,7 @@ async def passkey_login_verify(request: Request):
     # Same bounded-concurrency hygiene as password login.
     try:
         sessions.prune()
-        _evicted = sessions.enforce_cap(keep_token=token)
+        _evicted = sessions.enforce_cap_if_migrated(keep_token=token)
         if _evicted:
             authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
     except Exception:

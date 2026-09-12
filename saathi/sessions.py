@@ -161,6 +161,42 @@ def enforce_cap(keep_token: str = "", cap: int | None = None) -> int:
     return _store().session_enforce_cap(_owner_id(), limit, keep_hash=keep)
 
 
+# ── one-time historical migration (consent-gated) ─────────────────────────────
+# The cap is the permanent FUTURE policy, but activating it must NOT let an
+# ordinary login silently mass-revoke hundreds of pre-policy sessions. Cap
+# enforcement on login is therefore gated on this marker: it stays off until the
+# owner explicitly migrates (via the local reset/migrate CLI), which collapses
+# the historical excess once and flips the marker. Afterwards every login
+# enforces the cap normally, with no repeated prompt/state.
+_MIGRATION_KEY = "session_cap_migrated"
+
+
+def policy_migrated() -> bool:
+    return _store().kv_get(_MIGRATION_KEY) == "1"
+
+
+def mark_policy_migrated() -> None:
+    _store().kv_set(_MIGRATION_KEY, "1")
+
+
+def enforce_cap_if_migrated(keep_token: str = "") -> int:
+    """Login-time enforcement: no-op until the owner has explicitly migrated."""
+    if not policy_migrated():
+        return 0
+    return enforce_cap(keep_token=keep_token)
+
+
+def migrate_sessions(keep_token: str = "", cap: int | None = None) -> dict:
+    """Explicit one-time collapse of historical sessions to the cap, then flip the
+    marker so future logins enforce normally. Idempotent after the first run."""
+    already = policy_migrated()
+    evicted = enforce_cap(keep_token=keep_token, cap=cap)
+    pruned = prune()
+    _store().kv_set(_MIGRATION_KEY, "1")
+    return {"already_migrated": already, "evicted": evicted, "pruned": pruned,
+            "counts": counts()}
+
+
 def counts() -> dict:
     """Non-secret session counts for owner diagnostics (no token material)."""
     return _store().session_counts(_owner_id())

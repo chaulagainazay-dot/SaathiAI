@@ -17,9 +17,10 @@ test("dev script serves the canonical :3100, never :3000", () => {
   assert.doesNotMatch(pkg.scripts.dev, /-p 3000\b/, "dev must not pin :3000");
 });
 
-test("start script is PORT-driven (no hard-coded port) so prod keeps its PORT env", () => {
+test("start defaults to :3100 locally but honors PORT (prod override)", () => {
+  // bare `npm start` (no PORT) must not fall back to Next's :3000 default.
+  assert.match(pkg.scripts.start, /\$\{PORT:-3100\}/, "start must default to 3100 via ${PORT:-3100}");
   assert.doesNotMatch(pkg.scripts.start, /-p 3000\b/, "start must not hard-code :3000");
-  assert.doesNotMatch(pkg.scripts.start, /-p 3100\b/, "start must not hard-code :3100 (breaks VM PORT=3000)");
 });
 
 test("local launcher pins the UI to :3100 and does not gate on :3000", () => {

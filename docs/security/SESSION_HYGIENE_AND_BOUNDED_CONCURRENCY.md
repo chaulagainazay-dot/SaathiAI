@@ -29,3 +29,24 @@ Not executed. On the owner's **next real login the cap will keep the newest 10 a
 - `POST /api/v1/auth/sessions/revoke-all` → revokes 582, keeps current.
 - `POST /api/v1/auth/sessions/revoke-all-including-current` → revokes all 583 (then re-login).
 All 583 carry `Unknown` device metadata (programmatic/cert artifacts), so few/no real browser devices should need to sign in again. The owner decides. `OWNER_APPROVAL_REQUIRED_FOR_HISTORICAL_SESSION_COLLAPSE`.
+
+---
+
+## Closure (three bounded issues, 2026-09-12)
+
+### Issue 1 — owner password recovery (no secret exposed)
+Password sources: `.env BAADAR_PASSWORD` → `_PASSWORD_HASH` (env-derived) + the security-store owner credential (PBKDF2-600k) checked live by `verify_active_owner_password`. Owner couldn't log in = unknown `.env` value (recoverable but deliberately not read/printed). New local CLI **`scripts/reset_owner_password.py`** (LOCAL OPERATOR ONLY, no network/listener): prompts interactively (getpass) with confirmation + strength check, writes the new credential to BOTH the store (immediate) and `.env` (persistence), revokes all sessions, marks migration, audits (`owner_password_reset`, no secret). PBKDF2 unchanged; no Argon2; no default/backdoor password; no unauthenticated reset endpoint. Verified end-to-end in an isolated temp DB/.env (throwaway password, never printed). **Old env-derived password only leaves memory on backend restart** — the CLI prints the restart step.
+
+### Issue 2 — historical collapse is now truly consent-gated
+The cap (10) is the permanent FUTURE policy, but login-time enforcement is gated on a one-time marker (`app_kv.session_cap_migrated`): `enforce_cap_if_migrated()` is a **no-op until the owner explicitly migrates**. So an ordinary login (or inspection, or password-recovery investigation) never silently revokes the historical 583. Explicit collapse happens via `sessions.migrate_sessions()` (or the password reset, which revokes all + sets the marker). After migration every login enforces the cap normally, with no repeated prompt.
+
+### Issue 3 — :3000 can no longer become a local default
+`package.json` `start` is now `next start -H 127.0.0.1 -p ${PORT:-3100}` — bare `npm start` binds **3100** (proven: EADDRINUSE on 3100 when launchd holds it), while an explicit `PORT` still overrides (proven: `PORT=3399` bound 3399). Production keeps `:3000` through its **explicit** `deploy/oracle/saathi-ui.service` `Environment=PORT=3000` — a deployment override, not the package default. `dev`=3100, `start_local.sh`=3100, launchd `com.saathi.local`=3100. Guard test updated.
+
+### Real owner reset — OWNER-INTERACTIVE, NOT PERFORMED HERE
+The real reset requires the owner to choose their password interactively; an automated session must not set or know it. So it was NOT executed against the real DB — real live sessions remain **583** until the owner runs:
+```
+python scripts/reset_owner_password.py        # interactive; revokes all 583, sets new password
+launchctl kickstart -k gui/$(id -u)/com.saathi.local   # reload backend
+```
+This reset is the approved historical collapse (explicit, owner-invoked, service/API tokens untouched, auditable, ends within cap). After it: active→0 then 1 on first login; cap governs thereafter.
