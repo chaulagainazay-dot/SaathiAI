@@ -137,3 +137,56 @@ def test_ttl_bounded_and_remember_longer(sessions):
     now = time.time()
     assert 0 < (ss["expires_at"] - now) <= 24 * 3600 + 5          # ~24h
     assert 24 * 3600 < (ls["expires_at"] - now) <= 30 * 24 * 3600 + 5  # ~30d, bounded
+
+
+# ── M — bounded active-session concurrency (session cap + LRU eviction) ──
+def test_session_cap_enforced_lru_eviction(sessions):
+    # cap = 3; create 5 live sessions; the newest one is "current" and kept
+    toks = [sessions.create(ua=f"s{i}") for i in range(5)]
+    # touch is by last_seen; create order == last_seen order (ascending)
+    evicted = sessions.enforce_cap(keep_token=toks[-1], cap=3)
+    assert evicted == 2  # 5 - 3
+    live = [t for t in toks if sessions.validate(t, touch=False)]
+    assert len(live) == 3
+    assert sessions.validate(toks[-1], touch=False) is True   # current survives
+    assert sessions.validate(toks[0], touch=False) is False   # oldest evicted
+    assert sessions.validate(toks[1], touch=False) is False
+
+
+def test_login_below_cap_keeps_all(sessions):
+    toks = [sessions.create(ua=f"s{i}") for i in range(3)]
+    evicted = sessions.enforce_cap(keep_token=toks[-1], cap=5)
+    assert evicted == 0
+    assert all(sessions.validate(t, touch=False) for t in toks)
+
+
+def test_cap_never_revokes_current_no_lockout(sessions):
+    # Safety-first: even when the current session is the OLDEST, cap enforcement
+    # must never revoke it (no owner lockout). It may leave cap+1 in that edge;
+    # in the real login path current is always newest, so the cap is exact.
+    a = sessions.create(ua="old")
+    import time as _t; _t.sleep(0.01)
+    sessions.create(ua="new")
+    sessions.enforce_cap(keep_token=a, cap=1)
+    assert sessions.validate(a, touch=False) is True  # current never revoked
+
+
+def test_cap_ignores_expired_and_revoked(sessions):
+    from saathi.security.store import get_store
+    import hashlib, time as _t
+    live = [sessions.create(ua=f"L{i}") for i in range(2)]
+    # an expired row + a revoked row should not count toward the cap
+    get_store().session_create(user_id=sessions._owner_id(),
+        token_hash=hashlib.sha256(b"exp").hexdigest(), expires_at=_t.time()-5)
+    dead = sessions.create(ua="dead"); sessions.revoke(sessions.session_id(dead))
+    evicted = sessions.enforce_cap(keep_token=live[-1], cap=5)
+    assert evicted == 0  # only 2 active, under cap
+    assert all(sessions.validate(t, touch=False) for t in live)
+
+
+def test_cap_eviction_is_auditable_via_revoke(sessions):
+    # evicted sessions are soft-revoked (validate False) then prunable
+    toks = [sessions.create(ua=f"s{i}") for i in range(4)]
+    sessions.enforce_cap(keep_token=toks[-1], cap=2)
+    pruned = sessions.prune()
+    assert pruned["revoked"] >= 2  # evicted rows are revoked, then hard-pruned

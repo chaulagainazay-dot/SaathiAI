@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Always-on local SaathiAI: FastAPI API (:8765) + SaathiAI OS dashboard (:3000).
+# Always-on local SaathiAI: FastAPI API (:8765) + SaathiAI OS dashboard (:3100).
 # So you can do everything from localhost on the Mac. Loaded by launchd at login.
+# CANONICAL LOCAL FRONTEND = http://localhost:3100 (was :3000; retired 2026-09-12
+# to end the split-brain where a stale :3000 server served an old build).
 set -e
 cd "$HOME/SaathiAI"
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
@@ -28,8 +30,14 @@ fi
 cd saathi-os
 export NEXT_PUBLIC_SAATHI_API="${SAATHI_OS_DATA:-http://127.0.0.1:8765}"
 export NEXT_PUBLIC_LOCAL_API="http://localhost:8765"
-if ! curl -s -o /dev/null http://localhost:3000 2>/dev/null; then
+# Canonical local frontend port. `npm run start` now honours PORT (package.json
+# no longer hard-codes -p), so the Oracle VM keeps its own PORT=3000 while the
+# Mac runs the one canonical UI on :3100.
+export PORT=3100
+export SAATHI_OS_URL="http://localhost:3100"      # API root redirect → local UI
+export SAATHI_SELF_BASE="http://127.0.0.1:3100"   # Next server-side self-fetch base
+if ! curl -s -o /dev/null http://localhost:3100 2>/dev/null; then
   npm run build >/dev/null 2>&1 || true
-  nohup npm run start -- -H 127.0.0.1 >/dev/null 2>&1 &   # localhost-only UI listener
+  nohup npm run start -- -H 127.0.0.1 >/dev/null 2>&1 &   # localhost-only UI listener on :3100
 fi
 wait

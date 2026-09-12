@@ -6,11 +6,18 @@ The backend now uses SQLite via Security Store instead of JSON files.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import secrets
 import time
 
 from saathi.security.store import get_store
+
+# Bounded active-session policy for this private, single-owner install. A small
+# global cap with LRU eviction prevents hundreds of live owner sessions from
+# accumulating again, without per-device fingerprinting (device identity is not
+# reliably available). Remember-me TTL (30d) is unchanged. Env-overridable.
+MAX_ACTIVE_SESSIONS = max(1, int(os.getenv("SAATHI_MAX_ACTIVE_SESSIONS", "10")))
 
 
 def _hash(token: str) -> str:
@@ -144,6 +151,14 @@ def revoke_all(except_token: str = "") -> int:
 def prune() -> dict:
     """Hard-delete the owner's expired + revoked sessions. Returns {expired, revoked}."""
     return _store().session_prune(_owner_id())
+
+
+def enforce_cap(keep_token: str = "", cap: int | None = None) -> int:
+    """Bound active owner sessions to the global cap via LRU eviction, never
+    revoking `keep_token` (the current session). Returns count revoked."""
+    limit = MAX_ACTIVE_SESSIONS if cap is None else cap
+    keep = _hash(keep_token) if keep_token else ""
+    return _store().session_enforce_cap(_owner_id(), limit, keep_hash=keep)
 
 
 def counts() -> dict:

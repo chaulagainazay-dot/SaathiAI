@@ -414,6 +414,28 @@ class SecurityStore:
         self.db.commit()
         return {"expired": exp, "revoked": rev}
 
+    def session_enforce_cap(self, user_id: str, cap: int, keep_hash: str = "") -> int:
+        """Bound active sessions to `cap` via LRU eviction (revoke oldest by
+        last_seen). Never revokes `keep_hash` (the current/just-minted session)
+        and never touches expired/revoked rows. Soft-revoke (audit-friendly);
+        opportunistic prune hard-deletes them later. Returns count revoked."""
+        if cap <= 0:
+            return 0
+        now = self._now()
+        rows = self.db.execute(
+            "SELECT token_hash FROM sessions WHERE user_id=? AND revoked=0 AND expires_at>?"
+            " ORDER BY last_seen DESC",
+            (user_id, now),
+        ).fetchall()
+        active = [r["token_hash"] for r in rows]
+        # keep the `cap` most-recently-used; revoke the rest, never the current one
+        to_revoke = [h for h in active[cap:] if h != keep_hash]
+        for h in to_revoke:
+            self.db.execute("UPDATE sessions SET revoked=1 WHERE token_hash=?", (h,))
+        if to_revoke:
+            self.db.commit()
+        return len(to_revoke)
+
     def session_counts(self, user_id: str) -> dict:
         """Non-secret session metadata for owner diagnostics — no tokens leaked."""
         now = self._now()

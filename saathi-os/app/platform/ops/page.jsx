@@ -278,7 +278,7 @@ export default function OperatorConsolePage() {
     },
     {
       id: "localhost", title: "Localhost", icon: "localhost", signal: "active",
-      line: <Text tone="muted" size="xs">Local single-host runtime · localhost:3000 · 127.0.0.1:8765 · cold-start retry active · multi-host disabled</Text>,
+      line: <Text tone="muted" size="xs">Local single-host runtime · localhost:3100 · 127.0.0.1:8765 · cold-start retry active · multi-host disabled</Text>,
     },
     {
       id: "security", title: "Security", icon: "security", signal: "active",

@@ -2081,6 +2081,14 @@ def login(body: LoginIn, request: Request):
         _LAST_PRUNE.update({"at": time.time(), **_p})
     except Exception:
         pass
+    # Bounded concurrency: keep the newest N active sessions (LRU eviction),
+    # never the one just minted. Prevents hundreds of live owner sessions.
+    try:
+        _evicted = sessions.enforce_cap(keep_token=token)
+        if _evicted:
+            authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
+    except Exception:
+        pass
     authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
     # Record security event
     from saathi.security.timeline import get_timeline
@@ -2180,6 +2188,14 @@ async def passkey_login_verify(request: Request):
     risk_score = risk.score(_owner_id(), browser=browser, ip=ip, device_name=device_name)
     token = sessions.create(ua=ua, ip=ip, kind="passkey", remember_me=remember_me)
     sid = sessions.session_id(token)
+    # Same bounded-concurrency hygiene as password login.
+    try:
+        sessions.prune()
+        _evicted = sessions.enforce_cap(keep_token=token)
+        if _evicted:
+            authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
+    except Exception:
+        pass
     authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
     from saathi.security.timeline import get_timeline
     get_timeline().record(_owner_id(), "login_success",

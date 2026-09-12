@@ -46,7 +46,7 @@ export default function VoiceHub() {
         <Eyebrow style={{ color: TEAL }}>1 · Recognise my voice (speaker enrollment)</Eyebrow>
         <div style={{ fontSize: 12.5, opacity: 0.7, margin: "8px 0 14px" }}>
           Records ~5 seconds and saves your voice profile, so Saathi knows it's you and unlocks owner actions.
-          Works on the Mac app (localhost:3000).
+          Works on the Mac app (localhost:3100).
         </div>
         <button onClick={enroll} disabled={enrolling}
           style={{ padding: "12px 22px", borderRadius: 12, border: "none", cursor: "pointer",
