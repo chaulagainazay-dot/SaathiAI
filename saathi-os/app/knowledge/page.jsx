@@ -6,7 +6,7 @@ import { fetchMissions } from "@/lib/api";
 import { color } from "@/lib/departments";
 import Link from "next/link";
 
-const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API || "http://localhost:8765";
+const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API ?? "http://localhost:8765";
 
 const NODE_TYPE_META = {
   company: { label: "Company", color: "#E8B84B" },

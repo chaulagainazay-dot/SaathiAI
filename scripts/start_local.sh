@@ -28,8 +28,12 @@ fi
 #    topology in one variable. Mac-only capabilities (voice, code-memory) keep
 #    their own base so a remote data plane cannot capture the microphone.
 cd saathi-os
-export NEXT_PUBLIC_SAATHI_API="${SAATHI_OS_DATA:-http://127.0.0.1:8765}"
-export NEXT_PUBLIC_LOCAL_API="http://localhost:8765"
+# Single-origin topology: the browser talks ONLY to this Next origin (:3100).
+# Empty NEXT_PUBLIC_* => same-origin relative /api/... , which next.config.mjs
+# rewrites proxy to the loopback backend (127.0.0.1:8765). SAATHI_OS_DATA remains
+# the multi-host override (set it to an absolute VM URL to restore direct calls).
+export NEXT_PUBLIC_SAATHI_API="${SAATHI_OS_DATA-}"
+export NEXT_PUBLIC_LOCAL_API=""
 # Canonical local frontend port. `npm run start` now honours PORT (package.json
 # no longer hard-codes -p), so the Oracle VM keeps its own PORT=3000 while the
 # Mac runs the one canonical UI on :3100.

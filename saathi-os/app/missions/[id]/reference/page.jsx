@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { Panel, Eyebrow, Pill } from "@/components/ui";
 import MissionNav from "@/components/MissionNav";
 
-const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API || "http://localhost:8765";
+const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API ?? "http://localhost:8765";
 
 const REF_TYPES = [
   { key: "github", label: "GitHub Repo", placeholder: "https://github.com/owner/repo" },
