@@ -7,7 +7,7 @@
 // requests 401 in a loop: bootstrap validates the token against the backend and
 // afetch's central 401 handler (lib/api.js) flips us to AUTH_REQUIRED once.
 import { API_BASE, afetch, login as apiLogin, logout as apiLogout,
-         hasSessionToken, clearSessionToken } from "./api";
+         clearSessionToken } from "./api";
 
 export const AuthState = Object.freeze({
   UNKNOWN: "UNKNOWN",
@@ -77,13 +77,14 @@ let _bootstrapped = false;
 export async function bootstrapAuth({ force = false } = {}) {
   if (_bootstrapped && !force) return getAuthSnapshot();
   _bootstrapped = true;
-  if (!hasSessionToken()) { _set(AuthState.AUTH_REQUIRED, { session: null }); return getAuthSnapshot(); }
+  clearSessionToken();                  // drop any legacy pre-cookie localStorage bearer
+  // Browser auth is the HttpOnly cookie — JS cannot read it, so always validate
+  // against the server (the cookie rides the request automatically).
   _set(AuthState.CHECKING);
   const res = await validateSession();
   if (res.authenticated) {
     _set(AuthState.AUTHENTICATED, { session: res.session, error: "" });
   } else {
-    clearSessionToken();               // remove the stale token so it can't 401 again
     _set(AuthState.AUTH_REQUIRED, { session: null });
   }
   return getAuthSnapshot();

@@ -1904,6 +1904,31 @@ def _is_authed(request) -> bool:
     return False
 
 
+_CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+
+def _csrf_ok(request) -> bool:
+    """CSRF defense for BROWSER cookie-auth mutations (defense-in-depth atop
+    SameSite=Lax). Same-origin Origin required on unsafe methods when the request
+    carries the session cookie. Non-browser callers are unaffected: service-token
+    (x-saathi-token) and header-only (x-baadar-session, no cookie) requests bypass,
+    as they carry no ambient-cookie CSRF surface. Absent Origin is allowed because
+    SameSite=Lax already blocks cross-site cookie POSTs."""
+    if request.method in _CSRF_SAFE_METHODS:
+        return True
+    if request.headers.get("x-saathi-token"):
+        return True
+    cookies = getattr(request, "cookies", None) or {}
+    if not cookies.get(_COOKIE_NAME):
+        return True
+    origin = request.headers.get("origin")
+    if not origin:
+        return True
+    from urllib.parse import urlparse
+    o = urlparse(origin).netloc.lower()
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").lower()
+    return bool(o) and o == host
+
+
 def _owner_id() -> str:
     """Return the owner user_id from the Security Store."""
     from saathi.security.store import get_store
@@ -2024,6 +2049,8 @@ async def _auth(request, call_next):
                 pass  # fall through to session auth
     except Exception:
         pass
+    if not _csrf_ok(request):
+        return JSONResponse({"error": "bad origin"}, status_code=403)
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return await call_next(request)
@@ -2031,6 +2058,28 @@ async def _auth(request, call_next):
 class LoginIn(BaseModel):
     password: str
     remember_me: bool = True
+
+
+# ── First-party HttpOnly session cookie (M — cookie-auth) ────────────────────
+# Env-aware attributes: Secure only over HTTPS (so the cookie actually works on
+# plain-http localhost:3100), SameSite=Lax (single-origin — Lax lets top-level
+# navigations carry it while blocking cross-site POST cookies for CSRF defense),
+# host-only (no Domain), Path=/. HttpOnly always — browser JS never reads it.
+_COOKIE_NAME = "baadar_session"
+
+def _req_https(request) -> bool:
+    proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip().lower()
+    if proto:
+        return proto == "https"
+    return (getattr(request.url, "scheme", "") or "").lower() == "https"
+
+def _set_session_cookie(resp, request, token: str, max_age: int) -> None:
+    resp.set_cookie(_COOKIE_NAME, token, httponly=True, samesite="lax",
+                    secure=_req_https(request), max_age=max_age, path="/")
+
+def _clear_session_cookie(resp, request) -> None:
+    resp.delete_cookie(_COOKIE_NAME, samesite="lax", secure=_req_https(request), path="/")
+
 
 @app.post("/api/v1/auth/login")
 def login(body: LoginIn, request: Request):
@@ -2099,7 +2148,7 @@ def login(body: LoginIn, request: Request):
         ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if body.remember_me else (24*3600)
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
+    _set_session_cookie(r, request, token, max_age)
     return r
 
 def _rp(request) -> tuple[str, str]:
@@ -2206,7 +2255,7 @@ async def passkey_login_verify(request: Request):
 
     r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if remember_me else (24*3600)
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
+    _set_session_cookie(r, request, token, max_age)
     return r
 
 
@@ -2260,7 +2309,7 @@ def change_password(body: ChangePasswordIn, request: Request):
         meta={"browser": _browser, "os": _os_name, "ip": ip},
         ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    _set_session_cookie(r, request, token, 30*24*3600)
     return r
 
 @app.post("/api/v1/auth/logout")
@@ -2279,7 +2328,7 @@ def logout(request: Request):
         title="Signed out", ip=request.client.host if request.client else "",
         ua=request.headers.get("user-agent", ""))
     r = JSONResponse({"ok": True})
-    r.delete_cookie("baadar_session", samesite="none", secure=True)
+    _clear_session_cookie(r, request)
     return r
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2345,7 +2394,7 @@ def rotate_session(request: Request):
     new_token = sessions.rotate(token, ua=ua, ip=ip)
     authsec.audit("rotate_session", ok=True, ip=ip, ua=ua, detail=f"new_{sessions.session_id(new_token)}")
     r = JSONResponse({"ok": True, "token": new_token})
-    r.set_cookie("baadar_session", new_token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    _set_session_cookie(r, request, new_token, 30*24*3600)
     return r
 
 
@@ -2435,7 +2484,7 @@ def revoke_all_including_current(request: Request):
     authsec.audit("revoke_all_including_current", ok=True, ip=ip,
                   ua=request.headers.get("user-agent", ""), detail=f"revoked_{count}")
     r = JSONResponse({"ok": True, "revoked": count})
-    r.delete_cookie("baadar_session", samesite="none", secure=True)
+    _clear_session_cookie(r, request)
     return r
 
 

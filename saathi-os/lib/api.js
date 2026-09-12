@@ -13,13 +13,18 @@ export const API_BASE = (_RAW === undefined || _RAW === null) ? "http://localhos
 const _LOCAL = process.env.NEXT_PUBLIC_LOCAL_API;
 export const LOCAL_BASE = (_LOCAL === undefined || _LOCAL === null) ? API_BASE : _LOCAL;
 
-// ── cookie-independent session: token in localStorage + x-baadar-session header.
-// Works on every browser/device incl. Safari ITP + cross-origin, where cookies fail.
-const _tok = () => { try { return localStorage.getItem("saathi_session") || ""; } catch { return ""; } };
-export function setSessionToken(t) { try { if (t) localStorage.setItem("saathi_session", t); } catch {} }
-/** Whether a Baadar session token is present in this browser. */
-export function hasSessionToken() { return Boolean(_tok()); }
-export function clearSessionToken() { try { localStorage.removeItem("saathi_session"); } catch {} }
+// ── Browser auth = first-party HttpOnly session cookie (M — cookie-auth).
+// Browser JS never reads or injects the session credential; the cookie rides
+// same-origin requests automatically via credentials:"include". The old
+// localStorage bearer ("saathi_session") is legacy: never written anymore, and
+// proactively cleared so no readable credential lingers.
+const LEGACY_TOKEN_KEY = "saathi_session";
+/** @deprecated cookie-based now — no-op; retained so callers don't break. */
+export function setSessionToken(_t) { try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch {} }
+/** Browser JS cannot read the HttpOnly cookie; auth is confirmed via /auth/session. */
+export function hasSessionToken() { return false; }
+/** Remove any legacy localStorage bearer left over from the pre-cookie era. */
+export function clearSessionToken() { try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch {} }
 // Auth endpoints manage their own 401s (wrong password, session probe) and must
 // NOT trigger stale-session recovery — otherwise a bad login would look like a
 // revoked session.
@@ -43,9 +48,11 @@ function _isAuthEndpoint(url) {
 // fetch otherwise (backward compatible: still resolves to the Response).
 export function afetch(url, opts = {}) {
   const h = { ...(opts.headers || {}) };
-  const t = _tok(); if (t) h["x-baadar-session"] = t;
+  // No x-baadar-session injection: the HttpOnly cookie authenticates the browser
+  // (sent automatically for same-origin with credentials:"include").
   return fetch(url, { credentials: "include", ...opts, headers: h }).then((res) => {
-    if (res.status === 401 && t && !_isAuthEndpoint(url)) {
+    if (res.status === 401 && !_isAuthEndpoint(url)) {
+      // remove any legacy localStorage bearer; emit the raw per-request signal.
       try { localStorage.removeItem("saathi_session"); } catch {}
       try {
         if (typeof window !== "undefined") {
