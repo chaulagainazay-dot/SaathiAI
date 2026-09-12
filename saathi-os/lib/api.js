@@ -34,9 +34,13 @@ function _isAuthEndpoint(url) {
 }
 
 // Central authenticated fetch. On a genuine auth 401 for a request that CARRIED
-// a token, clear the stale token and fire `saathi:auth-required` ONCE — no
-// retry, no auto-replay of the original request. Behaviour is otherwise
-// identical to a plain fetch (backward compatible: still resolves to Response).
+// a token, clear the stale token and emit a RAW per-request signal
+// (`saathi:auth-401`) — no retry, no auto-replay. The canonical auth state
+// machine (lib/authState.js) listens to this raw signal and performs the
+// single AUTH_REQUIRED transition + emits exactly one canonical
+// `saathi:auth-required` event, deduplicating concurrent 401s. afetch itself
+// stays decoupled from authState (no import cycle) and behaves like a plain
+// fetch otherwise (backward compatible: still resolves to the Response).
 export function afetch(url, opts = {}) {
   const h = { ...(opts.headers || {}) };
   const t = _tok(); if (t) h["x-baadar-session"] = t;
@@ -45,7 +49,7 @@ export function afetch(url, opts = {}) {
       try { localStorage.removeItem("saathi_session"); } catch {}
       try {
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("saathi:auth-required", {
+          window.dispatchEvent(new CustomEvent("saathi:auth-401", {
             detail: { url: String(url), method: (opts.method || "GET").toUpperCase() },
           }));
         }

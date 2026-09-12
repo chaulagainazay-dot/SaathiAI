@@ -27,10 +27,12 @@ globalThis.localStorage = {
   setItem: (k, v) => store.set(k, String(v)),
   removeItem: (k) => store.delete(k),
 };
-let evCount = 0, cb = null;
+// real multi-listener window; count the CANONICAL saathi:auth-required event
+let evCount = 0;
+const listeners = new Map();
 globalThis.window = {
-  addEventListener: (t, f) => { if (t === "saathi:auth-required") cb = f; },
-  dispatchEvent: () => { evCount++; if (cb) cb(); return true; },
+  addEventListener: (t, f) => { (listeners.get(t) || listeners.set(t, new Set()).get(t)).add(f); },
+  dispatchEvent: (e) => { if (e.type === "saathi:auth-required") evCount++; (listeners.get(e.type) || []).forEach((f) => f(e)); return true; },
 };
 globalThis.CustomEvent = class { constructor(t, o) { this.type = t; this.detail = o?.detail; } };
 

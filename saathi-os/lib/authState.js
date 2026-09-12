@@ -112,17 +112,30 @@ export async function signOut() {
   _set(AuthState.AUTH_REQUIRED, { session: null, error: "" });
 }
 
-// Called by afetch's central 401 handler. Idempotent: flips to AUTH_REQUIRED
-// once and clears the stale token — no retry, no auto-replay.
+// Canonical auth-loss handler — the state machine OWNS deduplication.
+// Fired (possibly many times, one per concurrent 401) by afetch's raw
+// `saathi:auth-401` signal. Only the FIRST call that actually performs the
+// transition into AUTH_REQUIRED does work and emits exactly ONE canonical
+// `saathi:auth-required` event. Every subsequent concurrent/stale 401 while
+// already AUTH_REQUIRED (or mid-AUTHENTICATING) is a no-op: no second
+// transition, no second event, no retry, no replay, no extra overlay.
+// Dedup derives purely from canonical state ownership — no timers/debounce.
 export function onAuthRequired() {
+  // Already in (or heading into) a resolved auth-loss state → do nothing.
+  if (_state === AuthState.AUTH_REQUIRED || _state === AuthState.AUTHENTICATING) return;
   clearSessionToken();
-  if (_state !== AuthState.AUTH_REQUIRED && _state !== AuthState.AUTHENTICATING) {
-    _set(AuthState.AUTH_REQUIRED, { session: null });
-  }
+  _set(AuthState.AUTH_REQUIRED, { session: null });
+  // Winning transition only: emit the single canonical notification.
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("saathi:auth-required", { detail: { reason: "session-lost" } }));
+    }
+  } catch {}
 }
 
-// Wire the browser event dispatched by afetch (module side-effect, guarded).
+// Wire the RAW per-request 401 signal from afetch (module side-effect, guarded).
+// authState is the sole emitter of the canonical `saathi:auth-required` event.
 if (typeof window !== "undefined" && !window.__saathiAuthWired) {
   window.__saathiAuthWired = true;
-  window.addEventListener("saathi:auth-required", onAuthRequired);
+  window.addEventListener("saathi:auth-401", onAuthRequired);
 }
