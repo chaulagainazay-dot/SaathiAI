@@ -27,12 +27,27 @@ def status_line(result: ResearchResult) -> dict:
         and f.group in (FactGroup.OFFICIAL_NOTICES, FactGroup.CORPORATE_ACTIONS,
                         FactGroup.REGULATORY, FactGroup.COMPANY_EVENTS)
     )
+    from saathi.browser_research.freshness import Freshness
+    fresh = sum(1 for f in result.extracted_facts
+                if f.freshness not in (Freshness.STALE, Freshness.UNKNOWN))
+    unknown_dates = sum(1 for f in result.extracted_facts if f.freshness == Freshness.UNKNOWN)
+    tiers: dict[str, int] = {}
+    for f in result.extracted_facts:
+        tiers[f.source_tier.name] = tiers.get(f.source_tier.name, 0) + 1
     return {
         "mission_id": result.mission_id,
         "phase": _PHASE.get(result.status, "Researching"),
+        "acquisition_tier": "HTTP/PLAYWRIGHT",   # browser-use deferred
         "sources_checked": len(result.sources),
+        "official_source_count": sum(1 for c in result.sources
+                                     if c.source_tier == SourceTier.TIER_1_OFFICIAL),
         "official_notices_found": official_notices,
         "facts": len(result.extracted_facts),
+        "fresh": fresh,
+        "unknown_dates": unknown_dates,
+        "contradictions": len(result.contradictions),
+        "freshness_warnings": sum(1 for w in result.warnings if "fresh" in w.lower() or "stale" in w.lower()),
+        "tier_counts": tiers,
         "warnings": len(result.warnings),
         "complete": result.status in (ResearchStatus.COMPLETE, ResearchStatus.PARTIAL),
         "read_only": True,

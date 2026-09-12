@@ -225,7 +225,11 @@ def run_nepse_mission(
             title=page.title, source_tier=classify_source(page.url),
             retrieval_ts=page.retrieval_ts,
         ))
-        result.extracted_facts.extend(extract_facts(page, now=now_fn()))
+        # V2: source-aware, noise-filtered, BS-date-normalized extraction.
+        from saathi.browser_research.extract_v2 import extract_facts_v2
+        facts, stats = extract_facts_v2(page, now=now_fn())
+        result.extracted_facts.extend(facts)
+        result.resource.setdefault("extraction", []).append({host_of(page.url): stats})
 
     # Freshness warnings
     stale = [f for f in result.extracted_facts if f.freshness == Freshness.STALE]

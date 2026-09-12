@@ -23,6 +23,14 @@ from saathi.browser_research.reconciliation import (
     arbitrate_market_value,
 )
 from saathi.browser_research.tiers import SourceTier, classify_source, is_official, tier1_allowlist
+from saathi.browser_research.bs_date import Calendar, bs_to_ad, is_valid_bs, parse_date
+from saathi.browser_research.records import (
+    ExtractedRecord, ExtractionMethod, SymbolResolution, deduplicate,
+)
+from saathi.browser_research.extractors import extractor_for
+from saathi.browser_research.extract_v2 import extract_facts_v2, extract_records
+from saathi.browser_research.durable import DurableBrowserResearch
+from saathi.browser_research.status import status_line
 
 __all__ = [
     "AUTHORITY", "SCHEMA_VERSION", "MissionType", "ResearchStatus", "DataDomain",
@@ -32,5 +40,8 @@ __all__ = [
     "meets_requirement", "SourceTier", "classify_source", "is_official",
     "tier1_allowlist", "ArbitrationOutcome", "CanonicalDatum", "Observation",
     "arbitrate_event", "arbitrate_market_value", "BrowserResearchOrchestrator",
-    "MAX_BROWSER_WORKERS",
+    "MAX_BROWSER_WORKERS", "Calendar", "bs_to_ad", "is_valid_bs", "parse_date",
+    "ExtractedRecord", "ExtractionMethod", "SymbolResolution", "deduplicate",
+    "extractor_for", "extract_facts_v2", "extract_records",
+    "DurableBrowserResearch", "status_line",
 ]
