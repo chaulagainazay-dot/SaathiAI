@@ -45,3 +45,19 @@ Returns `counts` (active / expired / revoked / total / oldest_active_age_seconds
 
 ## Security invariants (unchanged)
 No change to ExecutionGateway/Trading Guardian authority, deterministic risk checks, approval requirements, RBAC, audit, external-write containment, broker/provider boundaries, or paper/live state. No auth bypass introduced. localStorage token storage is pre-existing (documented cross-origin fallback; httpOnly cookie also set) — not expanded by this milestone; see follow-ups.
+
+---
+
+## Certification closure (evidence phase, 2026-09-12)
+
+Evidence-only phase against frozen SHA `8559a566` — **no production code changed** (`git diff 8559a566 -- saathi/ saathi-os/` empty). Verdict upgraded to **CERTIFIED**.
+
+**Full regression** — `.venv/bin/python -m pytest tests/ -m "not integration and not network and not browser and not live and not external and not live_ollama"` (Python 3.12.13, pytest 9.1.1): **8840 passed, 2 failed, 1 skipped, 13 deselected** in 727s. The 2 failures (`test_m157_private_alpha.py::test_private_alpha_certification_gate`, `::test_doctor_no_public_saathi_listeners`) are **environment-only** — the private-alpha doctor detected the isolated `:8799`/`:3100` certification servers as unexpected listeners; both **pass (2/2)** once those harness servers are stopped. Zero auth/session failures. Effective clean: 8842 passed / 1 skipped.
+
+**Live in-page 401 (real afetch, no reload)** — isolated FE `:3100` → BE `:8799` (temp security DB). Logged in, `saathi_session` populated, canonical state AUTHENTICATED, protected `GET /control/attention` → 200. Set a `window.__certMarker` (survives to prove no full reload). Revoked the browser's exact session server-side (fingerprint id, no token exposed). Client-side navigated to `/security` (marker survived → SPA nav, not reload); its `fetchSessions` afetch hit `GET /api/v1/auth/sessions` → **401** (captured in network). Result: `saathi_session` cleared automatically; canonical state → AUTH_REQUIRED (single transition, `onAuthRequired` idempotent guard); AuthGate overlay visible without reload; auth-required event count stable at 2 = the two token-bearing requests in flight when the first 401 cleared the token (self-limiting — later afetch calls carry no token so they don't re-trigger); **no storm** (count did not grow over a 4s hold), **no auto re-login**, **no silent replay**.
+
+**Replay safety** — `scripts/cert/certify_afetch_replay.mjs` (real production afetch + classifyRequest, self-contained): **12/12** — a 401'd POST is issued exactly once (no retry/replay), token cleared once, mutations + sensitive paths (chat, connectors/execute, trading, voice/enroll) classify REQUIRES_USER_REISSUE, GET reads SAFE_TO_RETRY, and wrong-password login 401s do NOT trigger recovery.
+
+**Security invariants** — unchanged (zero production diff since freeze). `/voice/enroll` gated live (401 no-auth); whitelist audit shows only `command`/`transcribe` exempt plus the frozen `/auth/session` probe — no new entries. ExecutionGateway, Trading Guardian, RBAC, approvals, audit, agent authority, external-write containment, broker/provider boundaries, paper/live state all byte-identical.
+
+**Note on event count vs "exactly one":** the canonical STATE transition to AUTH_REQUIRED is exactly once; the auth-required *event* fires once per concurrent token-bearing request that 401s (bounded by page mount fan-out, here 2), which is correct concurrent behavior and self-limiting, not a storm or loop.
