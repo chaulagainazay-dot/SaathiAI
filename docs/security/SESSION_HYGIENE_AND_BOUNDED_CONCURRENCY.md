@@ -50,3 +50,19 @@ python scripts/reset_owner_password.py        # interactive; revokes all 583, se
 launchctl kickstart -k gui/$(id -u)/com.saathi.local   # reload backend
 ```
 This reset is the approved historical collapse (explicit, owner-invoked, service/API tokens untouched, auditable, ends within cap). After it: active→0 then 1 on first login; cap governs thereafter.
+
+---
+
+## Certification closure — owner reset executed & independently verified (2026-09-12)
+
+Owner ran `scripts/reset_owner_password.py` (typed RESET), then `launchctl kickstart -k gui/$(id -u)/com.saathi.local`, then logged in at http://localhost:3100. Independently verified from **non-secret** runtime state (no password read/printed, no code changed this run):
+
+- **Real session DB:** active **1**, expired 0, revoked 0 (was 583) — historical collapse complete. The 1 active session was created 09:18 (after the 09:11 reset + 09:13 backend restart), method=password, **Chrome/Mac** (real UA), remember-me 30d, `expires 2026-10-12`. active ≤ cap(10). ✓
+- **Migration marker** `app_kv.session_cap_migrated = 1` → post-migration enforcement active; future logins enforce the cap. ✓
+- **Password reset (non-secret):** canonical credential exists, KDF prefix `pbkdf2` (value not shown), `_PBKDF2_ITERS` still 600_000 (policy unchanged). `owner_password_reset` audited ok. Service/API creds separate (`api_tokens` table + `SAATHI_TOKEN` env; sessions untouched). Backend restarted (PID new, 09:13). Old 583 sessions no longer live. ✓
+- **Topology:** `:8765` backend + `:3100` frontend under `com.saathi.local`; **`:3000` no listener**. `:3100` serves current build (`<title>SaathiOS — Sovereign Orbit</title>`, 200). ✓
+- **Authorization proofs:** `/api/v1/control/attention` no-auth → **401**, authenticated → **200**; `/api/v1/voice/providers` no-auth → 401, authenticated → 200; **`/api/v1/voice/enroll` no-auth → 401** (still protected). command/transcribe exemptions unchanged; no new exemptions.
+- **Auth-recovery regressions:** concurrent-401 dedup 12/12 (two concurrent 401s → one AUTH_REQUIRED transition + one canonical event), replay/no-replay 12/12, canonical-port guard 3/3, focused session/cap tests 20/20.
+- **Security invariants:** `git diff c449c1d2 -- saathi/server.py` shows no authority/middleware/voice-policy change; ExecutionGateway, Trading Guardian, deterministic risk, approvals, RBAC, audit, agent authority, broker/provider, external-write, paper/live untouched. No secret committed (owner `.env`/DB mutations remain local, uncommitted).
+
+**Verdict upgraded → SAATHIOS_SESSION_HYGIENE_AND_BOUNDED_CONCURRENCY_CERTIFIED. Milestone frozen.**
