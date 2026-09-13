@@ -37,7 +37,33 @@ def _from_capture(cap: CaptureResult, *, now: float):
         "resolved_symbols": sum(1 for r in unique if r.symbol),
         "securities_loaded": len(idx.by_symbol),
     }
-    return facts, stats
+    return facts, stats, unique, idx
+
+
+def _ingest_documents(records, *, mission_id, security_index, document_fetcher, store, max_docs):
+    """Phase 14/15 — ingest captured document URLs (bounded). Returns result dicts."""
+    from saathi.browser_research.documents import (
+        DocumentIngestionRequest, MAX_DOCUMENTS_PER_MISSION, ingest_document,
+    )
+    from saathi.browser_research.tiers import host_of
+    cap = max_docs or MAX_DOCUMENTS_PER_MISSION
+    out = []
+    for r in records:
+        if len(out) >= cap:
+            break
+        if not r.document_url:
+            continue
+        req = DocumentIngestionRequest(
+            mission_id=mission_id, source_url=r.document_url,
+            parent_fact_ref=r.dedup_key(), source_page=r.source_url,
+            source_tier=r.source_tier, expected_issuer=r.symbol,
+            allowed_domains=(host_of(r.document_url) or "nepalstock.com",),
+        )
+        kw = {"security_index": security_index, "store": store}
+        if document_fetcher is not None:
+            kw["fetcher"] = document_fetcher
+        out.append(ingest_document(req, **kw).as_dict())
+    return out
 
 
 def run_nepse_deep_mission(
@@ -48,6 +74,10 @@ def run_nepse_deep_mission(
     seed_urls: tuple[str, ...] | None = None,
     now: Callable[[], float] | float = time.time,
     detail_pages: tuple[str, ...] = ("/company-disclosure",),
+    ingest_documents: bool = False,
+    document_fetcher=None,
+    document_store=None,
+    max_documents: int = 0,
 ) -> ResearchResult:
     request.validate()
     now_fn = now if callable(now) else (lambda: now)
@@ -60,16 +90,39 @@ def run_nepse_deep_mission(
 
     acquisition = "NONE"
     cap = None
+    from saathi.browser_research.documents import MAX_DOCUMENTS_PER_MISSION
+    doc_cap = (max_documents or MAX_DOCUMENTS_PER_MISSION) if ingest_documents else 0
     try:
-        cap = capture_fn(detail_pages=detail_pages)
+        cap = capture_fn(detail_pages=detail_pages, max_documents=doc_cap)
     except Exception as e:
         result.warnings.append(f"capture raised: {type(e).__name__}")
         cap = CaptureResult(status="degraded", error_category="CAPTURE_EXCEPTION")
 
+    # endpoint health / schema drift (Phase 23-25)
+    if cap is not None:
+        from saathi.browser_research.endpoint_monitor import health_from_capture
+        result.resource["endpoint_health"] = health_from_capture(cap)
+
     if cap and cap.status == "ok" and (cap.notices or cap.disclosures):
         acquisition = "OFFICIAL_ENDPOINT"
-        facts, stats = _from_capture(cap, now=now_fn())
+        facts, stats, records, sec_idx = _from_capture(cap, now=now_fn())
         result.extracted_facts.extend(facts)
+        if ingest_documents:
+            fetcher = document_fetcher
+            if fetcher is None and getattr(cap, "documents", None):
+                from saathi.browser_research.documents import browser_document_fetcher
+                fetcher = browser_document_fetcher(cap.documents)
+            docs = _ingest_documents(
+                records, mission_id=request.mission_id, security_index=sec_idx,
+                document_fetcher=fetcher, store=document_store,
+                max_docs=max_documents)
+            result.resource["documents"] = docs
+            changed = sum(1 for d in docs if "DOCUMENT_CHANGED" in d.get("warnings", []))
+            failed = sum(1 for d in docs if d.get("status") != "DOCUMENT_OK")
+            result.resource["document_summary"] = {
+                "count": len(docs), "changed": changed, "failed": failed,
+                "parsed": sum(1 for d in docs if d.get("extracted_text_len", 0) > 0),
+            }
         result.sources.append(Citation(
             url=f"{NEPSE_ORIGIN}/api/web/notice/", host="nepalstock.com", title="NEPSE Notices",
             source_tier=SourceTier.TIER_1_OFFICIAL, retrieval_ts=now_fn()))

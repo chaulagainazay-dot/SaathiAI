@@ -35,6 +35,11 @@ from saathi.browser_research.nepse_endpoint import (
     EndpointClass, NEPSEJsonExtractor, SecurityIndex, classify_endpoint, is_adoptable,
 )
 from saathi.browser_research.nepse_v3 import run_nepse_deep_mission
+from saathi.browser_research.documents import (
+    DocumentIngestionRequest, DocumentIngestionResult, DocumentStatus,
+    governed_fetch, ingest_document,
+)
+from saathi.browser_research.endpoint_monitor import EndpointHealth, health_from_capture, validate_schema
 
 __all__ = [
     "AUTHORITY", "SCHEMA_VERSION", "MissionType", "ResearchStatus", "DataDomain",
@@ -49,4 +54,7 @@ __all__ = [
     "extractor_for", "extract_facts_v2", "extract_records",
     "DurableBrowserResearch", "status_line", "EndpointClass", "NEPSEJsonExtractor",
     "SecurityIndex", "classify_endpoint", "is_adoptable", "run_nepse_deep_mission",
+    "DocumentIngestionRequest", "DocumentIngestionResult", "DocumentStatus",
+    "governed_fetch", "ingest_document", "EndpointHealth", "health_from_capture",
+    "validate_schema",
 ]

@@ -22,6 +22,9 @@ _UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 _ALLOWED = ("nepalstock.com",)
 
 
+_MAX_DOC_BYTES = 15 * 1024 * 1024
+
+
 @dataclass
 class CaptureResult:
     status: str                       # ok | degraded
@@ -31,11 +34,33 @@ class CaptureResult:
     securities: list = field(default_factory=list)
     endpoint_status: dict = field(default_factory=dict)   # path -> http status seen in browser
     off_domain_blocked: list = field(default_factory=list)
+    documents: dict = field(default_factory=dict)         # url -> {status, content_type, body}
     runtime_sec: float = 0.0
     cleanup: dict = field(default_factory=dict)
 
 
-def capture_nepse(*, timeout_sec: float = 45.0, detail_pages: tuple[str, ...] = ()) -> CaptureResult:
+def _derive_doc_urls(notices, disclosures) -> list[str]:
+    from saathi.browser_research.nepse_endpoint import _doc_url
+    urls: list[str] = []
+    for n in (notices or []):
+        p = n.get("noticeFilePath")
+        if p:
+            urls.append(_doc_url(str(p)))
+    news = disclosures.get("companyNews", []) if isinstance(disclosures, dict) else (disclosures or [])
+    for c in news:
+        for d in (c.get("applicationDocumentDetailsList") or []):
+            if d.get("filePath"):
+                urls.append(_doc_url(str(d["filePath"])))
+    # unique, order-preserving
+    seen, out = set(), []
+    for u in urls:
+        if u not in seen:
+            seen.add(u); out.append(u)
+    return out
+
+
+def capture_nepse(*, timeout_sec: float = 45.0, detail_pages: tuple[str, ...] = (),
+                  max_documents: int = 0, max_doc_bytes: int = _MAX_DOC_BYTES) -> CaptureResult:
     t0 = time.time()
     try:
         from playwright.sync_api import sync_playwright
@@ -87,12 +112,32 @@ def capture_nepse(*, timeout_sec: float = 45.0, detail_pages: tuple[str, ...] = 
                 page.wait_for_timeout(3500)
             except Exception:
                 continue
+        notices = bodies.get(NEPSE_RESEARCH_ENDPOINTS[0], []) or []
+        disclosures = bodies.get(NEPSE_RESEARCH_ENDPOINTS[1], {}) or {}
+        documents: dict = {}
+        if max_documents > 0:
+            # Fetch official document bytes IN-SESSION (browser's own token; no
+            # forgery). Domain-checked + size-capped. Bounded count.
+            for url in _derive_doc_urls(notices, disclosures)[:max_documents]:
+                if not check_domain(url, allowed_hosts=list(_ALLOWED)).allowed:
+                    off_domain.append(url); continue
+                try:
+                    dr = context.request.get(url, timeout=int(timeout_sec * 1000))
+                    body = dr.body()
+                    if len(body) > max_doc_bytes:
+                        documents[url] = {"status": dr.status, "content_type": "", "body": None,
+                                          "too_large": True}
+                    else:
+                        documents[url] = {"status": dr.status,
+                                          "content_type": (dr.headers.get("content-type", "") or "").split(";")[0].strip().lower(),
+                                          "body": body}
+                except Exception as e:
+                    documents[url] = {"status": 0, "content_type": "", "body": None,
+                                      "error": type(e).__name__}
         res = CaptureResult(
-            status="ok",
-            notices=bodies.get(NEPSE_RESEARCH_ENDPOINTS[0], []) or [],
-            disclosures=bodies.get(NEPSE_RESEARCH_ENDPOINTS[1], {}) or {},
+            status="ok", notices=notices, disclosures=disclosures,
             securities=bodies.get(NEPSE_SECURITY_ENDPOINT, []) or [],
-            endpoint_status=ep_status, off_domain_blocked=off_domain,
+            endpoint_status=ep_status, off_domain_blocked=off_domain, documents=documents,
         )
     except Exception as e:
         res = CaptureResult(status="degraded", error_category=f"CAPTURE_ERROR:{type(e).__name__}",
