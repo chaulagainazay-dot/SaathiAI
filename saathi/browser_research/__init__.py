@@ -40,6 +40,12 @@ from saathi.browser_research.documents import (
     governed_fetch, ingest_document,
 )
 from saathi.browser_research.endpoint_monitor import EndpointHealth, health_from_capture, validate_schema
+from saathi.browser_research.intelligence import (
+    ResearchEvent, ResearchEventType, ResearchIntelligenceSnapshot, ContradictionState,
+    build_snapshot, build_from_evidence, daily_brief, deterministic_summary,
+    optional_model_summary, chat_answer, voice_answer, central_command_projection,
+    unify_source_health, classify_event_type,
+)
 
 __all__ = [
     "AUTHORITY", "SCHEMA_VERSION", "MissionType", "ResearchStatus", "DataDomain",
@@ -56,5 +62,9 @@ __all__ = [
     "SecurityIndex", "classify_endpoint", "is_adoptable", "run_nepse_deep_mission",
     "DocumentIngestionRequest", "DocumentIngestionResult", "DocumentStatus",
     "governed_fetch", "ingest_document", "EndpointHealth", "health_from_capture",
-    "validate_schema",
+    "validate_schema", "ResearchEvent", "ResearchEventType",
+    "ResearchIntelligenceSnapshot", "ContradictionState", "build_snapshot",
+    "build_from_evidence", "daily_brief", "deterministic_summary",
+    "optional_model_summary", "chat_answer", "voice_answer",
+    "central_command_projection", "unify_source_health", "classify_event_type",
 ]
