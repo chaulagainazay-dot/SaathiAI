@@ -31,6 +31,10 @@ from saathi.browser_research.extractors import extractor_for
 from saathi.browser_research.extract_v2 import extract_facts_v2, extract_records
 from saathi.browser_research.durable import DurableBrowserResearch
 from saathi.browser_research.status import status_line
+from saathi.browser_research.nepse_endpoint import (
+    EndpointClass, NEPSEJsonExtractor, SecurityIndex, classify_endpoint, is_adoptable,
+)
+from saathi.browser_research.nepse_v3 import run_nepse_deep_mission
 
 __all__ = [
     "AUTHORITY", "SCHEMA_VERSION", "MissionType", "ResearchStatus", "DataDomain",
@@ -43,5 +47,6 @@ __all__ = [
     "MAX_BROWSER_WORKERS", "Calendar", "bs_to_ad", "is_valid_bs", "parse_date",
     "ExtractedRecord", "ExtractionMethod", "SymbolResolution", "deduplicate",
     "extractor_for", "extract_facts_v2", "extract_records",
-    "DurableBrowserResearch", "status_line",
+    "DurableBrowserResearch", "status_line", "EndpointClass", "NEPSEJsonExtractor",
+    "SecurityIndex", "classify_endpoint", "is_adoptable", "run_nepse_deep_mission",
 ]

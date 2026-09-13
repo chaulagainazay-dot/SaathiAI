@@ -16,6 +16,7 @@ from saathi.browser_research.tiers import SourceTier
 
 
 class ExtractionMethod(str, Enum):
+    OFFICIAL_ENDPOINT = "OFFICIAL_ENDPOINT"   # public JSON captured via governed Playwright
     HTTP_DOM = "HTTP_DOM"
     PLAYWRIGHT_DOM = "PLAYWRIGHT_DOM"
     TABLE = "TABLE"
