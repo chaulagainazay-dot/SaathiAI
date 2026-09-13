@@ -891,3 +891,18 @@ def nepse_eod_ingest():
         return out
     except Exception as e:
         return {"status": "ERROR", "error": str(e)[:160]}
+
+
+def nepse_live_refresh():
+    """Bounded live NEPSE market observation: governed Playwright reads the RENDERED
+    today-price DOM (no download, no XHR/token replay) into LIVE_BROWSER_OBSERVED state
+    for Central Command / chat / voice. Read-only; zero trade authority. Self-bounded
+    (skips a read within its refresh interval); market-closed cadence is low."""
+    try:
+        from saathi.platform.market_data.nepse_live_service import get_default_service
+        snap = get_default_service().refresh()
+        return {"status": snap.source_health.value, "market_status": snap.market_status.value,
+                "index": str(snap.nepse_index), "securities": len(snap.securities),
+                "freshness": snap.freshness.value}
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)[:160]}

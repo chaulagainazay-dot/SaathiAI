@@ -5932,3 +5932,106 @@ async def _saathi_stop_public_market_data():
             await _rt_mod._RUNTIME.stop_async()
     except Exception:
         pass
+
+
+# ── M — LIVE_NEPSE_BROWSER_MARKET_DATA: read-only live market surface ──────────
+# Governed-browser observation of the OFFICIAL public NEPSE site (rendered DOM only;
+# no downloads, no XHR/token replay). LIVE_BROWSER_OBSERVED — never canonical history,
+# never a trade control. Handlers are sync `def` so FastAPI runs them in a threadpool
+# (sync Playwright cannot run on the asyncio loop).
+def _nepse_live_snapshot(force: bool = False):
+    from saathi.platform.market_data.nepse_live_service import get_default_service
+    svc = get_default_service()
+    snap = svc.snapshot()
+    if snap is None or force:
+        snap = svc.refresh(force=True)
+    return svc, snap
+
+
+@app.get("/api/v1/market/nepse/live")
+def nepse_live_tile(refresh: int = 0):
+    """Central-Command tile: index, breadth, turnover, top movers, freshness. No trade controls."""
+    try:
+        from saathi.platform.market_data.nepse_live_service import central_command_live_projection
+        _, snap = _nepse_live_snapshot(force=bool(refresh))
+        return central_command_live_projection(snap)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/full")
+def nepse_live_full(refresh: int = 0):
+    try:
+        _, snap = _nepse_live_snapshot(force=bool(refresh))
+        return snap.to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/health")
+def nepse_live_health():
+    try:
+        from saathi.platform.market_data.nepse_live_service import get_default_service
+        return get_default_service().health()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/chat")
+def nepse_live_chat(q: str = ""):
+    try:
+        from saathi.platform.market_data.nepse_live_service import chat_answer_live
+        _, snap = _nepse_live_snapshot(force=False)
+        return chat_answer_live(snap, q)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market/nepse", response_class=HTMLResponse, include_in_schema=False)
+def nepse_live_panel():
+    """Phase 19/20 — internal read-only NEPSE market panel. No trade controls; a source
+    link to the official public site only."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Live (observed)</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.hdr{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.badge{padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px}
+.LIVE{background:#1f6f3f}.CLOSED,.MARKET_CLOSED{background:#5a3a12}.STALE,.RECENT{background:#6b5900}
+.PAGE_ERROR,.UNAVAILABLE,.SCHEMA_CHANGED{background:#7d2222}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px}
+.card b{display:block;font-size:20px}.muted{color:#8b949e;font-size:12px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #21262d;font-size:13px}
+th{color:#8b949e}a{color:#58a6ff}button{background:#238636;color:#fff;border:0;padding:6px 12px;border-radius:6px;cursor:pointer}
+</style></head><body><div class=wrap>
+<div class=hdr><h2 style="margin:0">NEPSE <span class=muted>live observed</span></h2>
+<span id=status class=badge>…</span><span id=fresh class=badge>…</span>
+<button onclick="load(1)">Refresh</button>
+<a href="https://www.nepalstock.com" target=_blank rel=noopener>Open official source ↗</a></div>
+<div class=muted id=obs></div>
+<div class=grid id=stats></div>
+<h3>Top by turnover <span class=muted>(observed)</span></h3>
+<table><thead><tr><th>Symbol</th><th>LTP</th><th>Change</th><th>%</th><th>Volume</th></tr></thead><tbody id=rows></tbody></table>
+<p class=muted>Source: Official NEPSE (nepalstock.com). Data class: LIVE_BROWSER_OBSERVED — current
+awareness only, not canonical historical data. Read-only; no trading controls.</p>
+</div><script>
+async function load(refresh){
+ const s=document.getElementById('status'); s.textContent='loading…';
+ try{const r=await fetch('/api/v1/market/nepse/live'+(refresh?'?refresh=1':''));const d=await r.json();
+ if(d.error){s.textContent='error';return}
+ s.textContent=d.market_status;s.className='badge '+d.market_status;
+ const f=document.getElementById('fresh');f.textContent=d.freshness;f.className='badge '+d.freshness;
+ document.getElementById('obs').textContent='Observed: '+(d.source_as_of||new Date(d.observed_at*1000).toLocaleString());
+ document.getElementById('stats').innerHTML=[
+  ['Index',d.nepse_index],['Change',d.index_change+' ('+d.index_change_percent+'%)'],
+  ['Turnover Rs',d.total_turnover],['Traded shares',d.total_volume],
+  ['Advancers',d.advancers],['Decliners',d.decliners],['Unchanged',d.unchanged]]
+  .map(([k,v])=>'<div class=card><span class=muted>'+k+'</span><b>'+(v??'—')+'</b></div>').join('');
+ document.getElementById('rows').innerHTML=(d.watchlist||[]).map(o=>'<tr><td>'+o.symbol+'</td><td>'+
+  (o.ltp??'—')+'</td><td>'+(o.point_change??'—')+'</td><td>'+(o.percent_change??'—')+'</td><td>'+
+  (o.volume??'—')+'</td></tr>').join('');
+ }catch(e){s.textContent='error'}
+}
+load(0);</script></body></html>""")
