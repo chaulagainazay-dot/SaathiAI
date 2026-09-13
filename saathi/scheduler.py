@@ -876,3 +876,18 @@ if __name__ == "__main__":
     while True:
         time.sleep(3600)
 
+
+
+def nepse_eod_ingest():
+    """Post-session canonical NEPSE ingestion: governed Playwright downloads the official
+    Today's-Price CSV and imports it to canonical md_bars. Read+download only; no trading.
+    Bounded single attempt (NEPSE_CALENDAR_LIMITED — exact close time not modeled)."""
+    try:
+        from saathi.platform.market_data.nepse_acquire import acquire_and_import
+        out = acquire_and_import()
+        imp = out.get("import") or {}
+        _notify("NEPSE EOD ingest",
+                f"{out.get('status')} · bars+{imp.get('rows_inserted', 0)} · {imp.get('latest_trading_date','')}")
+        return out
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)[:160]}

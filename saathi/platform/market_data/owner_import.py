@@ -246,9 +246,14 @@ def _read_file(path: Path) -> tuple[bytes | None, str]:
 def run_import(path: str | Path, *, store: MarketDataStore, org_id: str = "owner",
                dry_run: bool = True, attest_official: bool = False,
                source_claim: str = SOURCE_CLAIM_DEFAULT, trading_date: str = "",
-               now: float | None = None) -> ImportResult:
-    """Inspect (dry_run=True, default) or canonically import an owner-supplied NEPSE
-    export. Canonical writes require attest_official=True (owner attestation)."""
+               acquisition_method: str = "", now: float | None = None) -> ImportResult:
+    """Inspect (dry_run=True, default) or canonically import a NEPSE export.
+
+    Canonical writes require verified provenance: either attest_official=True (owner
+    manual attestation) OR acquisition_method='OFFICIAL_BROWSER_DOWNLOAD' (automated
+    governed Playwright download of the official export). Both yield OFFICIAL_VERIFIED.
+    """
+    verified = attest_official or acquisition_method == "OFFICIAL_BROWSER_DOWNLOAD"
     now = now if now is not None else time.time()
     p = Path(path)
     data, err = _read_file(p)
@@ -258,11 +263,12 @@ def run_import(path: str | Path, *, store: MarketDataStore, org_id: str = "owner
 
     sha = _sha256(data)
     fmt = detect_format(data)
+    vmethod = ("OFFICIAL_BROWSER_DOWNLOAD" if acquisition_method == "OFFICIAL_BROWSER_DOWNLOAD"
+               else ("OWNER_ATTESTED_OFFICIAL_DOWNLOAD" if attest_official else ""))
     artifact = OwnerArtifact(
         file_name=p.name, file_size=len(data), sha256=sha, received_at=now,
-        detected_format=fmt, source_claim=source_claim,
-        verification_method="OWNER_ATTESTED_OFFICIAL_DOWNLOAD" if attest_official else "",
-        provenance=Provenance.OFFICIAL_VERIFIED if attest_official else Provenance.UNVERIFIED,
+        detected_format=fmt, source_claim=source_claim, verification_method=vmethod,
+        provenance=Provenance.OFFICIAL_VERIFIED if verified else Provenance.UNVERIFIED,
         artifact_id=f"art_{sha[:16]}")
     res = ImportResult(status=ImportStatus.DRY_RUN, artifact=artifact,
                        available_at_method="AVAILABLE_AT_CONSERVATIVE_RETRIEVAL_BOUNDARY")
@@ -348,10 +354,11 @@ def run_import(path: str | Path, *, store: MarketDataStore, org_id: str = "owner
         res.status = ImportStatus.NO_VALID_ROWS
         return res
 
-    # provenance gate — only OFFICIAL_VERIFIED writes canonically
-    if not attest_official:
+    # provenance gate — only OFFICIAL_VERIFIED (owner attestation OR official browser
+    # download) writes canonically
+    if not verified:
         res.status = ImportStatus.DRY_RUN if dry_run else ImportStatus.PROVENANCE_UNVERIFIED
-        res.limitations.append("provenance UNVERIFIED — owner attestation required for canonical import")
+        res.limitations.append("provenance UNVERIFIED — owner attestation or official browser download required")
         return res
     if dry_run:
         res.status = ImportStatus.DRY_RUN
