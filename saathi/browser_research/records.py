@@ -17,6 +17,8 @@ from saathi.browser_research.tiers import SourceTier
 
 class ExtractionMethod(str, Enum):
     OFFICIAL_ENDPOINT = "OFFICIAL_ENDPOINT"   # public JSON captured via governed Playwright
+    JINA_READER = "JINA_READER"               # clean webpage text via Agent-Reach / r.jina.ai
+    AGENT_REACH_SEARCH = "AGENT_REACH_SEARCH" # web search via Agent-Reach (Exa/DDG)
     HTTP_DOM = "HTTP_DOM"
     PLAYWRIGHT_DOM = "PLAYWRIGHT_DOM"
     TABLE = "TABLE"
