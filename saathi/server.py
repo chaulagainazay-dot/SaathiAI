@@ -2873,6 +2873,16 @@ class ChatIn(BaseModel):
 
 
 def _safe_respond(text: str, session_id: str, speaker_verified: bool) -> str:
+    # Research questions answer from the unified, evidence-backed intelligence
+    # snapshot (read-only) — never the LLM's memory. Non-research text falls
+    # through to the normal agent. Failure here never blocks a reply.
+    try:
+        from saathi.research_surface import maybe_answer_chat
+        r = maybe_answer_chat(text)
+        if r is not None:
+            return r["reply"]
+    except Exception:
+        pass
     try:
         return agent.respond(text, session_id, speaker_verified=speaker_verified)
     except Exception as e:
@@ -2970,6 +2980,39 @@ def chat(body: ChatIn, request: Request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
     reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
     return {"reply": reply}
+
+
+# ── Research Intelligence surface (READ-ONLY) — projects the existing evidence
+# intelligence into Central Command / chat / voice. No trade/broker/portfolio/
+# market_data authority; follows the standard session auth (not whitelisted).
+@app.get("/api/v1/research/intelligence")
+def research_intelligence(request: Request):
+    from saathi import research_surface
+    return research_surface.intelligence()
+
+
+@app.get("/api/v1/research/events")
+def research_events(request: Request, limit: int = 50):
+    from saathi import research_surface
+    return research_surface.events(limit=limit)
+
+
+@app.get("/api/v1/research/events/{event_id}")
+def research_event_detail(event_id: str, request: Request):
+    from saathi import research_surface
+    return research_surface.event_detail(event_id)
+
+
+@app.get("/api/v1/research/brief")
+def research_brief(request: Request):
+    from saathi import research_surface
+    return research_surface.brief()
+
+
+@app.get("/api/v1/research/health")
+def research_health(request: Request):
+    from saathi import research_surface
+    return research_surface.health()
 
 
 @app.post("/api/v1/workspace")
