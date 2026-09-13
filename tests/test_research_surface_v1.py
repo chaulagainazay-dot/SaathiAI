@@ -130,6 +130,16 @@ def test_citations():
     assert ev0["evidence_refs"]
 
 
+# 14b — CC projection event drill-down: latest_events carry an event_id that resolves
+def test_cc_projection_event_id_resolves():
+    st = _seed()
+    d = RS.intelligence(store=st)
+    ev = d["latest_events"][0]
+    assert ev.get("event_id"), "latest_events must expose event_id for detail drill-down"
+    detail = RS.event_detail(ev["event_id"], store=st)
+    assert detail.get("error") != "EVENT_NOT_FOUND" and detail["event_id"] == ev["event_id"]
+
+
 # 15 portfolio relevance read-only
 def test_portfolio_relevance():
     d = RS.intelligence(store=_seed(), holdings={"MBL"})

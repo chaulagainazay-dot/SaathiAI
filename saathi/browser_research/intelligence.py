@@ -382,6 +382,7 @@ def central_command_projection(snap: ResearchIntelligenceSnapshot) -> dict:
             "confidence": snap.confidence,
         },
         "latest_events": [{
+            "event_id": e.event_id,
             "headline": e.headline[:80], "type": e.event_type.value, "symbol": e.symbol,
             "date": e.event_date_raw, "authority": e.source_tier.name,
             "confidence": e.confidence, "freshness": e.freshness.value,
