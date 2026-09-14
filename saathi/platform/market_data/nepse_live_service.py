@@ -12,8 +12,12 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from dataclasses import replace
+
+# read-only live-market event fanned out over the existing SSE stream.
+EVENT_NAME = "market.nepse.snapshot"
 
 from saathi.platform.market_data.live_observation import (
     DATA_CLASS, Freshness, LiveAcquisitionStatus, MarketState, NepseLiveMarketSnapshot,
@@ -96,50 +100,78 @@ def observation_series(store, instrument_id: str, *, limit: int = 50) -> list[di
 class NepseLiveService:
     """One bounded live-market browser worker with a cached last observation."""
 
-    def __init__(self, *, store=None, reader=None, persist: bool = True,
-                 refresh_open_sec: float = REFRESH_OPEN_SEC,
+    def __init__(self, *, store=None, reader=None, persist: bool = True, publish: bool = True,
+                 watchlist=None, refresh_open_sec: float = REFRESH_OPEN_SEC,
                  refresh_closed_sec: float = REFRESH_CLOSED_SEC):
         self._store = store
         self._reader = reader
         self._persist = persist and store is not None
+        self._publish = publish
+        self._watchlist = list(watchlist) if watchlist else None
         self._refresh_open = refresh_open_sec
         self._refresh_closed = refresh_closed_sec
         self._last: NepseLiveMarketSnapshot | None = None
         self._last_ok: NepseLiveMarketSnapshot | None = None
         self._last_refresh_at: float = 0.0
         self._last_metrics: dict = {}
+        self._version: int = 0
+        self._refresh_lock = threading.Lock()   # MAX_CONCURRENT_NEPSE_BROWSER_ACQUISITIONS = 1
 
     def _interval(self) -> float:
         st = self._last.market_status if self._last else MarketState.UNKNOWN
         return self._refresh_closed if st == MarketState.CLOSED else self._refresh_open
 
+    def _fresh_enough(self, now: float) -> bool:
+        return bool(self._last) and (now - self._last_refresh_at) < self._interval()
+
     def refresh(self, *, force: bool = False, now: float | None = None) -> NepseLiveMarketSnapshot:
+        """Single-flight bounded refresh. Concurrent callers coalesce onto ONE in-flight
+        browser acquisition (others get the cached snapshot); never hammers the site."""
         now = now if now is not None else time.time()
-        if not force and self._last and (now - self._last_refresh_at) < self._interval():
-            return self._last  # bounded: do not hammer the site
-        snap, metrics = observe_nepse_live(reader=self._reader, now=now)
-        self._last_refresh_at = now
-        self._last_metrics = metrics
-        good = snap.source_health in (
-            LiveAcquisitionStatus.NEPSE_LIVE_AVAILABLE,
-            LiveAcquisitionStatus.NEPSE_MARKET_CLOSED,
-            LiveAcquisitionStatus.NEPSE_LIVE_STALE)
-        if good:
-            self._last_ok = snap
-            if self._persist:
-                try:
-                    persist_snapshot(self._store, snap)
-                except Exception:
-                    pass
-        elif self._last_ok is not None:
-            # failure containment: preserve last good, mark STALE, never fabricate
-            snap = replace(
-                self._last_ok, freshness=Freshness.STALE,
-                source_health=LiveAcquisitionStatus.NEPSE_LIVE_STALE,
-                limitations=tuple(self._last_ok.limitations) +
-                (f"live read failed ({metrics.get('source_health')}); showing last observation",))
-        self._last = snap
-        return snap
+        if not force and self._fresh_enough(now):
+            return self._last
+        acquired = self._refresh_lock.acquire(blocking=False)
+        if not acquired:
+            # another acquisition is in flight → coalesce (no second browser)
+            if self._last is not None:
+                return self._last
+            with self._refresh_lock:            # no snapshot yet: await the in-flight owner
+                return self._last
+        try:
+            if not force and self._fresh_enough(now):   # a peer may have just finished
+                return self._last
+            snap, metrics = observe_nepse_live(reader=self._reader, now=now)
+            self._last_refresh_at = now
+            self._last_metrics = metrics
+            good = snap.source_health in (
+                LiveAcquisitionStatus.NEPSE_LIVE_AVAILABLE,
+                LiveAcquisitionStatus.NEPSE_MARKET_CLOSED,
+                LiveAcquisitionStatus.NEPSE_LIVE_STALE)
+            if good:
+                self._last_ok = snap
+                if self._persist:
+                    try:
+                        persist_snapshot(self._store, snap)
+                    except Exception:
+                        pass
+            elif self._last_ok is not None:
+                # failure containment: preserve last good, mark STALE, never fabricate
+                snap = replace(
+                    self._last_ok, freshness=Freshness.STALE,
+                    source_health=LiveAcquisitionStatus.NEPSE_LIVE_STALE,
+                    limitations=tuple(self._last_ok.limitations) +
+                    (f"live read failed ({metrics.get('source_health')}); showing last observation",))
+            self._version += 1
+            self._last = snap
+            if self._publish:
+                publish_snapshot(snap, self._version, watchlist=self._watchlist)
+            return snap
+        finally:
+            self._refresh_lock.release()
+
+    @property
+    def version(self) -> int:
+        return self._version
 
     def snapshot(self, *, max_age_sec: float | None = None,
                  now: float | None = None) -> NepseLiveMarketSnapshot | None:
@@ -159,9 +191,10 @@ class NepseLiveService:
         s = self._last
         return {
             "service": "nepse_live_browser", "acquisition_method": "OFFICIAL_LIVE_BROWSER",
-            "data_class": DATA_CLASS, "source_url": SOURCE_TODAY_PRICE,
+            "data_class": DATA_CLASS, "source_url": SOURCE_TODAY_PRICE, "version": self._version,
             "source_kind": "OFFICIAL_PAGE_OBSERVED (rendered DOM; not a licensed tick feed)",
-            "browser_workers": 1, "last_refresh_at": self._last_refresh_at,
+            "browser_workers": 1, "max_concurrent_acquisitions": 1,
+            "last_refresh_at": self._last_refresh_at,
             "refresh_interval_sec": self._interval(), "last_metrics": self._last_metrics,
             "market_status": s.market_status.value if s else None,
             "freshness": s.freshness.value if s else None,
@@ -205,6 +238,36 @@ def central_command_live_projection(snap: NepseLiveMarketSnapshot, *, watchlist=
                        "observed_at": o.observed_at} for o in wl],
         "controls": [],  # explicitly no trade controls
     }
+
+
+def _tone_for(snap: NepseLiveMarketSnapshot) -> str:
+    ic = snap.index_change
+    if ic is None:
+        return "info"
+    return "up" if ic > 0 else "down" if ic < 0 else "info"
+
+
+def snapshot_event_payload(snap: NepseLiveMarketSnapshot, version: int, *, watchlist=None) -> dict:
+    """Phase 5/6 — compact market projection for the SSE event (NOT all 345 records)."""
+    proj = central_command_live_projection(snap, watchlist=watchlist)
+    idx = proj.get("nepse_index")
+    return {"version": version, "snapshot_id": snap.snapshot_id, "dept": "FINANCE",
+            "title": f"NEPSE {snap.market_status.value} · {idx or '—'}",
+            "action": "View", "tone": _tone_for(snap), **proj}
+
+
+def publish_snapshot(snap: NepseLiveMarketSnapshot, version: int, *, watchlist=None) -> bool:
+    """Fan the latest already-acquired snapshot out over the existing Event Fabric / SSE.
+    Publishing NEVER triggers a browser acquisition. Returns False (skips) if called from
+    within a running event loop — the acquisition itself still succeeds."""
+    try:
+        from saathi.events import bus
+        bus.publish_sync(EVENT_NAME, snapshot_event_payload(snap, version, watchlist=watchlist))
+        return True
+    except RuntimeError:
+        return False
+    except Exception:
+        return False
 
 
 def _freshness_phrase(snap: NepseLiveMarketSnapshot) -> str:

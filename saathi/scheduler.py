@@ -868,6 +868,14 @@ def start():
         svc.start(interval_seconds=60)
     except Exception:
         pass  # storage monitoring must never block server startup
+    # ONE governed live-NEPSE producer (bounded cadence; open-session fast, else idle).
+    # Opt out with SAATHI_NEPSE_LIVE_PRODUCER=0.
+    try:
+        import os as _os
+        if _os.environ.get("SAATHI_NEPSE_LIVE_PRODUCER", "1") != "0":
+            threading.Thread(target=nepse_live_producer_loop, daemon=True).start()
+    except Exception:
+        pass  # live producer must never block server startup
 
 
 if __name__ == "__main__":
@@ -906,3 +914,37 @@ def nepse_live_refresh():
                 "freshness": snap.freshness.value}
     except Exception as e:
         return {"status": "ERROR", "error": str(e)[:160]}
+
+
+def _nepse_session_state():
+    """Current NEPSE session state from the canonical calendar (no new calendar)."""
+    from datetime import datetime
+    from saathi.platform.nepse.calendar import NepseCalendar, NEPAL_TZ, SessionState
+    try:
+        return NepseCalendar().session_state(datetime.now(NEPAL_TZ))
+    except Exception:
+        return SessionState.UNKNOWN
+
+
+def nepse_live_producer_loop():
+    """The ONE governed live-market producer. Refreshes the shared NEPSE snapshot on a
+    bounded cadence and publishes it to the Event Fabric/SSE for all consumers. Fast
+    cadence only during the open/pre-open session; otherwise idle (one closed snapshot so
+    surfaces have data, then quiet). Single browser worker (single-flight in the service);
+    SSE clients never drive acquisition."""
+    from saathi.platform.market_data.nepse_live_service import (
+        get_default_service, REFRESH_OPEN_SEC)
+    from saathi.platform.nepse.calendar import SessionState
+    while True:
+        interval = 300.0
+        try:
+            st = _nepse_session_state()
+            svc = get_default_service()
+            if st in (SessionState.OPEN, SessionState.PRE_OPEN):
+                svc.refresh()
+                interval = REFRESH_OPEN_SEC
+            elif svc.snapshot() is None:
+                svc.refresh()   # seed one snapshot when closed so surfaces aren't empty
+        except Exception:
+            pass
+        time.sleep(interval)

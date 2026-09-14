@@ -6017,21 +6017,29 @@ th{color:#8b949e}a{color:#58a6ff}button{background:#238636;color:#fff;border:0;p
 <p class=muted>Source: Official NEPSE (nepalstock.com). Data class: LIVE_BROWSER_OBSERVED — current
 awareness only, not canonical historical data. Read-only; no trading controls.</p>
 </div><script>
-async function load(refresh){
- const s=document.getElementById('status'); s.textContent='loading…';
- try{const r=await fetch('/api/v1/market/nepse/live'+(refresh?'?refresh=1':''));const d=await r.json();
- if(d.error){s.textContent='error';return}
- s.textContent=d.market_status;s.className='badge '+d.market_status;
+let _ver=-1;
+function render(d){
+ if(!d||d.error)return;
+ if(typeof d.version==='number'){ if(d.version<_ver)return; _ver=d.version; }
+ const s=document.getElementById('status');s.textContent=d.market_status;s.className='badge '+d.market_status;
  const f=document.getElementById('fresh');f.textContent=d.freshness;f.className='badge '+d.freshness;
- document.getElementById('obs').textContent='Observed: '+(d.source_as_of||new Date(d.observed_at*1000).toLocaleString());
+ document.getElementById('obs').textContent='Observed: '+(d.source_as_of||new Date((d.observed_at||0)*1000).toLocaleString())+(d.version!=null?'  (v'+d.version+')':'');
  document.getElementById('stats').innerHTML=[
-  ['Index',d.nepse_index],['Change',d.index_change+' ('+d.index_change_percent+'%)'],
+  ['Index',d.nepse_index],['Change',(d.index_change??'—')+' ('+(d.index_change_percent??'—')+'%)'],
   ['Turnover Rs',d.total_turnover],['Traded shares',d.total_volume],
   ['Advancers',d.advancers],['Decliners',d.decliners],['Unchanged',d.unchanged]]
   .map(([k,v])=>'<div class=card><span class=muted>'+k+'</span><b>'+(v??'—')+'</b></div>').join('');
  document.getElementById('rows').innerHTML=(d.watchlist||[]).map(o=>'<tr><td>'+o.symbol+'</td><td>'+
   (o.ltp??'—')+'</td><td>'+(o.point_change??'—')+'</td><td>'+(o.percent_change??'—')+'</td><td>'+
   (o.volume??'—')+'</td></tr>').join('');
- }catch(e){s.textContent='error'}
 }
+async function load(refresh){
+ const s=document.getElementById('status');s.textContent='loading…';
+ try{const r=await fetch('/api/v1/market/nepse/live'+(refresh?'?refresh=1':''));render(await r.json());}
+ catch(e){s.textContent='error';}
+}
+// consume the shared snapshot over the EXISTING SSE stream — never triggers acquisition
+try{const es=new EventSource('/api/events/stream?demo=0');
+ es.onmessage=function(e){try{const ev=JSON.parse(e.data);
+  if(ev&&ev.name==='market.nepse.snapshot'&&ev.payload)render(ev.payload);}catch(_){}}; }catch(_){}
 load(0);</script></body></html>""")
