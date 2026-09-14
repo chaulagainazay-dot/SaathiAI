@@ -6164,3 +6164,201 @@ async function load(){
  }catch(e){document.getElementById('src').textContent='error';}
 }
 load();</script></body></html>""")
+
+
+# ── M — NATIVE_NEPSE_MARKET_INTELLIGENCE_WORKSPACE (read-only, combines sources) ─
+# Official NEPSE = current authority; tracker = third-party history/analytics; research
+# + catalyst from frozen surfaces. No portfolio MCP, no signals, zero authority.
+@app.get("/api/v1/market/workspace/overview")
+def mw_overview():
+    try:
+        from saathi.platform.market_data.tracker.workspace import overview
+        return overview()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/stocks")
+def mw_stocks(sort: str = "turnover", sector: str = "", limit: int = 50):
+    try:
+        from saathi.platform.market_data.tracker.workspace import stock_table
+        return stock_table(sort=sort, sector=sector or None, limit=min(max(limit, 1), 600))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/sectors")
+def mw_sectors(sort: str = "turnover"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import sectors
+        return sectors(sort=sort)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/compare")
+def mw_compare(symbols: str, range: str = "1Y", mode: str = "NORMALIZED_PERCENT"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import compare
+        syms = [s.strip() for s in symbols.split(",") if s.strip()][:4]
+        return compare(syms, range, mode=mode)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/panel")
+def mw_panel(symbol: str, range: str = "1Y"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import symbol_panel
+        return symbol_panel(symbol, range)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/chat")
+def mw_chat(q: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.workspace import workspace_chat
+        return workspace_chat(q)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market", response_class=HTMLResponse, include_in_schema=False)
+def market_workspace_page():
+    """Native NEPSE Market Intelligence workspace. No iframe, no TradingView."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Market Intelligence</title>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+h2{margin:0 0 4px}.muted{color:#8b949e;font-size:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:6px 12px;cursor:pointer}
+.tabs button.on{background:#238636;border-color:#238636}
+.badge{padding:2px 8px;border-radius:10px;font-size:11px;background:#1f3a5f}
+.official{background:#1f6f3f}.third{background:#5a3a12}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid #21262d;text-align:right}
+th:first-child,td:first-child{text-align:left}th{color:#8b949e;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px}.card b{display:block;font-size:18px}
+input,select{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 8px}
+svg{width:100%;height:auto;background:#0d1117;border:1px solid #21262d;border-radius:8px}
+.pit{color:#d29922;font-size:12px;margin:6px 0}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+section{display:none}section.on{display:block}
+</style></head><body><div class=wrap>
+<h2>NEPSE Market Intelligence</h2>
+<div class=muted>Current: <span class="badge official">Official NEPSE</span> · History/analytics: <span class="badge third">NEPSE Portfolio Tracker · third-party</span></div>
+<div class=tabs id=tabs></div>
+<section id=overview></section>
+<section id=stocks></section>
+<section id=compare></section>
+<section id=sectors></section>
+<section id=chart></section>
+<section id=panel></section>
+</div><script>
+const TABS=[["overview","Overview"],["stocks","Stocks"],["compare","Compare"],["sectors","Sectors"],["chart","Chart"],["panel","Fundamentals/Dividends/Research"]];
+let CUR="overview";
+document.getElementById('tabs').innerHTML=TABS.map(([id,l])=>`<button data-t="${id}" onclick="go('${id}')">${l}</button>`).join('');
+function go(t){CUR=t;document.querySelectorAll('.tabs button').forEach(b=>b.className=b.dataset.t===t?'on':'');
+ document.querySelectorAll('section').forEach(s=>s.className=s.id===t?'on':'');R[t]&&R[t]();}
+async function j(u){const r=await fetch(u);return r.json();}
+const num=v=>v==null?'—':(+v).toLocaleString();
+const R={};
+R.overview=async()=>{const d=await j('/api/v1/market/workspace/overview');const o=d.official||{};
+ document.getElementById('overview').innerHTML=`<div class=row><span class="badge official">Official NEPSE</span>
+ <span class=muted>${d.official_state}</span></div>
+ <div class=cards>${[['Index',o.nepse_index],['Change',(o.index_change??'—')+' ('+(o.index_change_percent??'—')+'%)'],
+ ['Turnover',num(o.total_turnover)],['Volume',num(o.total_volume)],['Advancers',o.advancers],['Decliners',o.decliners],
+ ['Unchanged',o.unchanged],['Status',o.market_status]].map(([k,v])=>`<div class=card><span class=muted>${k}</span><b>${v??'—'}</b></div>`).join('')}</div>
+ <div class=muted style="margin-top:6px">Observed: ${o.source_as_of||'—'} · freshness ${o.freshness||'—'}</div>`;};
+R.stocks=async()=>{const el=document.getElementById('stocks');
+ el.innerHTML=`<div class=row>Sort:<select id=ss onchange="R.stocks()">
+ ${['turnover','volume','gain','decline','pe','market_cap'].map(s=>`<option ${s==(window._ss||'turnover')?'selected':''}>${s}</option>`).join('')}</select>
+ <span class=muted>official LTP where observed; else tracker</span></div><div id=stbody>loading…</div>`;
+ window._ss=document.getElementById('ss').value;
+ const d=await j('/api/v1/market/workspace/stocks?limit=30&sort='+window._ss);
+ document.getElementById('stbody').innerHTML=`<div class=muted>${d.count} securities</div><table>
+ <tr><th>Symbol</th><th>LTP</th><th>%Chg</th><th>Volume</th><th>Turnover</th><th>Sector</th><th>P/E</th></tr>
+ ${(d.rows||[]).map(r=>`<tr><td>${r.symbol} ${r.ltp_source==='OFFICIAL_PAGE_OBSERVED'?'<span class="badge official">O</span>':''}</td>
+ <td>${num(r.ltp)}</td><td>${r.percent_change??'—'}</td><td>${num(r.volume)}</td><td>${num(r.turnover)}</td>
+ <td style="text-align:left">${r.sector||'—'}</td><td>${r.pe_ratio??'—'}</td></tr>`).join('')}</table>`;};
+R.sectors=async()=>{const d=await j('/api/v1/market/workspace/sectors?sort=change');
+ document.getElementById('sectors').innerHTML=`<div class=muted>Derived sector analytics (not an official sector index)</div>
+ <table><tr><th>Sector</th><th>%Chg</th><th>Turnover</th><th>Volume</th><th>Up</th><th>Down</th><th>Cos</th></tr>
+ ${(d.sectors||[]).map(s=>`<tr><td>${s.sector}</td><td>${s.sector_percentage_change??'—'}</td>
+ <td>${num(s.aggregate_turnover)}</td><td>${num(s.aggregate_volume)}</td><td>${s.advancers}</td>
+ <td>${s.decliners}</td><td>${s.company_count}</td></tr>`).join('')}</table>`;};
+R.compare=async()=>{const el=document.getElementById('compare');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row>
+ <input id=csyms value="NABIL,API,AKPL,HDL" size=24>
+ <select id=crange>${['1M','3M','1Y'].map(r=>`<option ${r==='1Y'?'selected':''}>${r}</option>`).join('')}</select>
+ <button onclick="drawCompare()">Compare</button></div><div id=cmeta class=muted></div><svg id=csvg viewBox="0 0 1000 320" preserveAspectRatio="none"></svg><div id=cleg></div>`;}
+ drawCompare();};
+async function drawCompare(){const s=document.getElementById('csyms').value,r=document.getElementById('crange').value;
+ const d=await j(`/api/v1/market/workspace/compare?symbols=${encodeURIComponent(s)}&range=${r}`);
+ if(!d.series||!d.series.length){document.getElementById('cmeta').textContent='no overlapping data';document.getElementById('csvg').innerHTML='';return;}
+ document.getElementById('cmeta').textContent=`Normalized % change · ${d.common_start}→${d.common_end} · ${d.series[0].points.length} pts`;
+ const cols=['#58a6ff','#3fb950','#f0883e','#db61a2'];const W=1000,H=320,pad=8;
+ let all=[];d.series.forEach(se=>se.points.forEach(p=>all.push(+p[1])));const mn=Math.min(...all),mx=Math.max(...all);
+ const n=d.series[0].points.length;const X=i=>pad+(n<2?W/2:i/(n-1)*(W-2*pad));const Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+ let svg=`<line x1=0 y1="${Y(0)}" x2="${W}" y2="${Y(0)}" stroke="#30363d"/>`;
+ d.series.forEach((se,k)=>{let path='';se.points.forEach((p,i)=>{path+=(i?'L':'M')+X(i)+' '+Y(+p[1])+' ';});
+  svg+=`<path d="${path}" fill=none stroke="${cols[k%4]}" stroke-width="1.5"/>`;});
+ document.getElementById('csvg').innerHTML=svg;
+ document.getElementById('cleg').innerHTML=d.series.map((se,k)=>`<span style="color:${cols[k%4]}">■ ${se.symbol} ${se.change_pct}%</span>`).join('  ');}
+R.chart=async()=>{const el=document.getElementById('chart');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row><input id=chsym value=NABIL size=8>
+ <select id=chr>${['1M','3M','6M','1Y','5Y'].map(r=>`<option ${r==='1Y'?'selected':''}>${r}</option>`).join('')}</select>
+ <button onclick="drawChart()">Load</button><span id=chbadge class="badge third"></span></div>
+ <div id=chmeta class=muted></div><svg id=chp viewBox="0 0 1000 300" preserveAspectRatio=none></svg>
+ <svg id=chv viewBox="0 0 1000 70" preserveAspectRatio=none style="margin-top:5px"></svg>
+ <div class=pit id=chpit></div>`;}drawChart();};
+async function drawChart(){const sym=document.getElementById('chsym').value.toUpperCase(),r=document.getElementById('chr').value;
+ const d=await j(`/api/v1/market/tracker/chart?symbol=${sym}&range=${r}&indicators=sma`);
+ if(!d.available){document.getElementById('chmeta').textContent=d.status||'unavailable';return;}
+ document.getElementById('chbadge').textContent='NEPSE Portfolio Tracker · third-party';
+ document.getElementById('chmeta').textContent=`${sym} ${d.range} ${d.first_date}→${d.last_date} · latest ${d.latest_close}`;
+ document.getElementById('chpit').textContent='⚠ '+d.point_in_time_capability+' — descriptive only; current LTP authority: Official NEPSE.';
+ const o=d.ohlc;const W=1000,H=300,pad=6;const mn=Math.min(...o.map(p=>+p.low)),mx=Math.max(...o.map(p=>+p.high));
+ const X=i=>pad+(o.length<2?W/2:i/(o.length-1)*(W-2*pad)),Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+ let s='';const cw=Math.max(1,(W-2*pad)/o.length*0.6);
+ o.forEach((p,i)=>{const up=+p.close>=+p.open,c=up?'#3fb950':'#f85149';
+  s+=`<line x1="${X(i)}" y1="${Y(+p.high)}" x2="${X(i)}" y2="${Y(+p.low)}" stroke="${c}"/>`;
+  const yo=Y(+p.open),yc=Y(+p.close);s+=`<rect x="${X(i)-cw/2}" y="${Math.min(yo,yc)}" width="${cw}" height="${Math.max(1,Math.abs(yc-yo))}" fill="${c}"/>`;});
+ const sm=(d.indicators.sma_20||{}).series;if(sm){let pa='';sm['sma_20'].forEach((v,i)=>{if(v==null)return;pa+=(pa?'L':'M')+X(i)+' '+Y(v)+' ';});s+=`<path d="${pa}" fill=none stroke="#58a6ff" stroke-width=1.3/>`;}
+ document.getElementById('chp').innerHTML=s;
+ const vmx=Math.max(...o.map(p=>+p.volume),1);let vs='';o.forEach((p,i)=>{const h=+p.volume/vmx*60;vs+=`<rect x="${X(i)-cw/2}" y="${70-h}" width="${cw}" height="${h}" fill="#30475e"/>`;});
+ document.getElementById('chv').innerHTML=vs;}
+R.panel=async()=>{const el=document.getElementById('panel');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row><input id=psym value=NABIL size=8><button onclick="loadPanel()">Load</button></div><div id=pbody></div>`;}loadPanel();};
+async function loadPanel(){const sym=document.getElementById('psym').value.toUpperCase();
+ const d=await j(`/api/v1/market/workspace/panel?symbol=${sym}&range=1Y`);const f=(d.chart||{}).fundamentals||{};const rec=d.reconciliation||{};
+ const divs=((d.chart||{}).dividends||[]);
+ document.getElementById('pbody').innerHTML=`
+ <h3>Reconciliation</h3><div class=card>Official ${rec.official_ltp??'—'} · Tracker ${rec.tracker_ltp??'—'} · <b>${rec.verdict||'—'}</b> <span class=muted>(official authority)</span></div>
+ <h3>Fundamentals <span class="badge third">third-party</span></h3><div class=cards>
+ ${[['EPS',f.eps],['P/E',f.pe_ratio],['P/B',f.pb_ratio],['Div yield',f.dividend_yield],['Mkt cap',num(f.market_cap)],['52w H',f.week52_high],['52w L',f.week52_low],['Sector',f.sector]].map(([k,v])=>`<div class=card><span class=muted>${k}</span><b>${v??'—'}</b></div>`).join('')}</div>
+ <h3>Dividends</h3><table><tr><th>FY</th><th>Cash</th><th>Bonus</th><th>Total</th></tr>
+ ${divs.slice(0,8).map(x=>`<tr><td>${x.fiscal_year||'—'}</td><td>${x.cash_dividend??'—'}</td><td>${x.bonus_share??'—'}</td><td>${x.total_dividend??'—'}</td></tr>`).join('')||'<tr><td colspan=4 class=muted>none</td></tr>'}</table>
+ <h3>Research</h3><div class=muted>${(d.research||{}).state} · ${((d.research||{}).events||[]).length} events (frozen Research Surface)</div>
+ <h3>Catalysts</h3><div class=muted>${(d.catalysts||{}).state} · ${((d.catalysts||{}).catalysts||[]).length} (Fusion; historical reaction = canonical/MD-1 only)</div>
+ <h3>Portfolio</h3><div class=card>${(d.portfolio||{}).message}</div>`;}
+go('overview');
+</script></body></html>""")
+
+
+# ── routing fix: keep the SPA catch-all StaticFiles mount at "/" LAST ──────────
+# Starlette matches routes in list order; a Mount at "/" matches every path, so any
+# route registered after it (the market/nepse/tracker/workspace HTML + API routes
+# above) would be shadowed and 404. Move root mounts to the end so explicit routes
+# resolve first and the SPA remains the final fallback. Idempotent.
+try:
+    from starlette.routing import Mount as _Mount
+    _rr = app.router.routes
+    _roots = [r for r in _rr if isinstance(r, _Mount) and getattr(r, "path", "") in ("", "/")]
+    for _m in _roots:
+        _rr.remove(_m)
+        _rr.append(_m)
+except Exception:
+    pass

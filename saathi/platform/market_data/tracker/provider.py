@@ -246,6 +246,75 @@ class NepsePortfolioTrackerProvider:
         data, st = self._get("/market/status")
         return (data if isinstance(data, dict) else None), st
 
+    # ── full universe (stock table) ────────────────────────────────────────────
+    def stock_universe(self, *, limit: int = 600) -> tuple[list, TrackerStatus]:
+        from saathi.platform.market_data.tracker.models import StockRow
+        ckey = ("history", "__universe__", str(limit))   # reuse history TTL bucket
+        cached = self._cache_get(ckey)
+        if cached is not None:
+            return cached, TrackerStatus.TRACKER_AVAILABLE
+        data, st = self._get(f"/today-prices?limit={int(limit)}")
+        if st != TrackerStatus.TRACKER_AVAILABLE:
+            return [], st
+        rows = data.get("data") if isinstance(data, dict) else data
+        if not isinstance(rows, list):
+            return [], TrackerStatus.TRACKER_SCHEMA_CHANGED
+        out = []
+        for r in rows:
+            sym = str(r.get("symbol") or "").upper()
+            if not sym:
+                continue
+            try:
+                from saathi.platform.nepse.instruments import instrument_id_for
+                inst = instrument_id_for(sym)
+            except Exception:
+                inst = ""
+            out.append(StockRow(
+                symbol=sym, instrument_id=inst,
+                ltp=dec(r.get("last_traded_price") or r.get("ltp") or r.get("close_price")),
+                change=dec(r.get("change")), percent_change=dec(r.get("percentage_change")),
+                open=dec(r.get("open_price")), high=dec(r.get("high_price")),
+                low=dec(r.get("low_price")), volume=dec(r.get("total_traded_quantity")),
+                turnover=dec(r.get("total_traded_value")), sector=r.get("sector_name"),
+                pe_ratio=dec(r.get("pe_ratio")), eps=dec(r.get("eps")),
+                week52_high=dec(r.get("fifty_two_week_high")),
+                week52_low=dec(r.get("fifty_two_week_low")),
+                market_cap=dec(r.get("market_capitalization"))))
+        self._cache_put(ckey, "history", out)
+        return out, TrackerStatus.TRACKER_AVAILABLE
+
+    # ── sectors (tracker-derived analytics; NOT an official sector index) ───────
+    def sectors(self) -> tuple[list, TrackerStatus]:
+        from saathi.platform.market_data.tracker.models import SectorMarketSnapshot
+        ckey = ("history", "__sectors__", "")
+        cached = self._cache_get(ckey)
+        if cached is not None:
+            return cached, TrackerStatus.TRACKER_AVAILABLE
+        data, st = self._get("/market/sectors")
+        if st != TrackerStatus.TRACKER_AVAILABLE:
+            return [], st
+        rows = data if isinstance(data, list) else (
+            data.get("sectors") or data.get("data") if isinstance(data, dict) else None)
+        if not isinstance(rows, list):
+            return [], TrackerStatus.TRACKER_SCHEMA_CHANGED
+        now = time.time()
+        out = []
+        for r in rows:
+            out.append(SectorMarketSnapshot(
+                sector=str(r.get("sector_name") or ""),
+                nepali_sector=str(r.get("nepali_sector_name") or ""),
+                company_count=int(r.get("company_count") or 0),
+                advancers=int(r.get("gainers") or 0), decliners=int(r.get("losers") or 0),
+                unchanged=int(r.get("unchanged") or 0),
+                aggregate_turnover=dec(r.get("total_turnover")),
+                aggregate_volume=dec(r.get("total_volume")),
+                average_change_pct=dec(r.get("avg_price_change")),
+                sector_percentage_change=dec(r.get("sector_percentage_change")),
+                total_market_cap=dec(r.get("total_market_cap")),
+                top_companies=tuple((r.get("top_companies") or [])[:5]), observed_at=now))
+        self._cache_put(ckey, "history", out)
+        return out, TrackerStatus.TRACKER_AVAILABLE
+
 
 _DEFAULT: NepsePortfolioTrackerProvider | None = None
 

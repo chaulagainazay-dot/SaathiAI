@@ -179,6 +179,118 @@ class DividendRecord:
                 "published_date": self.published_date}
 
 
+DERIVED_SECTOR = "DERIVED_SECTOR_ANALYTICS"
+
+
+@dataclass(frozen=True)
+class StockRow:
+    symbol: str
+    instrument_id: str
+    ltp: Decimal | None = None
+    change: Decimal | None = None
+    percent_change: Decimal | None = None
+    open: Decimal | None = None
+    high: Decimal | None = None
+    low: Decimal | None = None
+    volume: Decimal | None = None
+    turnover: Decimal | None = None
+    sector: str | None = None
+    pe_ratio: Decimal | None = None
+    eps: Decimal | None = None
+    week52_high: Decimal | None = None
+    week52_low: Decimal | None = None
+    market_cap: Decimal | None = None
+    ltp_source: str = SOURCE           # overridden to OFFICIAL_PAGE_OBSERVED when official wins
+    source: str = SOURCE
+
+    def to_public(self) -> dict:
+        def s(v):
+            return None if v is None else str(v)
+        return {"symbol": self.symbol, "instrument_id": self.instrument_id, "ltp": s(self.ltp),
+                "change": s(self.change), "percent_change": s(self.percent_change),
+                "open": s(self.open), "high": s(self.high), "low": s(self.low),
+                "volume": s(self.volume), "turnover": s(self.turnover), "sector": self.sector,
+                "pe_ratio": s(self.pe_ratio), "eps": s(self.eps),
+                "week52_high": s(self.week52_high), "week52_low": s(self.week52_low),
+                "market_cap": s(self.market_cap), "ltp_source": self.ltp_source,
+                "source": self.source}
+
+
+@dataclass(frozen=True)
+class SectorMarketSnapshot:
+    sector: str
+    company_count: int = 0
+    advancers: int = 0
+    decliners: int = 0
+    unchanged: int = 0
+    aggregate_turnover: Decimal | None = None
+    aggregate_volume: Decimal | None = None
+    average_change_pct: Decimal | None = None
+    sector_percentage_change: Decimal | None = None
+    total_market_cap: Decimal | None = None
+    top_companies: tuple = ()
+    nepali_sector: str = ""
+    observed_at: float = 0.0
+    source: str = SOURCE
+    source_authority: str = DERIVED_SECTOR
+    limitations: tuple[str, ...] = ()
+
+    def to_public(self) -> dict:
+        def s(v):
+            return None if v is None else str(v)
+        return {"sector": self.sector, "nepali_sector": self.nepali_sector,
+                "company_count": self.company_count, "advancers": self.advancers,
+                "decliners": self.decliners, "unchanged": self.unchanged,
+                "aggregate_turnover": s(self.aggregate_turnover),
+                "aggregate_volume": s(self.aggregate_volume),
+                "average_change_pct": s(self.average_change_pct),
+                "sector_percentage_change": s(self.sector_percentage_change),
+                "total_market_cap": s(self.total_market_cap),
+                "top_companies": list(self.top_companies), "observed_at": self.observed_at,
+                "source": self.source, "source_authority": self.source_authority,
+                "note": "derived sector analytics (not an official NEPSE sector index)",
+                "limitations": list(self.limitations)}
+
+
+@dataclass(frozen=True)
+class ComparisonSeries:
+    symbol: str
+    first_close: Decimal | None
+    last_close: Decimal | None
+    change_pct: Decimal | None
+    points: tuple = ()                 # (business_date, value) — value depends on mode
+
+    def to_public(self) -> dict:
+        def s(v):
+            return None if v is None else str(v)
+        return {"symbol": self.symbol, "first_close": s(self.first_close),
+                "last_close": s(self.last_close), "change_pct": s(self.change_pct),
+                "points": [[bd, (None if v is None else str(v))] for bd, v in self.points]}
+
+
+@dataclass(frozen=True)
+class MultiSymbolComparison:
+    symbols: tuple[str, ...]
+    range: str
+    mode: str                          # NORMALIZED_PERCENT | ABSOLUTE
+    common_start: str | None
+    common_end: str | None
+    series: tuple[ComparisonSeries, ...] = ()
+    source: str = SOURCE
+    source_authority: str = SOURCE_AUTHORITY
+    data_class: str = DATA_CLASS
+    point_in_time_capability: str = POINT_IN_TIME
+    limitations: tuple[str, ...] = ()
+
+    def to_public(self) -> dict:
+        return {"symbols": list(self.symbols), "range": self.range, "mode": self.mode,
+                "common_start": self.common_start, "common_end": self.common_end,
+                "series": [s.to_public() for s in self.series], "source": self.source,
+                "source_authority": self.source_authority, "data_class": self.data_class,
+                "point_in_time_capability": self.point_in_time_capability,
+                "limitations": list(self.limitations)}
+
+
 @dataclass(frozen=True)
 class QuoteReconciliation:
     symbol: str
