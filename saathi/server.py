@@ -6043,3 +6043,124 @@ try{const es=new EventSource('/api/events/stream?demo=0');
  es.onmessage=function(e){try{const ev=JSON.parse(e.data);
   if(ev&&ev.name==='market.nepse.snapshot'&&ev.payload)render(ev.payload);}catch(_){}}; }catch(_){}
 load(0);</script></body></html>""")
+
+
+# ── M — TRACKER_MARKET_HISTORY_READMODEL: read-only THIRD-PARTY analytics ──────
+# Public REST (no creds/MCP/browser). THIRD_PARTY_STRUCTURED_MARKET_DATA; official
+# NEPSE remains current-market authority; never writes md_bars/md_quotes; no signals.
+# Sync `def` handlers → FastAPI threadpool (requests is blocking).
+@app.get("/api/v1/market/tracker/history")
+def tracker_history(symbol: str, range: str = "1Y"):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        series, st = get_provider().market_history(symbol, range)
+        if series is None:
+            return JSONResponse({"available": False, "status": st.value, "symbol": symbol.upper()},
+                                status_code=200)
+        return series.to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/chart")
+def tracker_chart(symbol: str, range: str = "1Y", indicators: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.chart import build_chart_model
+        which = [w.strip() for w in indicators.split(",") if w.strip()] or None
+        return build_chart_model(symbol, range, which_indicators=which)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/fundamentals")
+def tracker_fundamentals(symbol: str):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        f, st = get_provider().fundamentals(symbol)
+        return f.to_public() if f else JSONResponse({"available": False, "status": st.value}, status_code=200)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/dividends")
+def tracker_dividends(symbol: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        d, st = get_provider().dividends(symbol or None)
+        return {"status": st.value, "count": len(d), "dividends": [x.to_public() for x in d]}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/reconcile")
+def tracker_reconcile(symbol: str):
+    try:
+        from saathi.platform.market_data.tracker.chart import reconcile_current
+        return reconcile_current(symbol).to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market/chart", response_class=HTMLResponse, include_in_schema=False)
+def tracker_chart_panel():
+    """Native SaathiOS chart from tracker structured history. No TradingView, no iframe."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Chart</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+input,button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button.on{background:#238636;border-color:#238636}
+.badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#1f3a5f}
+.muted{color:#8b949e;font-size:12px}svg{width:100%;height:auto;background:#0d1117;border:1px solid #21262d;border-radius:8px}
+.pit{color:#d29922;font-size:12px;margin-top:6px}
+</style></head><body><div class=wrap>
+<div class=row><b>NEPSE Chart</b>
+<input id=sym value="NABIL" size=8 onkeydown="if(event.key==='Enter')load()">
+<span id=ranges></span><button onclick="load()">Load</button>
+<span id=src class=badge>—</span></div>
+<div class=muted id=meta></div>
+<svg id=price viewBox="0 0 1000 340" preserveAspectRatio="none"></svg>
+<svg id=vol viewBox="0 0 1000 90" preserveAspectRatio="none" style="margin-top:6px"></svg>
+<div class=pit id=pit></div>
+<div class=muted id=funda style="margin-top:8px"></div>
+</div><script>
+let RANGE="1Y"; const RS=["1D","1W","1M","3M","6M","1Y","5Y"];
+document.getElementById('ranges').innerHTML=RS.map(r=>`<button data-r="${r}" onclick="setR('${r}')">${r}</button>`).join('');
+function setR(r){RANGE=r;paintRanges();load();}
+function paintRanges(){document.querySelectorAll('#ranges button').forEach(b=>b.className=b.dataset.r===RANGE?'on':'');}
+function px(v,min,max,w){return (max===min)?w/2:((v-min)/(max-min))*w;}
+async function load(){
+ paintRanges();
+ const sym=document.getElementById('sym').value.trim().toUpperCase();
+ document.getElementById('src').textContent='loading…';
+ try{
+  const r=await fetch(`/api/v1/market/tracker/chart?symbol=${sym}&range=${RANGE}&indicators=sma`);
+  const d=await r.json();
+  if(!d.available){document.getElementById('src').textContent=d.status||'unavailable';return;}
+  document.getElementById('src').textContent='NEPSE Portfolio Tracker · third-party';
+  document.getElementById('meta').textContent=`${sym} ${d.range} (${d.timeframe}) · ${d.first_date}→${d.last_date} · ${d.n_points} pts · latest ${d.latest_close}`;
+  document.getElementById('pit').textContent='⚠ '+d.point_in_time_capability+' — descriptive only, not canonical/backtest data. Current LTP authority: Official NEPSE.';
+  const o=d.ohlc, closes=o.map(p=>+p.close), vols=o.map(p=>+p.volume);
+  const W=1000,H=340,pad=6; const mn=Math.min(...o.map(p=>+p.low)),mx=Math.max(...o.map(p=>+p.high));
+  const X=i=>pad+ (o.length<2?W/2:(i/(o.length-1))*(W-2*pad));
+  const Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+  // candlesticks
+  let s='';const cw=Math.max(1,(W-2*pad)/o.length*0.6);
+  o.forEach((p,i)=>{const up=+p.close>=+p.open;const col=up?'#3fb950':'#f85149';
+   s+=`<line x1="${X(i)}" y1="${Y(+p.high)}" x2="${X(i)}" y2="${Y(+p.low)}" stroke="${col}" stroke-width="1"/>`;
+   const yo=Y(+p.open),yc=Y(+p.close);s+=`<rect x="${X(i)-cw/2}" y="${Math.min(yo,yc)}" width="${cw}" height="${Math.max(1,Math.abs(yc-yo))}" fill="${col}"/>`;});
+  // SMA overlay
+  const sma=(d.indicators.sma_20||{}).series; const smv=sma?sma['sma_20']:null;
+  if(smv){let path='';smv.forEach((v,i)=>{if(v==null)return;path+=(path?'L':'M')+X(i)+' '+Y(v)+' ';});
+   s+=`<path d="${path}" fill="none" stroke="#58a6ff" stroke-width="1.4"/>`;}
+  document.getElementById('price').innerHTML=s;
+  // volume
+  const vmx=Math.max(...vols,1);let vs='';
+  o.forEach((p,i)=>{const h=(+p.volume/vmx)*80;vs+=`<rect x="${X(i)-cw/2}" y="${90-h}" width="${cw}" height="${h}" fill="#30475e"/>`;});
+  document.getElementById('vol').innerHTML=vs;
+  const f=d.fundamentals||{};
+  document.getElementById('funda').textContent=f.eps?`EPS ${f.eps} · P/E ${f.pe_ratio} · P/B ${f.pb_ratio} · Div yield ${f.dividend_yield}% · ${f.sector||''} (third-party fundamentals)`:'';
+ }catch(e){document.getElementById('src').textContent='error';}
+}
+load();</script></body></html>""")
