@@ -74,6 +74,21 @@ def test_permission_unsafe():
     assert assess_permissions({"enableReading": True}) == PermissionAssessment.PERMISSION_UNKNOWN
 
 
+# 2b — extended authority fields (options/FIX/portfolio-margin) + default-deny unknown
+def test_permission_extended_authority():
+    for flag, exp in [("enableVanillaOptions", "UNSAFE_OPTIONS_PERMISSION"),
+                      ("enableFixApiTrade", "UNSAFE_FIX_TRADING_PERMISSION"),
+                      ("enablePortfolioMarginTrading", "UNSAFE_PORTFOLIO_MARGIN_PERMISSION")]:
+        r = dict(RESTR_SAFE); r[flag] = True
+        assert assess_permissions(r).value == exp
+    # unknown NEW truthy authority-looking permission → default-deny
+    r = dict(RESTR_SAFE); r["enableSomeNewTradingThing"] = True
+    assert assess_permissions(r) == PermissionAssessment.PERMISSION_UNKNOWN
+    # read-only FIX flag does NOT block
+    r = dict(RESTR_SAFE); r["enableFixReadOnly"] = True; r["ipRestrict"] = True
+    assert assess_permissions(r) == PermissionAssessment.READ_ONLY_CONFIRMED
+
+
 # 3 — account canTrade/canWithdraw cross-check
 def test_account_crosscheck():
     acct = dict(ACCT); acct["canTrade"] = True

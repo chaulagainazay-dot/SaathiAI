@@ -56,38 +56,66 @@ class PermissionAssessment(str, Enum):
     UNSAFE_MARGIN_PERMISSION = "UNSAFE_MARGIN_PERMISSION"
     UNSAFE_FUTURES_PERMISSION = "UNSAFE_FUTURES_PERMISSION"
     UNSAFE_TRANSFER_PERMISSION = "UNSAFE_TRANSFER_PERMISSION"
+    UNSAFE_OPTIONS_PERMISSION = "UNSAFE_OPTIONS_PERMISSION"
+    UNSAFE_FIX_TRADING_PERMISSION = "UNSAFE_FIX_TRADING_PERMISSION"
+    UNSAFE_PORTFOLIO_MARGIN_PERMISSION = "UNSAFE_PORTFOLIO_MARGIN_PERMISSION"
     PERMISSION_UNKNOWN = "PERMISSION_UNKNOWN"
     CREDENTIAL_INVALID = "CREDENTIAL_INVALID"
 
 
+# Explicit known authority-bearing flags → specific unsafe result (checked in order).
+_KNOWN_UNSAFE_FLAGS = (
+    ("enableWithdrawals", PermissionAssessment.UNSAFE_WITHDRAW_PERMISSION),
+    ("enableInternalTransfer", PermissionAssessment.UNSAFE_TRANSFER_PERMISSION),
+    ("permitsUniversalTransfer", PermissionAssessment.UNSAFE_TRANSFER_PERMISSION),
+    ("enableFutures", PermissionAssessment.UNSAFE_FUTURES_PERMISSION),
+    ("enablePortfolioMarginTrading", PermissionAssessment.UNSAFE_PORTFOLIO_MARGIN_PERMISSION),
+    ("enableMargin", PermissionAssessment.UNSAFE_MARGIN_PERMISSION),
+    ("enableVanillaOptions", PermissionAssessment.UNSAFE_OPTIONS_PERMISSION),
+    ("enableFixApiTrade", PermissionAssessment.UNSAFE_FIX_TRADING_PERMISSION),
+    ("enableSpotAndMarginTrading", PermissionAssessment.UNSAFE_TRADING_PERMISSION),
+)
+# Keys that are read-only / non-authority (never block on their own).
+_SAFE_KEYS = frozenset({
+    "enableReading", "enableFixReadOnly", "ipRestrict", "createTime", "updateTime",
+    "tradingAuthorityExpirationTime",
+})
+# Core safety flags that MUST be present to trust a READ_ONLY_CONFIRMED verdict.
+_REQUIRED_KEYS = ("enableWithdrawals", "enableSpotAndMarginTrading", "enableFutures", "enableMargin")
+# Any OTHER truthy key whose name looks like execution authority → default-deny (UNKNOWN).
+_AUTHORITY_PAT = __import__("re").compile(
+    r"withdraw|transfer|margin|future|option|trade|trading|lend|borrow|repay|convert|swap|"
+    r"leverage|order", __import__("re").IGNORECASE)
+
+
 def assess_permissions(restrictions: dict | None, account: dict | None = None
                        ) -> PermissionAssessment:
-    """Default-deny permission verification. SAFE only when reading is enabled and NO
-    trading/withdraw/margin/futures/transfer authority exists."""
+    """Default-deny. SAFE only when reading is enabled and NO execution-bearing authority
+    (trade/withdraw/transfer/margin/futures/options/FIX-trade/portfolio-margin) exists.
+    ANY unrecognized truthy authority-looking permission → PERMISSION_UNKNOWN (deny)."""
     if not isinstance(restrictions, dict):
         return PermissionAssessment.CREDENTIAL_INVALID
     r = restrictions
     if not r.get("enableReading", False):
         return PermissionAssessment.CREDENTIAL_INVALID
-    if r.get("enableWithdrawals", False):
-        return PermissionAssessment.UNSAFE_WITHDRAW_PERMISSION
-    if r.get("enableInternalTransfer", False) or r.get("permitsUniversalTransfer", False):
-        return PermissionAssessment.UNSAFE_TRANSFER_PERMISSION
-    if r.get("enableFutures", False):
-        return PermissionAssessment.UNSAFE_FUTURES_PERMISSION
-    if r.get("enableMargin", False):
-        return PermissionAssessment.UNSAFE_MARGIN_PERMISSION
-    if r.get("enableSpotAndMarginTrading", False):
-        return PermissionAssessment.UNSAFE_TRADING_PERMISSION
-    # cross-check the account endpoint if provided
+    for key, result in _KNOWN_UNSAFE_FLAGS:
+        if r.get(key, False):
+            return result
+    # account-level capability cross-check
     if isinstance(account, dict):
         if account.get("canWithdraw", False):
             return PermissionAssessment.UNSAFE_WITHDRAW_PERMISSION
         if account.get("canTrade", False):
             return PermissionAssessment.UNSAFE_TRADING_PERMISSION
-    # require the presence of the safety keys we checked; else UNKNOWN (still deny)
-    required = ("enableWithdrawals", "enableSpotAndMarginTrading", "enableFutures", "enableMargin")
-    if not all(k in r for k in required):
+    # default-deny any UNKNOWN truthy authority-looking permission (new Binance fields)
+    known = {k for k, _ in _KNOWN_UNSAFE_FLAGS} | _SAFE_KEYS
+    for k, v in r.items():
+        if k in known:
+            continue
+        if v and _AUTHORITY_PAT.search(str(k)):
+            return PermissionAssessment.PERMISSION_UNKNOWN
+    # require the core safety flags to be present, else deny
+    if not all(k in r for k in _REQUIRED_KEYS):
         return PermissionAssessment.PERMISSION_UNKNOWN
     return PermissionAssessment.READ_ONLY_CONFIRMED
 

@@ -120,3 +120,26 @@ freeze requires Gate B). STOP before real account access —
 via the secret store: verify permissions, one bounded real account read (balances redacted in
 evidence), public-price enrichment, crypto UI + chat/voice, secret-exposure audit, then
 certify `SAATHIOS_BINANCE_READONLY_PORTFOLIO_CERTIFIED` and freeze the adapter. No trading.
+
+---
+
+## Gate B attempt (2026-09-15) — BLOCKED at credential gate
+Owner read-only credential is **not configured** (`BINANCE_API_KEY`/`BINANCE_API_SECRET`
+absent) and the Binance API is **unreachable from the build sandbox** (`api.binance.com`
+DNS-blocked, live probe → 000). Per Phase 3, Gate B **STOPS**:
+`OWNER_BINANCE_READONLY_CREDENTIAL_REQUIRED`. No real account read performed; no credential
+requested or printed.
+
+**Credential-independent hardening delivered (Phase 2, pre-connection):** `assess_permissions`
+now covers all known authority-bearing flags — withdrawals, internal/universal transfer,
+futures, **portfolio-margin trading**, margin, **vanilla options**, **FIX API trade**, and
+spot+margin trading — each mapped to a specific `UNSAFE_*_PERMISSION`; account `canTrade`/
+`canWithdraw` cross-checked; read-only flags (`enableReading`, `enableFixReadOnly`,
+`ipRestrict`) never block; and **any unrecognized truthy authority-looking permission →
+`PERMISSION_UNKNOWN` (default-deny)** so a newly introduced Binance authority field cannot
+silently pass. Core safety flags must be present or the verdict is `PERMISSION_UNKNOWN`.
+This tightens safety before any real connection without touching the frozen contracts.
+
+Gate B (permission verify → one bounded real read → enrichment → UI/chat/voice → secret
+audit → certify + freeze) remains to be run in an environment where the owner has configured
+a read-only key via the SaathiOS secret store and the Binance API is reachable.
