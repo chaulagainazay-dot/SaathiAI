@@ -6512,3 +6512,102 @@ try:
         _rr2.append(_m2)
 except Exception:
     pass
+
+
+# ── M — BINANCE_READONLY_ACCOUNT_ADAPTER (read-only; no trading/withdraw path) ──
+@app.get("/api/v1/finance/binance/status")
+def binance_status():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        c = get_connection()
+        return {"provider": "BINANCE", "state": c.state.value, "read_only": True,
+                "note": "connect a read-only API key via the SaathiOS secret store (never in chat)"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/binance/portfolio")
+def binance_portfolio(refresh: int = 0):
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection, crypto_view
+        c = get_connection()
+        snap, st = c.snapshot(force=bool(refresh))
+        if snap is None:
+            return JSONResponse({"state": st.value, "available": False,
+                                 "owner_action": "OWNER_BINANCE_READONLY_CREDENTIAL_REQUIRED"
+                                 if st.value == "OWNER_ACTION_REQUIRED" else None}, status_code=200)
+        return {"state": st.value, "available": True, "view": crypto_view(snap)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/binance/disconnect")
+def binance_disconnect():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        get_connection().disconnect()
+        return {"state": "NOT_CONNECTED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/binance/kill")
+def binance_kill():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        get_connection().kill()
+        return {"state": "NOT_CONNECTED", "killed": True}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/binance/chat")
+def binance_chat(q: str = ""):
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection, crypto_view, chat_answer
+        c = get_connection()
+        snap, st = c.snapshot()
+        view = crypto_view(snap) if snap is not None else None
+        return chat_answer(q, view=view)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/finance/crypto", response_class=HTMLResponse, include_in_schema=False)
+def finance_crypto_page():
+    """Native crypto portfolio view. Read-only. No Buy/Sell/Swap/Withdraw/Transfer controls."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — Crypto Portfolio</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}.wrap{max-width:900px;margin:0 auto;padding:16px}
+.muted{color:#8b949e;font-size:12px}.b{padding:2px 8px;border-radius:10px;font-size:11px;background:#1f3a5f}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px}.card b{display:block;font-size:18px}
+table{width:100%;border-collapse:collapse}th,td{padding:5px 8px;border-bottom:1px solid #21262d;text-align:right;font-size:13px}
+th:first-child,td:first-child{text-align:left}th{color:#8b949e}</style></head><body><div class=wrap>
+<h2>Crypto Portfolio <span class=b>Binance · read-only</span></h2>
+<div class=muted id=meta>loading…</div><div class=cards id=cards></div>
+<table><thead><tr><th>Asset</th><th>Qty</th><th>Available</th><th>Locked</th><th>Price</th><th>Value</th><th>Alloc</th></tr></thead><tbody id=rows></tbody></table>
+<p class=muted id=lims></p></div><script>
+async function load(){const r=await fetch('/api/v1/finance/binance/portfolio');const d=await r.json();
+ if(!d.available){document.getElementById('meta').textContent=(d.owner_action||d.state)+
+  ' — connect a read-only API key via the SaathiOS secret store (never in chat).';return;}
+ const v=d.view;document.getElementById('meta').textContent='State '+d.state+' · '+v.asset_count+' assets · '+v.freshness+
+  ' · cost basis '+v.cost_basis+' · P/L '+v.pnl;
+ document.getElementById('cards').innerHTML=[['Total ('+v.valuation_currency+')',v.total_value],
+  ['Stablecoin %',v.stablecoin_allocation_pct],['Crypto %',v.crypto_allocation_pct],['Locked %',v.locked_allocation_pct]]
+  .map(([k,x])=>'<div class=card><span class=muted>'+k+'</span><b>'+(x??'—')+'</b></div>').join('');
+ document.getElementById('rows').innerHTML=v.positions.map(p=>'<tr><td>'+p.asset+' <span class=muted>'+p.asset_type+'</span></td><td>'+
+  p.quantity+'</td><td>'+p.available+'</td><td>'+p.locked+'</td><td>'+(p.price??'—')+'</td><td>'+(p.market_value??'PRICE_UNAVAILABLE')+
+  '</td><td>'+(p.allocation_pct??'—')+'%</td></tr>').join('');
+ document.getElementById('lims').textContent='Limitations: '+(v.limitations||[]).join(' · ');}
+load();</script></body></html>""")
+
+
+# keep SPA catch-all mount LAST (binance routes added after prior reorder)
+try:
+    from starlette.routing import Mount as _Mount3
+    _rr3 = app.router.routes
+    for _m3 in [r for r in _rr3 if isinstance(r, _Mount3) and getattr(r, "path", "") in ("", "/")]:
+        _rr3.remove(_m3); _rr3.append(_m3)
+except Exception:
+    pass
