@@ -100,6 +100,14 @@ LOW_LEVEL_DRIVER_ALLOWLIST: frozenset[str] = frozenset({
     "saathi/tools/agent_browser.py",
     "saathi/tools/browser.py",
     "saathi/tools/chatgpt_browser.py",
+    # Owner-controlled financial browser runtime (headed persistent context for OWNER manual
+    # login only; agent gets read-only observation via ReadOnlyPageReader, never interaction).
+    "saathi/platform/finance/browser_runtime.py",
+    # Governed official-NEPSE browser modules (read-only observation + official file download;
+    # per-response domain policy; certified in the live-NEPSE / acquisition milestones).
+    "saathi/platform/market_data/nepse_live.py",
+    "saathi/platform/market_data/nepse_acquire.py",
+    "saathi/browser_research/nepse_capture.py",
     # Connector technical surface (must route through governance)
     "saathi/infrastructure/connectors/drivers/browser.py",
     "saathi/infrastructure/connectors/drivers/human_publish.py",

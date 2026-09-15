@@ -6611,3 +6611,94 @@ try:
         _rr3.remove(_m3); _rr3.append(_m3)
 except Exception:
     pass
+
+
+# ── M — BROWSER_AUTHENTICATED_FINANCIAL_PORTFOLIO_RUNTIME (owner login; read-only) ─
+# Owner drives a real provider browser + enters all credentials; agent only reads (after
+# owner enables Saathi Read) via a deterministic observer. No credential/DOM/screenshot to
+# any model. No agent click/type/navigate/submit. No execution. Auth-gated.
+@app.get("/api/v1/finance/browser/runtimes")
+def fbr_runtimes():
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        return {"runtimes": get_runtime_manager().list()}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/open")
+def fbr_open(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        from saathi.platform.finance.policy import Provider
+        prov = str(body.get("provider", "")).upper()
+        if prov not in Provider.__members__:
+            return JSONResponse({"error": "unknown provider"}, status_code=400)
+        rt = get_runtime_manager().open(Provider[prov])
+        return {"runtime": rt.to_public(),
+                "owner_action": "OWNER_FINANCIAL_LOGIN_REQUIRED",
+                "note": "log in yourself in the opened browser; SaathiOS never enters credentials"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/mark-authenticated")
+def fbr_mark_auth(body: dict = Body(...)):
+    # OWNER action: confirm they finished logging in (SaathiOS never reads credentials).
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        rt = get_runtime_manager().mark_owner_authenticated(str(body.get("runtime_id", "")))
+        return rt.to_public() if rt else JSONResponse({"error": "no runtime"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/saathi-read")
+def fbr_saathi_read(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        m = get_runtime_manager()
+        rid = str(body.get("runtime_id", "")); on = bool(body.get("on"))
+        rt = (m.set_saathi_read(rid, True) if on else m.set_saathi_read(rid, False))
+        return rt.to_public() if rt else JSONResponse({"error": "no runtime"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/close")
+def fbr_close(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        return {"closed": bool(get_runtime_manager().close(str(body.get("runtime_id", ""))))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/portfolio")
+def fbr_portfolio(runtime_id: str):
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        m = get_runtime_manager()
+        rt = m.get(runtime_id)
+        if rt is None:
+            return JSONResponse({"error": "no runtime"}, status_code=404)
+        if not m.read_allowed(runtime_id):
+            return {"available": False, "state": rt.to_public(),
+                    "reason": "enable Saathi Read after owner login (SAATHI_READ_ON required)"}
+        # Real read happens on the owner's Mac (headed context page + ReadOnlyPageReader +
+        # provider observer). No live page in this environment → owner-login-required.
+        return {"available": False, "state": rt.to_public(),
+                "owner_action": "OWNER_FINANCIAL_LOGIN_REQUIRED",
+                "note": "live observation runs against the owner-authenticated page on the desktop"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# keep SPA catch-all mount LAST
+try:
+    from starlette.routing import Mount as _Mount4
+    _rr4 = app.router.routes
+    for _m4 in [r for r in _rr4 if isinstance(r, _Mount4) and getattr(r, "path", "") in ("", "/")]:
+        _rr4.remove(_m4); _rr4.append(_m4)
+except Exception:
+    pass
