@@ -201,6 +201,34 @@ def test_prohibited_regions():
     assert any(x in TMSBrowserPortfolioObserver.PROHIBITED_REGIONS for x in ("buy", "sell", "order"))
 
 
+# 17b — read_portfolio orchestration: gating + OK + empty/schema + enrichment
+def test_read_portfolio_orchestration(monkeypatch):
+    from saathi.platform.finance import browser_portfolio as bp
+    m = FinancialBrowserRuntimeManager()
+    rt = m.open(Provider.TMS)
+    # not owner-authenticated yet
+    assert bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader(TMS_ROWS))["state"] == "OWNER_TMS_LOGIN_REQUIRED"
+    m.mark_owner_authenticated(rt.runtime_id)
+    # owner-authed but Saathi Read OFF
+    assert bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader(TMS_ROWS))["state"] == "SAATHI_READ_OFF"
+    m.set_saathi_read(rt.runtime_id, True)
+    # OK read (enrich off to avoid live-service dependency)
+    out = bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader(TMS_ROWS), enrich=False)
+    assert out["available"] and out["state"] == "OK"
+    syms = {p["symbol"] for p in out["view"]["positions"]}
+    assert "NABIL" in syms and out["view"]["selectors_verified"] is False
+    # empty rows → schema-changed-or-unverified (not silent empty)
+    empty = bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader([]), enrich=False)
+    assert empty["available"] is False and "SCHEMA_CHANGED" in empty["state"]
+    # official enrichment (authority for current price) + reconciliation
+    monkeypatch.setattr(bp, "_official_ltp", lambda s: Decimal("560") if s == "NABIL" else None)
+    enr = bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader(TMS_ROWS), enrich=True)
+    nabil = next(p for p in enr["view"]["positions"] if p["symbol"] == "NABIL")
+    assert nabil["current_price"] == "560" and nabil["current_price_source"] == "OFFICIAL_PAGE_OBSERVED"
+    rec = {r["symbol"]: r["verdict"] for r in enr["view"]["reconciliation"]}
+    assert rec["NABIL"] in ("CONFIRMED", "SOURCE_DISAGREEMENT")
+
+
 # 18 — read blocked before owner authentication (manager gate)
 def test_read_requires_owner_auth():
     m = FinancialBrowserRuntimeManager()

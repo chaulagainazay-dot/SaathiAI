@@ -110,3 +110,87 @@ def chat_answer(query: str, *, view: dict | None = None) -> dict:
 
 def voice_answer(query: str, *, view: dict | None = None) -> str:
     return chat_answer(query, view=view).get("answer", "")
+
+
+def _official_ltp(symbol: str):
+    """Official NEPSE current LTP for a symbol (authority for current price), or None."""
+    try:
+        from saathi.platform.market_data.nepse_live_service import get_default_service
+        snap = get_default_service().snapshot()
+        if snap is None:
+            return None
+        o = snap.get(symbol)
+        return o.ltp if o else None
+    except Exception:
+        return None
+
+
+def enrich_with_official(snap: PortfolioSnapshot) -> tuple[PortfolioSnapshot, list[dict]]:
+    """For a TMS/NEPSE snapshot, set current price from the Official NEPSE pipeline (authority)
+    and reconcile against any TMS-displayed value. Never overwrites the account holding."""
+    from dataclasses import replace as _replace
+    recon = []
+    new_pos = []
+    for p in snap.positions:
+        official = _official_ltp(p.symbol) if snap.provider == "TMS" else None
+        tms_implied = None
+        if p.market_value is not None and p.quantity not in (None, Decimal(0)):
+            try:
+                tms_implied = (p.market_value / p.quantity)
+            except Exception:
+                tms_implied = None
+        if official is not None:
+            verdict = "OFFICIAL_UNAVAILABLE" if tms_implied is None else (
+                "CONFIRMED" if abs(official - tms_implied) <= official * Decimal("0.01")
+                else "SOURCE_DISAGREEMENT")
+            mv = official * p.quantity if p.quantity is not None else p.market_value
+            new_pos.append(_replace(p, current_price=official,
+                                    current_price_source="OFFICIAL_PAGE_OBSERVED", market_value=mv))
+        else:
+            verdict = "OFFICIAL_UNAVAILABLE"
+            new_pos.append(p)
+        recon.append({"symbol": p.symbol, "official_ltp": None if official is None else str(official),
+                      "tms_implied_ltp": None if tms_implied is None else str(tms_implied),
+                      "verdict": verdict})
+    total = sum((x.market_value for x in new_pos if x.market_value is not None), Decimal(0))
+    return _replace(snap, positions=tuple(new_pos),
+                    total_market_value=total if new_pos else None), recon
+
+
+def read_portfolio(runtime_id: str, *, manager=None, reader=None, enrich: bool = True) -> dict:
+    """One deterministic read-only observation of the owner-authenticated page → snapshot.
+    Read-only; no clicks/navigation. Returns typed states, never fabricated data."""
+    from saathi.platform.finance.browser_runtime import get_runtime_manager, AuthState
+    from saathi.platform.finance.observer import ReadOnlyPageReader, get_observer
+    m = manager or get_runtime_manager()
+    rt = m.get(runtime_id)
+    if rt is None:
+        return {"available": False, "state": "NO_RUNTIME"}
+    if rt.auth_state != AuthState.OWNER_AUTHENTICATED:
+        return {"available": False, "state": "OWNER_TMS_LOGIN_REQUIRED"}
+    if not m.read_allowed(runtime_id):
+        return {"available": False, "state": "SAATHI_READ_OFF"}
+    if reader is None:
+        page = m.live_page(rt.provider)
+        if page is None:
+            return {"available": False, "state": "OWNER_TMS_PORTFOLIO_PAGE_REQUIRED"}
+        reader = ReadOnlyPageReader(page)
+    obs = get_observer(rt.provider.value)
+    if obs is None:
+        return {"available": False, "state": "NO_OBSERVER"}
+    if obs.authentication_state(reader) != AuthState.OWNER_AUTHENTICATED:
+        return {"available": False, "state": "TMS_AUTH_STATE_UNKNOWN"}
+    rows, lims = obs.observe_portfolio(reader)
+    if not rows:
+        # distinguish empty vs failure: an authenticated page with a container but no rows =
+        # EMPTY_PORTFOLIO; missing container/selectors = SCHEMA_CHANGED
+        state = "EMPTY_PORTFOLIO" if obs.SELECTORS_VERIFIED else "SCHEMA_CHANGED_OR_UNVERIFIED"
+        return {"available": False, "state": state, "limitations": lims}
+    snap = build_snapshot(rt.provider.value, rows)
+    recon = []
+    if enrich and rt.provider.value == "TMS":
+        snap, recon = enrich_with_official(snap)
+    view = portfolio_view(snap)
+    view["reconciliation"] = recon
+    view["selectors_verified"] = obs.SELECTORS_VERIFIED
+    return {"available": True, "state": "OK", "view": view, "limitations": lims}

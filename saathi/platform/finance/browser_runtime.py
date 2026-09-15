@@ -175,6 +175,18 @@ class FinancialBrowserRuntimeManager:
                      result="OK", session_id=runtime_id)
         return True
 
+    def live_page(self, provider: Provider):
+        """The current live page of a provider's owner-controlled context, or None.
+        Read-only callers wrap it in ReadOnlyPageReader; interaction is never exposed."""
+        handle = self._pw.get(provider)
+        if not handle:
+            return None
+        _pw, ctx = handle
+        try:
+            return ctx.pages[-1] if ctx.pages else None
+        except Exception:
+            return None
+
     def get(self, runtime_id: str):
         return self._rt.get(runtime_id)
 

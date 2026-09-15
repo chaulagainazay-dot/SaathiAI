@@ -118,3 +118,29 @@ Resume provider validation (no credentials read): confirm authenticated surface,
 provider's real DOM selectors, run one deterministic read-only observation → PortfolioSnapshot
 → view/chat/voice, audit for zero credential/DOM/screenshot leakage, then grant the
 provider-specific browser-portfolio certification. No trading, no TMS order/execution.
+
+---
+
+## TMS Gate (owner-authenticated validation) — 2026-09-15: BLOCKED_TMS_AUTHENTICATED_SURFACE_VALIDATION
+The owner logged into TMS in the SaathiOS app on their Mac. That live runtime + headed browser
+live in the running app process on the desktop; this build sandbox has **no display, an empty
+runtime singleton, and the owner's servers (:8765/:3100) unreachable** — so the real
+authenticated TMS DOM cannot be inspected here, the broker/hostname cannot be identified, and
+the PROVISIONAL selectors **cannot be replaced with evidence**. No fabrication → **STOP**.
+
+Credential-independent completion delivered this pass (tested with fakes; no creds, no live
+page): the observer↔live-page **wiring** — `manager.live_page(provider)` +
+`browser_portfolio.read_portfolio(runtime_id)` — gates on owner-auth + Saathi Read, wraps the
+live page in `ReadOnlyPageReader`, runs the provider observer, builds the frozen
+`PortfolioSnapshot`, and enriches TMS holdings with Official-NEPSE current price +
+reconciliation (CONFIRMED / SOURCE_DISAGREEMENT / OFFICIAL_UNAVAILABLE). Typed states:
+NO_RUNTIME / OWNER_TMS_LOGIN_REQUIRED / SAATHI_READ_OFF / OWNER_TMS_PORTFOLIO_PAGE_REQUIRED /
+TMS_AUTH_STATE_UNKNOWN / EMPTY_PORTFOLIO / SCHEMA_CHANGED_OR_UNVERIFIED / OK. Selectors remain
+`SELECTORS_PROVISIONAL_UNVERIFIED`.
+
+**To finish TMS certification:** run this validation from the SaathiOS process that owns the
+live runtime (owner's Mac), with the TMS holdings page open and Saathi Read ON, so the real
+DOM can be inspected and provider-evidence-backed selectors substituted. This cannot be done
+from the build sandbox. Verdict: `BLOCKED_TMS_AUTHENTICATED_SURFACE_VALIDATION` (pipeline wired
++ tested; real-DOM validation pending in-app). TMS observer NOT frozen (selectors unverified).
+`TMS_EXTERNAL_DOM_CONTRACT_DEPENDENCY` recorded.

@@ -6682,14 +6682,11 @@ def fbr_portfolio(runtime_id: str):
         rt = m.get(runtime_id)
         if rt is None:
             return JSONResponse({"error": "no runtime"}, status_code=404)
-        if not m.read_allowed(runtime_id):
-            return {"available": False, "state": rt.to_public(),
-                    "reason": "enable Saathi Read after owner login (SAATHI_READ_ON required)"}
-        # Real read happens on the owner's Mac (headed context page + ReadOnlyPageReader +
-        # provider observer). No live page in this environment → owner-login-required.
-        return {"available": False, "state": rt.to_public(),
-                "owner_action": "OWNER_FINANCIAL_LOGIN_REQUIRED",
-                "note": "live observation runs against the owner-authenticated page on the desktop"}
+        # Deterministic read-only observation of the owner-authenticated live page.
+        from saathi.platform.finance.browser_portfolio import read_portfolio
+        out = read_portfolio(runtime_id, manager=m)
+        out["runtime"] = rt.to_public()
+        return out
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
