@@ -1882,22 +1882,34 @@ def _is_authed(request) -> bool:
     token = (cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
     if token:
-        from saathi import sessions
-        if sessions.validate(token):
-            return True
+        # A session-store failure (e.g. SQLite lock) must not turn auth into a 500;
+        # the deterministic stateless token check below still authorizes.
+        try:
+            from saathi import sessions
+            if sessions.validate(token):
+                return True
+        except Exception:
+            pass
         if token == _session_token():
             return True
     # Token Registry: named, permissioned API tokens
     raw_api_token = request.headers.get("x-saathi-token", "")
     if raw_api_token:
-        from saathi.security.registry import get_registry
-        reg = get_registry()
-        rec = reg.verify(raw_api_token)
-        if rec:
-            return True
-        # Legacy SAATHI_TOKEN backward compat
+        # Legacy SAATHI_TOKEN backward compat FIRST — cheap, no DB, so a valid
+        # service token authorizes even if the registry store is momentarily
+        # unavailable (e.g. SQLite lock contention).
         if ACCESS_TOKEN and raw_api_token == ACCESS_TOKEN:
             return True
+        # Named, permissioned API tokens. A registry/store failure must never turn
+        # an auth check into a 500 — treat it as "not authorized via this path" and
+        # fall through to the final decision.
+        try:
+            from saathi.security.registry import get_registry
+            rec = get_registry().verify(raw_api_token)
+            if rec:
+                return True
+        except Exception:
+            pass
     # no password configured → trust genuine local callers
     if not _PASSWORD_HASH:
         return _is_local(request)
