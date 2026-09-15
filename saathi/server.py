@@ -6374,3 +6374,141 @@ try:
         _rr.append(_m)
 except Exception:
     pass
+
+
+# ── M — SAATHIOS_FINANCIAL_BROWSER (security/capability shell; read-only) ───────
+# Owner interacts with financial sites; the agent gets only explicit READ capability.
+# Never an execution path. Auth-gated. Sync def → threadpool. No credentials handled here.
+@app.get("/api/v1/finance/providers")
+def fin_providers():
+    try:
+        from saathi.platform.finance.capability_matrix import matrix
+        from saathi.platform.finance.policy import POLICIES
+        m = matrix()
+        m["policies"] = {p.value: {"allowed_domains": list(pol.allowed_domains),
+                                   "default_mode": pol.default_interaction_mode.value,
+                                   "owner_only_regions": list(pol.owner_only_regions),
+                                   "readable_regions": list(pol.readable_regions),
+                                   "downloads": pol.allowed_downloads, "uploads": pol.allowed_uploads,
+                                   "navigation": pol.navigation_policy}
+                         for p, pol in POLICIES.items()}
+        return m
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/sessions")
+def fin_sessions():
+    try:
+        from saathi.platform.finance.session import get_manager
+        return {"sessions": get_manager().list()}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/sessions/open")
+def fin_open(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.session import get_manager
+        from saathi.platform.finance.policy import Provider
+        prov = str(body.get("provider", "")).upper()
+        if prov not in Provider.__members__:
+            return JSONResponse({"error": "unknown provider"}, status_code=400)
+        s = get_manager().open(Provider[prov])
+        # NOTE: opening a session does NOT authenticate; owner must authenticate in-browser.
+        return {"session": s.to_public(), "owner_action": "OWNER_AUTHENTICATION_REQUIRED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/sessions/kill")
+def fin_kill(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.session import get_manager
+        m = get_manager()
+        if body.get("all"):
+            return {"killed": m.kill_all()}
+        return {"killed": bool(m.kill(str(body.get("session_id", ""))))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/audit")
+def fin_audit(n: int = 50):
+    try:
+        from saathi.platform.finance.audit import tail
+        return {"audit": tail(min(max(n, 1), 500))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/finance/browser", response_class=HTMLResponse, include_in_schema=False)
+def finance_browser_page():
+    """Native Financial Browser shell — provider cards + policy. No trade controls, no
+    embedded financial account site, no credential handling in the page."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — Financial Browser</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}h2{margin:0}.muted{color:#8b949e;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px}
+.card h3{margin:0 0 6px}.k{color:#8b949e}.v{font-weight:600}
+.row{display:flex;justify-content:space-between;padding:2px 0;font-size:13px}
+.b{padding:1px 7px;border-radius:9px;font-size:11px}
+.ok{background:#1f6f3f}.warn{background:#5a3a12}.no{background:#7d2222}.un{background:#3a3f47}
+button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:8px}
+.kill{background:#7d2222;border-color:#7d2222}
+.note{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;margin-top:14px;font-size:12px;color:#8b949e}
+</style></head><body><div class=wrap>
+<h2>Financial Browser</h2>
+<div class=muted>Specialized read-only financial surface. You control the browser and enter all
+credentials yourself; SaathiOS receives only explicit read capabilities. No trading, no
+withdrawals, no order forms.</div>
+<div class=grid id=cards>loading…</div>
+<button class=kill onclick="killAll()">Kill switch — revoke all agent reads</button>
+<div class=note id=note></div>
+</div><script>
+const CAPBADGE={PUBLIC_MARKET_DATA:'ok',READ_ONLY_API:'ok',READ_ONLY_MCP:'warn',AGENT_READ_ALLOWED:'ok',
+ OWNER_BROWSER_SESSION:'warn',OWNER_ONLY_INTERACTION:'warn',PROHIBITED_AGENT_ACTION:'no',UNSUPPORTED:'no',UNKNOWN:'un'};
+function badge(v){return `<span class="b ${CAPBADGE[v]||'un'}">${v}</span>`;}
+async function load(){
+ const r=await fetch('/api/v1/finance/providers');const d=await r.json();
+ if(d.error){document.getElementById('cards').textContent=d.error;return;}
+ const P=d.providers;
+ document.getElementById('cards').innerHTML=Object.keys(P).map(name=>{const c=P[name];
+  return `<div class=card><h3>${name}</h3>
+  <div class=row><span class=k>Public market data</span>${badge(c.public_market_data)}</div>
+  <div class=row><span class=k>Read-only API</span>${badge(c.read_only_api)}</div>
+  <div class=row><span class=k>Read-only MCP</span>${badge(c.read_only_mcp)}</div>
+  <div class=row><span class=k>Account data</span>${badge(c.account_data)}</div>
+  <div class=row><span class=k>Agent read</span>${badge(c.agent_read)}</div>
+  <div class=row><span class=k>Agent actions</span>${badge(c.agent_actions)}</div>
+  <div class=row><span class=k>Embed</span><span class="b ${c.embed&&c.embed.includes('BLOCKED')?'no':'un'}">${c.embed}</span></div>
+  <div class=muted style="margin-top:6px">${c.note||''}</div>
+  <button onclick="openS('${name}')">Open (owner authenticates)</button></div>`;}).join('');
+ document.getElementById('note').innerHTML='Trading, withdrawals, transfers, leverage, API-key '+
+ 'management and order forms are structurally blocked for the agent (PROHIBITED_AGENT_ACTION). '+
+ 'Credentials/OTP/2FA are OWNER_PRIVATE_INPUT — never observed, logged, or sent to any model. '+
+ 'Portfolio MCP is deferred pending an owner-supplied key. Any future execution stays: proposal → '+
+ 'Trading Guardian → approval → ExecutionGateway.';
+}
+async function openS(p){const r=await fetch('/api/v1/finance/sessions/open',{method:'POST',
+ headers:{'content-type':'application/json'},body:JSON.stringify({provider:p})});const d=await r.json();
+ alert(p+': '+(d.owner_action||d.error||'opened')+' — enter your own credentials in the provider site; SaathiOS will not.');}
+async function killAll(){const r=await fetch('/api/v1/finance/sessions/kill',{method:'POST',
+ headers:{'content-type':'application/json'},body:JSON.stringify({all:true})});const d=await r.json();
+ alert('Killed '+(d.killed||0)+' session(s); agent read capability revoked.');}
+load();
+</script></body></html>""")
+
+
+# Re-assert SPA catch-all mount stays LAST (finance routes were added after the prior
+# reorder). Idempotent; keeps all explicit routes reachable.
+try:
+    from starlette.routing import Mount as _Mount2
+    _rr2 = app.router.routes
+    for _m2 in [r for r in _rr2 if isinstance(r, _Mount2) and getattr(r, "path", "") in ("", "/")]:
+        _rr2.remove(_m2)
+        _rr2.append(_m2)
+except Exception:
+    pass
