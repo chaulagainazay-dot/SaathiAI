@@ -8,6 +8,11 @@ cd "$HOME/SaathiAI"
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 export SAATHI_HOST=127.0.0.1   # localhost-only: never bind 0.0.0.0 (LAN) from the launcher
 
+# Load repo .env so the backend inherits feature flags (e.g. SAATHI_FINANCE_HEADED=1,
+# which lets the Financial Browser open a real headed window on this GUI session).
+# Same convention as scripts/start_baadar.sh. Guarded so a missing .env is not fatal.
+set -a; [ -f .env ] && . ./.env; set +a
+
 # 1. API
 if ! curl -s -o /dev/null http://localhost:8765/api/v1/mission 2>/dev/null; then
   nohup ./.venv/bin/python -m saathi.server > data/local_server.log 2>&1 &
