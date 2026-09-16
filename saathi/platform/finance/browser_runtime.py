@@ -190,6 +190,16 @@ class FinancialBrowserRuntimeManager:
     def get(self, runtime_id: str):
         return self._rt.get(runtime_id)
 
+    def runtime_for_provider(self, provider: Provider) -> OwnerFinancialBrowserRuntime | None:
+        """Newest non-closed runtime for a provider (single-owner model). Used by the
+        observation bridge to resolve a provider-scoped request to its own runtime; a
+        cross-provider request never reaches another provider's runtime."""
+        cands = [r for r in self._rt.values()
+                 if r.provider == provider and r.runtime_state != RuntimeState.CLOSED]
+        if not cands:
+            return None
+        return max(cands, key=lambda r: r.created_at)
+
     def list(self) -> list[dict]:
         return [r.to_public() for r in self._rt.values()]
 

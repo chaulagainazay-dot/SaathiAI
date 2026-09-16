@@ -7,6 +7,7 @@ to any model — only the deterministically extracted, allowlisted, redacted fie
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from saathi.platform.finance.browser_runtime import AuthState
@@ -53,6 +54,30 @@ class ReadOnlyPageReader:
                     except Exception:
                         row[fname] = None
                 out.append(row)
+        except Exception:
+            pass
+        return out
+
+    def current_url(self) -> str:
+        """The live page URL (Playwright `page.url` is a pure read property). Used only for
+        domain revalidation / sensitive-surface detection — never sent to a model."""
+        try:
+            return str(getattr(self._page, "url", "") or "")
+        except Exception:
+            return ""
+
+    def header_labels(self, header_selector: str) -> list[str]:
+        """Column-header text only (no cell body values). Caller sanitizes further."""
+        out = []
+        try:
+            hl = self._page.locator(header_selector)
+            for i in range(hl.count()):
+                try:
+                    t = hl.nth(i).inner_text().strip()
+                    if t:
+                        out.append(t)
+                except Exception:
+                    continue
         except Exception:
             pass
         return out
@@ -136,3 +161,63 @@ OBSERVERS = {"BINANCE": BinanceBrowserPortfolioObserver, "TMS": TMSBrowserPortfo
 def get_observer(provider: str) -> FinancialPageObserver | None:
     cls = OBSERVERS.get(str(provider).upper())
     return cls() if cls else None
+
+
+# ── Sanitized structural observation (Phase 9) ──────────────────────────────────
+# Owner-local selector-discovery aid. Returns ONLY structural metadata (shape of the
+# page), NEVER owner cell values / names / account ids / textContent / innerHTML /
+# raw DOM / cookies / tokens. Header labels are allowlist-classified + redacted.
+
+_HEADER_ROW_SELECTORS = ("thead tr", "table tr:first-child", "[role='row']:first-child")
+
+
+class FinancialPageStructureObserver:
+    """Deterministic, read-only. Describes the shape of the authenticated surface so an
+    owner-local operator can build evidence-backed selectors — without exposing any owner
+    data. No interaction methods (no click/type/navigate/evaluate/submit)."""
+
+    def __init__(self, provider: str):
+        self.provider = str(provider).upper()
+        self._obs = get_observer(self.provider)
+
+    def _safe_labels(self, reader: ReadOnlyPageReader) -> list[str]:
+        raw: list[str] = []
+        for hsel in _HEADER_ROW_SELECTORS:
+            raw = reader.header_labels(hsel + " th, " + hsel + " td")
+            if raw:
+                break
+        safe = []
+        for lbl in raw:
+            key = re.sub(r"\s+", "_", lbl.strip().lower())
+            # drop any header naming private/sensitive data; redact secret-looking text
+            if classify_field(key) != FieldClass.PUBLIC_READABLE:
+                safe.append({"label": redact(lbl)[:40], "class": classify_field(key).value})
+            else:
+                safe.append({"label": lbl[:40], "class": FieldClass.PUBLIC_READABLE.value})
+        return safe
+
+    def observe_structure(self, reader: ReadOnlyPageReader) -> dict:
+        obs = self._obs
+        row_sel = obs.ROW_SELECTOR if obs else ""
+        row_count = reader.count(row_sel) if row_sel else 0
+        has_table = reader.exists("table, [role='table'], [role='grid']")
+        labels = self._safe_labels(reader)
+        return {
+            "provider": self.provider,
+            "has_table_or_grid": bool(has_table),
+            "row_count": int(row_count),                      # count only, no cell values
+            "column_count": len(labels),
+            "header_labels": labels,                          # allowlist-classified + redacted
+            "candidate_row_selector": row_sel,
+            "candidate_field_selectors": dict(obs.FIELD_SELECTORS) if obs else {},
+            "allowed_field_names": list(obs.ALLOWED_FIELDS) if obs else [],
+            "private_field_names": list(obs.PRIVATE_FIELDS) if obs else [],
+            "selectors_verified": bool(obs.SELECTORS_VERIFIED) if obs else False,
+            "note": "structural metadata only — no owner values / DOM / HTML / cookies / tokens",
+        }
+
+
+def get_structure_observer(provider: str) -> FinancialPageStructureObserver | None:
+    if str(provider).upper() not in OBSERVERS:
+        return None
+    return FinancialPageStructureObserver(provider)

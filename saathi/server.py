@@ -6617,8 +6617,15 @@ except Exception:
 # Owner drives a real provider browser + enters all credentials; agent only reads (after
 # owner enables Saathi Read) via a deterministic observer. No credential/DOM/screenshot to
 # any model. No agent click/type/navigate/submit. No execution. Auth-gated.
+def _fbr_authed(request) -> bool:
+    """Financial-browser routes are owner-only, authenticated loopback (Phase 3)."""
+    return _is_authed(request) or _is_local(request)
+
+
 @app.get("/api/v1/finance/browser/runtimes")
-def fbr_runtimes():
+def fbr_runtimes(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
         return {"runtimes": get_runtime_manager().list()}
@@ -6627,7 +6634,9 @@ def fbr_runtimes():
 
 
 @app.post("/api/v1/finance/browser/open")
-def fbr_open(body: dict = Body(...)):
+def fbr_open(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
         from saathi.platform.finance.policy import Provider
@@ -6643,7 +6652,9 @@ def fbr_open(body: dict = Body(...)):
 
 
 @app.post("/api/v1/finance/browser/mark-authenticated")
-def fbr_mark_auth(body: dict = Body(...)):
+def fbr_mark_auth(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     # OWNER action: confirm they finished logging in (SaathiOS never reads credentials).
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
@@ -6654,7 +6665,9 @@ def fbr_mark_auth(body: dict = Body(...)):
 
 
 @app.post("/api/v1/finance/browser/saathi-read")
-def fbr_saathi_read(body: dict = Body(...)):
+def fbr_saathi_read(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
         m = get_runtime_manager()
@@ -6666,16 +6679,26 @@ def fbr_saathi_read(body: dict = Body(...)):
 
 
 @app.post("/api/v1/finance/browser/close")
-def fbr_close(body: dict = Body(...)):
+def fbr_close(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
-        return {"closed": bool(get_runtime_manager().close(str(body.get("runtime_id", ""))))}
+        rid = str(body.get("runtime_id", ""))
+        closed = bool(get_runtime_manager().close(rid))
+        if closed:                                          # invalidate bridge cache on close
+            from saathi.platform.finance.observation_bridge import get_observation_service
+            rt = get_runtime_manager().get(rid)
+            get_observation_service().invalidate(rt.provider if rt else None)
+        return {"closed": closed}
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
 @app.get("/api/v1/finance/browser/portfolio")
-def fbr_portfolio(runtime_id: str):
+def fbr_portfolio(request: Request, runtime_id: str):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.browser_runtime import get_runtime_manager
         m = get_runtime_manager()
@@ -6687,6 +6710,55 @@ def fbr_portfolio(runtime_id: str):
         out = read_portfolio(runtime_id, manager=m)
         out["runtime"] = rt.to_public()
         return out
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# ── Observation Bridge (Phase 24): normalized observations, never browser control ──
+@app.get("/api/v1/finance/browser/{provider}/status")
+def fbr_obs_status(request: Request, provider: str, runtime_id: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        return get_observation_service().status(provider, runtime_id)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/observe-portfolio")
+def fbr_obs_portfolio(request: Request, provider: str, body: dict = Body(default={})):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        return get_observation_service().observe_portfolio(
+            provider, (body or {}).get("runtime_id"))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/observe-structure")
+def fbr_obs_structure(request: Request, provider: str, body: dict = Body(default={})):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        b = body or {}
+        return get_observation_service().observe_structure(
+            provider, b.get("runtime_id"),
+            authorize_structure_inspection=bool(b.get("authorize_structure_inspection")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/{provider}/evidence")
+def fbr_obs_evidence(request: Request, provider: str, runtime_id: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        return get_observation_service().evidence(provider, runtime_id)
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
