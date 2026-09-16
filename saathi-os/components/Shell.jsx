@@ -31,6 +31,10 @@ function ShellInner({ children }) {
   const router = useRouter();
   const bare = pathname?.startsWith("/project/create/");
   const dedicatedCaptureRoute = pathname === "/voice" || pathname === "/os";
+  // Routes that enforce their own auth via cookie-gated APIs and must NOT depend on
+  // the platform-token module-discovery gate (which shows "Sign in required" when the
+  // separate saathi_platform_token is absent even though the auth cookie is valid).
+  const selfAuthedRoute = pathname === "/finance/browser";
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [ceoOpen, setCeoOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -143,7 +147,7 @@ function ShellInner({ children }) {
         data-sidebar={sidebarExpanded ? "expanded" : "collapsed"}
         data-copilot={copilotOpen ? "open" : "closed"}
       >
-        <ModuleRouteBoundary>{children}</ModuleRouteBoundary>
+        {selfAuthedRoute ? children : <ModuleRouteBoundary>{children}</ModuleRouteBoundary>}
       </main>
 
       {copilotOpen && (

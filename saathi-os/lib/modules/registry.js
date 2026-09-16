@@ -289,7 +289,7 @@ export const PLACEHOLDER_MODULES = [
   placeholder("travel", "Travel", "✈", "travel", "Trip, itinerary, and booking management.",
     ["/travel"], ["Trips", "Bookings"], ["booking", "itinerary", "client"]),
   placeholder("finance", "Finance", "$", "finance", "Personal and business finance tracking.",
-    ["/finance", "/finance/browser"], ["Cashflow", "Budgets"], ["account", "transaction", "budget"]),
+    ["/finance"], ["Cashflow", "Budgets"], ["account", "transaction", "budget"]),
 ];
 
 /** Construct the platform's default registry: Trading enabled + placeholders. */
