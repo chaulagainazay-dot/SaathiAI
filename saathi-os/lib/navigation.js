@@ -152,6 +152,17 @@ export const NAV_GROUPS = [
         authoritySensitivity: "observation-only",
         environmentSensitivity: "never-imply-production",
       },
+      {
+        id: "finance-browser",
+        label: "Financial Browser",
+        href: "/finance/browser",
+        icon: "◧",
+        description: "Owner-controlled provider browser — you log in; Saathi reads only when you enable it. No trading.",
+        accent: "#4FB0C6",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
     ],
   },
   {
@@ -180,7 +191,7 @@ export const NAV_GROUPS = [
 ];
 
 /** Primary navigable areas. Bump deliberately when a surface is added. */
-export const PRIMARY_AREA_COUNT = 15;
+export const PRIMARY_AREA_COUNT = 16;
 
 /** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [
