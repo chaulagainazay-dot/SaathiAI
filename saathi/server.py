@@ -5870,8 +5870,11 @@ def main():
     uvicorn.run(app, host=config.HOST, port=config.PORT)
 
 
-if __name__ == "__main__":
-    main()
+# NOTE: the `if __name__ == "__main__": main()` entrypoint is intentionally at the
+# VERY END of this file. Route definitions continue for ~800 lines below; running
+# main() here would call the blocking uvicorn.run() before those routes (finance
+# providers, finance/browser/*, observation bridge, …) are registered, so a
+# `python -m saathi.server` launch would 404 them. Keep the entrypoint last.
 
 
 # ── M57 single-host heartbeat (localhost-only; advisory; no authority) ───────
@@ -6771,3 +6774,10 @@ try:
         _rr4.remove(_m4); _rr4.append(_m4)
 except Exception:
     pass
+
+
+# Entrypoint MUST stay at the very end: all routes above are now registered before
+# main() calls the blocking uvicorn.run(). (Importing `saathi.server:app` never runs
+# this block; `python -m saathi.server` runs it after full module execution.)
+if __name__ == "__main__":
+    main()
