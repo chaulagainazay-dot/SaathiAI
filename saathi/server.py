@@ -1834,6 +1834,14 @@ try:
 except Exception as _e:
     print(f"[saathi] platform-m50 router unavailable: {_e}")
 
+# AI Company — visual organization layer over existing runtimes (authenticated,
+# read-mostly; missions run deterministic read-only probes, no execution authority).
+try:
+    from .organization.api import router as organization_router
+    app.include_router(organization_router)
+except Exception as _e:
+    print(f"[saathi] organization router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
