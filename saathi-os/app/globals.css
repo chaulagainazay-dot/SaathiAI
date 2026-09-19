@@ -1958,8 +1958,9 @@ html, body {
   --color-red-400:#ff8a8a; --color-red-500:#ff4d4d; --color-red-600:#e02e2e;
   --color-green-400:#5fe39a; --color-green-500:#2ee27a; --color-green-600:#22b863;
   --color-blue-400:#ff8a6a; --color-blue-500:#ff6a3d; --color-blue-600:#e5501f;
-  /* headers → terminal mono (body font kept as-is to protect existing layouts) */
+  /* full terminal identity: headers + body → mono (dense pages verified for density/overflow) */
   --font-display: var(--font-mono, "Geist Mono", ui-monospace, monospace);
+  --font-ui: var(--font-mono, "Geist Mono", ui-monospace, monospace);
   --elev-2:0 6px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,42,42,.06);
   --elev-3:0 20px 60px rgba(0,0,0,.6);
 }

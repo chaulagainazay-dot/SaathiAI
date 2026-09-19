@@ -32,8 +32,12 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
 6. **[DONE] Home dashboard motion** — metric tiles count-up on real values (reuse
    `Counter`, no fabricated series/sparkline), red top-accent hairline + hover glow/lift +
    value glow; reduced-motion aware.
-7. **[TODO] Font pass** — selective mono for headings/labels that still fall back to serif/
-   sans; verify dense-table density before any global body flip.
+7. **[DONE] Font pass** — flipped global `--font-ui` body font to the mono stack in the retro
+   `:root` block (headers were already mono via `--font-display`). Spot-checked the dense
+   surfaces (/nepse tables, /command, /home) after build: body font resolves to Geist Mono,
+   zero horizontal page overflow on all three (scrollWidth == clientWidth @1024), density
+   intact — no surface needed a local-font revert. Full terminal identity now app-wide.
 
 ## Log
 - (foundation) 81d3a36a — global retro theme + CRT motion.
+- #7 font pass — global `--font-ui` → mono; dense surfaces verified (no overflow). LOOP COMPLETE.
