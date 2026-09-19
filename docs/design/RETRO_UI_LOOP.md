@@ -13,8 +13,11 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
 
 1. **[DONE] Reusable retro utilities** — `.retro-panel` (corner brackets + red glow),
    `.retro-live[.ok]` (pulsing status dot), `.retro-glow` in `globals.css`.
-2. **[TODO] Command Center showcase** — framed retro panels + live pulse on `/command`
-   (primary surface; the reel's signature framed look).
+2. **[DONE] Global shared-panel elevation** — red-tinted border + subtle red glow on all
+   `.glass`/`.surface`/`.surface-raised`/`.surface-overlay` (border/shadow only, no layout
+   change). Covers every page built on the shared Panel/Card primitives.
+2b. **[TODO] Command Center showcase** — the bespoke `/command` page uses its own
+   `command-hybrid.css` (dl-* classes), so retint those + add corner brackets there.
 3. **[DONE] Global status bar live pulse** — pulsing dot on "Local platform online"
    (every page). (Top-bar pulse optional, folded into showcases.)
 4. **[TODO] Financial Browser showcase** — retro-panel framing + the live auto-scrolling

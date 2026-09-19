@@ -1957,8 +1957,13 @@ html, body {
 }
 :root[data-theme="light"] .stars,
 .stars { opacity:.5; }
-/* glass panes take the red edge */
-.glass, .glass-soft { border-color:rgba(255,64,64,.16) !important; }
+/* shared panels take the retro edge app-wide: red-tinted border + subtle red glow
+   (border/shadow only — no position/layout change, so no offset-parent regressions) */
+.glass, .glass-soft, .surface, .surface-raised, .surface-overlay {
+  border-color:rgba(255,64,64,.16) !important;
+  box-shadow:0 6px 24px rgba(0,0,0,.42), inset 0 0 44px rgba(255,42,42,.035) !important;
+}
+.glass-soft { box-shadow:inset 0 0 34px rgba(255,42,42,.03) !important; }
 /* reusable retro components (apply per surface in loop iterations) */
 .retro-panel{ position:relative; border:1px solid var(--border); background:var(--surface);
   box-shadow: inset 0 0 60px rgba(255,42,42,.04), 0 0 0 1px rgba(0,0,0,.4); }
