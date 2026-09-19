@@ -12,6 +12,7 @@ import {
   Panel, Card, Button, Badge, StatusBadge, Heading, Text, Divider, Spinner,
   EmptyState, BlockedState, ErrorState, Pill, Eyebrow,
 } from "@/components/ui";
+import FinancialViewport from "@/components/finance/FinancialViewport";
 
 const PROVIDER_ORDER = ["TMS", "BINANCE", "NEPSE", "PORTFOLIO_TRACKER"];
 
@@ -244,6 +245,17 @@ function RuntimePanel({ rt, obs, busy, onAuth, onToggleRead, onRead, onClose }) 
           {busy === `close:${id}` ? "…" : "Close Browser"}
         </Button>
       </div>
+
+      {rt.runtime_state === "OPEN_OWNER_CONTROL" && (
+        <div style={{ marginTop: 16 }}>
+          <FinancialViewport provider={rt.provider} runtimeId={id} />
+        </div>
+      )}
+      {rt.runtime_state === "DISPLAY_UNAVAILABLE" && (
+        <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 12 }}>
+          Live viewport needs the backend on your Mac desktop session (SAATHI_FINANCE_HEADED=1).
+        </Text>
+      )}
 
       {obs && <ObservationResult env={obs} />}
     </Panel>

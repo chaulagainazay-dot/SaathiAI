@@ -6766,6 +6766,107 @@ def fbr_obs_evidence(request: Request, provider: str, runtime_id: str | None = N
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+# ── OWNER-ONLY embedded viewport (Plane 1 OWNER_VISUAL + Plane 2 OWNER_INPUT) ──────
+# These endpoints stream the owner's live provider page and forward the owner's own
+# mouse/keyboard/navigation. They are OWNER_INPUT, gated by owner session + loopback +
+# an existing REAL provider runtime. They are deliberately NOT agent tools: they appear
+# in no agent/LLM tool registry, no MCP surface, and grant no agent browser authority.
+def _viewport_gate(request, provider: str):
+    """Return (Provider, runtime, err_response). err_response set → stop.
+    Owner-authenticated only. The backend binds loopback (127.0.0.1) so it is already
+    local-only; requests arrive via the same-origin Next proxy (which stamps
+    x-forwarded-*), so we authenticate the owner session/token rather than requiring a
+    bare-loopback peer. OWNER_INPUT — never an agent path."""
+    if not _fbr_authed(request):
+        return None, None, JSONResponse({"error": "unauthorized"}, status_code=401)
+    from saathi.platform.finance.browser_runtime import get_runtime_manager
+    from saathi.platform.finance.policy import Provider
+    prov = str(provider).upper()
+    if prov not in Provider.__members__:
+        return None, None, JSONResponse({"error": "unknown provider"}, status_code=400)
+    p = Provider[prov]
+    m = get_runtime_manager()
+    rt = m.runtime_for_provider(p)
+    if rt is None:
+        return None, None, JSONResponse({"state": "BROWSER_NOT_OPEN"}, status_code=409)
+    if not m.is_real_runtime(p):
+        return None, None, JSONResponse({"state": "DISPLAY_UNAVAILABLE"}, status_code=409)
+    return p, rt, None
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/start")
+def fbr_vp_start(request: Request, provider: str, body: dict = Body(default={})):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        s = vp.get_or_create(p, rt.runtime_id, get_runtime_manager())
+        return s.start()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/{provider}/viewport/frame")
+def fbr_vp_frame(request: Request, provider: str):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        return s.frame()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/input")
+def fbr_vp_input(request: Request, provider: str, body: dict = Body(...)):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        return s.owner_input(dict(body or {}))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/navigate")
+def fbr_vp_navigate(request: Request, provider: str, body: dict = Body(...)):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        b = body or {}
+        return s.navigate(str(b.get("action", "")), b.get("url"))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/stop")
+def fbr_vp_stop(request: Request, provider: str, body: dict = Body(default={})):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        vp.drop(p)
+        return {"ok": True, "state": "CLOSED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 # keep SPA catch-all mount LAST
 try:
     from starlette.routing import Mount as _Mount4

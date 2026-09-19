@@ -70,7 +70,17 @@ class FinancialBrowserRuntimeManager:
 
     def __init__(self):
         self._rt: dict[str, OwnerFinancialBrowserRuntime] = {}
-        self._pw = {}          # provider -> (playwright, context) live handles (real Mac only)
+        # provider -> (marker, context). marker = PlaywrightExecutor for a REAL launch, or
+        # None for a test-injected fake context. All real Playwright object access is
+        # marshalled onto the executor thread (Playwright objects are thread-affine).
+        self._pw = {}
+        self._exec = None      # lazily-created single Playwright executor thread (real only)
+
+    def _executor(self):
+        from saathi.platform.finance.pw_executor import PlaywrightExecutor
+        if self._exec is None:
+            self._exec = PlaywrightExecutor()
+        return self._exec
 
     def _profile_dir(self, provider: Provider) -> Path:
         d = PROFILE_ROOT / provider.value.lower()
@@ -104,17 +114,24 @@ class FinancialBrowserRuntimeManager:
     def _launch_headed(self, provider: Provider):
         """Headed, provider-scoped persistent context for OWNER manual login (real Mac only).
         SaathiOS opens the window and navigates ONCE to the provider's allowed domain; the
-        owner does everything else. No credential automation."""
-        from playwright.sync_api import sync_playwright
+        owner does everything else. No credential automation. All Playwright work runs on the
+        single executor thread (thread affinity)."""
+        ex = self._executor()
         pol = POLICIES[provider]
-        pw = sync_playwright().start()
-        ctx = pw.chromium.launch_persistent_context(
-            user_data_dir=str(self._profile_dir(provider)), headless=False,
-            args=["--no-first-run", "--no-default-browser-check"])
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        udir = str(self._profile_dir(provider))
         seed = f"https://{pol.allowed_domains[0]}/" if pol.allowed_domains else "about:blank"
-        page.goto(seed, wait_until="domcontentloaded")     # one owner-facing navigation only
-        self._pw[provider] = (pw, ctx)
+
+        def _do():
+            pw = ex.pw_onthread()
+            ctx = pw.chromium.launch_persistent_context(
+                user_data_dir=udir, headless=False,
+                args=["--no-first-run", "--no-default-browser-check"])
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            page.goto(seed, wait_until="domcontentloaded")  # one owner-facing navigation only
+            return ctx
+
+        ctx = ex.submit(_do, timeout=90.0)
+        self._pw[provider] = (ex, ctx)
         return ctx
 
     def mark_owner_authenticated(self, runtime_id: str) -> OwnerFinancialBrowserRuntime | None:
@@ -162,30 +179,61 @@ class FinancialBrowserRuntimeManager:
         rt.auth_state = AuthState.UNKNOWN
         handle = self._pw.pop(rt.provider, None)
         if handle:
-            pw, ctx = handle
-            try:
-                ctx.close()
-            except Exception:
-                pass
-            try:
-                pw.stop()
-            except Exception:
-                pass
+            marker, ctx = handle
+            if marker is not None and hasattr(marker, "submit"):   # real: close on executor thread
+                try:
+                    marker.submit(lambda: ctx.close(), timeout=20.0)
+                except Exception:
+                    pass
+            else:                                                  # test/fake context
+                try:
+                    ctx.close()
+                except Exception:
+                    pass
+        # Note: the shared Playwright executor thread is left running for other providers;
+        # it is stopped only on full manager shutdown, not per-provider close.
         audit.record(provider=rt.provider.value, actor="OWNER_INPUT", capability="CLOSE_BROWSER",
                      result="OK", session_id=runtime_id)
         return True
 
     def live_page(self, provider: Provider):
         """The current live page of a provider's owner-controlled context, or None.
-        Read-only callers wrap it in ReadOnlyPageReader; interaction is never exposed."""
+        Real runtimes return an executor-bound read-only MarshalledPage (thread-safe); test
+        fakes return their injected page directly. Read-only callers wrap it in
+        ReadOnlyPageReader; interaction is never exposed here."""
         handle = self._pw.get(provider)
         if not handle:
             return None
-        _pw, ctx = handle
-        try:
+        marker, ctx = handle
+        if marker is not None and hasattr(marker, "submit"):       # real Playwright path
+            try:
+                page = marker.submit(lambda: (ctx.pages[-1] if ctx.pages else None), timeout=15.0)
+            except Exception:
+                return None
+            if page is None:
+                return None
+            from saathi.platform.finance.pw_marshal import MarshalledPage
+            return MarshalledPage(marker, page)
+        try:                                                       # test/fake path
             return ctx.pages[-1] if ctx.pages else None
         except Exception:
             return None
+
+    def is_real_runtime(self, provider: Provider) -> bool:
+        """True when a real (executor-backed) Playwright context is live for the provider."""
+        h = self._pw.get(provider)
+        return bool(h and h[0] is not None and hasattr(h[0], "submit"))
+
+    def on_context_page(self, provider: Provider, fn, *, timeout: float = 30.0):
+        """Run fn(ctx, page) on the Playwright executor thread for a real runtime, else None.
+        Used by the owner-only viewport (screencast + owner input) — never an agent path."""
+        handle = self._pw.get(provider)
+        if not handle:
+            return None
+        marker, ctx = handle
+        if marker is None or not hasattr(marker, "submit"):
+            return None
+        return marker.submit(lambda: fn(ctx, (ctx.pages[-1] if ctx.pages else None)), timeout=timeout)
 
     def get(self, runtime_id: str):
         return self._rt.get(runtime_id)

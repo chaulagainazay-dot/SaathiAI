@@ -103,6 +103,9 @@ LOW_LEVEL_DRIVER_ALLOWLIST: frozenset[str] = frozenset({
     # Owner-controlled financial browser runtime (headed persistent context for OWNER manual
     # login only; agent gets read-only observation via ReadOnlyPageReader, never interaction).
     "saathi/platform/finance/browser_runtime.py",
+    # Single-thread Playwright executor that owns the sync driver for the finance runtime
+    # (thread affinity for the owner-controlled context + CDP screencast). No authority.
+    "saathi/platform/finance/pw_executor.py",
     # Governed official-NEPSE browser modules (read-only observation + official file download;
     # per-response domain policy; certified in the live-NEPSE / acquisition milestones).
     "saathi/platform/market_data/nepse_live.py",
