@@ -114,9 +114,10 @@ export default function FinancialBrowserPage() {
       <Eyebrow>Finance · Owner-controlled</Eyebrow>
       <Heading level={1} size="xl" style={{ marginTop: 6 }}>Financial Browser</Heading>
       <Text tone="muted" size="sm" style={{ maxWidth: 720, marginTop: 8, display: "block" }}>
-        You open a provider site and enter every credential yourself. SaathiOS reads only approved,
-        normalized portfolio data — and only after you enable Saathi Read. It never sees your
-        password, OTP, cookies, or raw page, and cannot place trades or move funds here.
+        The provider site opens in an embedded browser right here inside SaathiOS — no separate
+        window, no external Chrome. You see and control it, and enter every credential yourself.
+        SaathiOS reads only approved, normalized portfolio data after you enable Saathi Read — it
+        never sees your password, OTP, cookies, or raw page, and cannot place trades or move funds.
       </Text>
 
       {/* Privacy boundary */}
@@ -171,7 +172,7 @@ export default function FinancialBrowserPage() {
         <>
           <Heading level={2} size="md" style={{ marginTop: 32 }}>Active sessions</Heading>
           {runtimes.filter((r) => r.runtime_state !== "CLOSED").length === 0 ? (
-            <EmptyState title="No open financial browser" description="Open a provider above. SaathiOS launches the owner-controlled window; you log in yourself." style={{ marginTop: 8 }} />
+            <EmptyState title="No open financial browser" description="Open a provider above. The site loads in an embedded browser inside SaathiOS; you log in yourself." style={{ marginTop: 8 }} />
           ) : (
             <div style={{ display: "grid", gap: 14, marginTop: 12 }}>
               {runtimes.filter((r) => r.runtime_state !== "CLOSED").map((r) => (
@@ -217,7 +218,13 @@ function RuntimePanel({ rt, obs, busy, onAuth, onToggleRead, onRead, onClose }) 
 
       {rt.runtime_state === "DISPLAY_UNAVAILABLE" && (
         <Text tone="muted" size="xs" style={{ display: "block", marginTop: 8 }}>
-          No desktop display on the backend host — the window opens on the owner's Mac session.
+          External-window mode (SAATHI_FINANCE_HEADED=1) needs a desktop session. Unset it to use
+          the default embedded browser, which needs no display.
+        </Text>
+      )}
+      {rt.runtime_state === "PROVIDER_ACCESS_UNAVAILABLE" && (
+        <Text tone="muted" size="xs" style={{ display: "block", marginTop: 8 }}>
+          The embedded browser could not start{rt.launch_error ? `: ${rt.launch_error}` : "."}
         </Text>
       )}
 
@@ -253,11 +260,6 @@ function RuntimePanel({ rt, obs, busy, onAuth, onToggleRead, onRead, onClose }) 
         <div style={{ marginTop: 16 }}>
           <FinancialViewport provider={rt.provider} runtimeId={id} />
         </div>
-      )}
-      {rt.runtime_state === "DISPLAY_UNAVAILABLE" && (
-        <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 12 }}>
-          Live viewport needs the backend on your Mac desktop session (SAATHI_FINANCE_HEADED=1).
-        </Text>
       )}
 
       {obs && <ObservationResult env={obs} />}

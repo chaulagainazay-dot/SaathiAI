@@ -87,6 +87,12 @@ export default function FinancialViewport({ provider, runtimeId, onClose }) {
     poll();
   }, [base, runtimeId, poll]);
 
+  // Auto-start on mount so the embedded browser streams immediately (no extra owner click) —
+  // this is the "browser inside SaathiOS" experience, not a separate window to open.
+  const startRef = useRef(start);
+  startRef.current = start;
+  useEffect(() => { startRef.current(); }, []);
+
   // Unmount ONLY (deps []): stop local polling AND tell the backend to stop (free CPU).
   // Must not depend on `active` — a re-run on activation would kill the poll loop.
   useEffect(() => () => {
@@ -122,9 +128,9 @@ export default function FinancialViewport({ provider, runtimeId, onClose }) {
     return (
       <div style={{ padding: 16, border: "1px dashed var(--border)", borderRadius: 10, textAlign: "center" }}>
         <Text tone="muted" size="sm" style={{ display: "block", marginBottom: 10 }}>
-          Live browser view — see and control the provider page inside SaathiOS.
+          {err ? "Could not connect the embedded browser." : "Connecting the embedded browser…"}
         </Text>
-        <Button onClick={start}>Show live viewport</Button>
+        <Button onClick={start}>{err ? "Retry" : "Connect"}</Button>
         {err && <Text tone="muted" size="xs" style={{ display: "block", marginTop: 8 }}>{err}</Text>}
       </div>
     );

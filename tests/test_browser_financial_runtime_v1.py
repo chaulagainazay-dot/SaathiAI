@@ -15,6 +15,7 @@ from saathi.platform.finance.browser_portfolio import (
 )
 from saathi.platform.finance.browser_runtime import (
     AuthState, FinancialBrowserRuntimeManager, ObservationState, RuntimeState,
+    _open_mode,
 )
 from saathi.platform.finance.observer import (
     ReadOnlyPageReader, TMSBrowserPortfolioObserver, BinanceBrowserPortfolioObserver, get_observer,
@@ -40,13 +41,22 @@ BIN_ROWS = [{"asset": "BTC", "quantity": "0.5", "available": "0.5", "locked": "0
             {"asset": "USDT", "quantity": "1000", "available": "1000", "locked": "0"}]
 
 
-# 1 — no display → DISPLAY_UNAVAILABLE; runtime carries no secrets
-def test_open_no_display(monkeypatch):
-    monkeypatch.delenv("SAATHI_FINANCE_HEADED", raising=False)
-    monkeypatch.delenv("DISPLAY", raising=False)
+# 1 — open() launch decision (embedded default needs no display); runtime carries no secrets
+def test_open_mode_decision():
+    # Embedded (default): launches regardless of display — the browser lives inside SaathiOS.
+    assert _open_mode(launch=True, headed=False, display=False) == "LAUNCH"
+    assert _open_mode(launch=True, headed=False, display=True) == "LAUNCH"
+    # Legacy headed opt-in still needs a real desktop session for its external window.
+    assert _open_mode(launch=True, headed=True, display=False) == "DISPLAY_UNAVAILABLE"
+    assert _open_mode(launch=True, headed=True, display=True) == "LAUNCH"
+    # No launch requested → inert runtime.
+    assert _open_mode(launch=False, headed=False, display=False) == "NOT_OPEN"
+
+
+def test_runtime_carries_no_secrets():
     m = FinancialBrowserRuntimeManager()
-    rt = m.open(Provider.TMS)
-    assert rt.runtime_state == RuntimeState.DISPLAY_UNAVAILABLE
+    rt = m.open(Provider.TMS, launch=False)   # no real Chromium in unit tests
+    assert rt.runtime_state == RuntimeState.NOT_OPEN
     d = rt.to_public()
     for bad in ("password", "otp", "cookie", "secret", "token", "storage"):
         assert not any(bad in k.lower() for k in d)
@@ -56,7 +66,7 @@ def test_open_no_display(monkeypatch):
 # 2 — Saathi Read gate: default OFF, needs owner auth, revocable
 def test_saathi_read_gate():
     m = FinancialBrowserRuntimeManager()
-    rt = m.open(Provider.BINANCE)
+    rt = m.open(Provider.BINANCE, launch=False)
     assert rt.observation_state == ObservationState.SAATHI_READ_OFF
     assert m.read_allowed(rt.runtime_id) is False
     m.set_saathi_read(rt.runtime_id, True)               # before owner auth → refused
@@ -71,7 +81,7 @@ def test_saathi_read_gate():
 # 3 — close revokes read + clears
 def test_close():
     m = FinancialBrowserRuntimeManager()
-    rt = m.open(Provider.TMS)
+    rt = m.open(Provider.TMS, launch=False)
     m.mark_owner_authenticated(rt.runtime_id); m.set_saathi_read(rt.runtime_id, True)
     m.close(rt.runtime_id)
     assert m.get(rt.runtime_id).runtime_state == RuntimeState.CLOSED
@@ -81,7 +91,7 @@ def test_close():
 # 4 — provider isolation
 def test_isolation():
     m = FinancialBrowserRuntimeManager()
-    a = m.open(Provider.TMS); b = m.open(Provider.BINANCE)
+    a = m.open(Provider.TMS, launch=False); b = m.open(Provider.BINANCE, launch=False)
     m.mark_owner_authenticated(b.runtime_id); m.set_saathi_read(b.runtime_id, True)
     m.close(a.runtime_id)
     assert m.get(a.runtime_id).runtime_state == RuntimeState.CLOSED
@@ -205,7 +215,7 @@ def test_prohibited_regions():
 def test_read_portfolio_orchestration(monkeypatch):
     from saathi.platform.finance import browser_portfolio as bp
     m = FinancialBrowserRuntimeManager()
-    rt = m.open(Provider.TMS)
+    rt = m.open(Provider.TMS, launch=False)
     # not owner-authenticated yet
     assert bp.read_portfolio(rt.runtime_id, manager=m, reader=FakeReader(TMS_ROWS))["state"] == "OWNER_TMS_LOGIN_REQUIRED"
     m.mark_owner_authenticated(rt.runtime_id)
@@ -232,6 +242,6 @@ def test_read_portfolio_orchestration(monkeypatch):
 # 18 — read blocked before owner authentication (manager gate)
 def test_read_requires_owner_auth():
     m = FinancialBrowserRuntimeManager()
-    rt = m.open(Provider.BINANCE)
+    rt = m.open(Provider.BINANCE, launch=False)
     m.set_saathi_read(rt.runtime_id, True)   # ignored (not authed)
     assert m.get(rt.runtime_id).observation_state == ObservationState.SAATHI_READ_OFF

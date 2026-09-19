@@ -23,6 +23,11 @@ from saathi.platform.finance.policy import POLICIES, Provider
 # provider-scoped persistent profiles (cookies isolated per provider; never read into app/LLM)
 PROFILE_ROOT = Path.home() / ".saathi" / "finance_browser"
 
+# Embedded viewport render size — the headless browser has no window, so it runs at a fixed
+# viewport that the owner-only screencast (viewport.py) captures and streams into SaathiOS.
+_EMBED_W = 1280
+_EMBED_H = 800
+
 
 class RuntimeState(str, Enum):
     NOT_OPEN = "NOT_OPEN"
@@ -54,15 +59,21 @@ class OwnerFinancialBrowserRuntime:
     auth_state: AuthState = AuthState.UNKNOWN
     observation_state: ObservationState = ObservationState.SAATHI_READ_OFF
     ttl_sec: float = 1800.0
+    embedded: bool = True                 # True = headless browser rendered inside SaathiOS viewport
+    launch_error: str | None = None       # diagnostic only (never a secret) when a launch fails
     # NOTE: deliberately NO password/otp/cookie/secret/storage_state/token fields.
 
     def to_public(self) -> dict:
-        return {"runtime_id": self.runtime_id, "provider": self.provider.value,
-                "allowed_domain": self.allowed_domain, "created_at": self.created_at,
-                "last_active_at": self.last_active_at, "runtime_state": self.runtime_state.value,
-                "auth_state": self.auth_state.value,
-                "observation_state": self.observation_state.value,
-                "owner_control": True, "agent_read": self.observation_state == ObservationState.SAATHI_READ_ON}
+        d = {"runtime_id": self.runtime_id, "provider": self.provider.value,
+             "allowed_domain": self.allowed_domain, "created_at": self.created_at,
+             "last_active_at": self.last_active_at, "runtime_state": self.runtime_state.value,
+             "auth_state": self.auth_state.value,
+             "observation_state": self.observation_state.value,
+             "embedded": self.embedded, "owner_control": True,
+             "agent_read": self.observation_state == ObservationState.SAATHI_READ_ON}
+        if self.launch_error:
+            d["launch_error"] = self.launch_error
+        return d
 
 
 class FinancialBrowserRuntimeManager:
@@ -91,31 +102,40 @@ class FinancialBrowserRuntimeManager:
              ) -> OwnerFinancialBrowserRuntime:
         now = now if now is not None else time.time()
         pol = POLICIES[provider]
+        headed = _headed_mode()          # legacy opt-in: real external window on the owner's desktop
         rt = OwnerFinancialBrowserRuntime(
             runtime_id=f"ofr_{uuid.uuid4().hex[:12]}", provider=provider,
             allowed_domain=pol.allowed_domains[0] if pol.allowed_domains else "",
-            created_at=now, last_active_at=now)
-        # A headed window needs a real desktop session. Without one, defer to owner env.
-        if launch and not (os.environ.get("DISPLAY") or os.uname().sysname == "Darwin" and _has_gui()):
-            rt.runtime_state = RuntimeState.DISPLAY_UNAVAILABLE
-        elif launch and _headed_launch_available():
-            try:
-                self._launch_headed(provider)
-                rt.runtime_state = RuntimeState.OPEN_OWNER_CONTROL
-            except Exception:
-                rt.runtime_state = RuntimeState.DISPLAY_UNAVAILABLE
-        else:
+            created_at=now, last_active_at=now, embedded=not headed)
+        mode = _open_mode(launch=launch, headed=headed, display=_display_available())
+        if mode == "NOT_OPEN":
             rt.runtime_state = RuntimeState.NOT_OPEN
+        elif mode == "DISPLAY_UNAVAILABLE":
+            # Only reachable when the owner explicitly asked for an external headed window
+            # but there is no desktop session. The default embedded path never needs one.
+            rt.runtime_state = RuntimeState.DISPLAY_UNAVAILABLE
+        else:  # "LAUNCH" — embedded headless (default) or headed-with-display (opt-in)
+            try:
+                self._launch(provider, headless=not headed)
+                rt.runtime_state = RuntimeState.OPEN_OWNER_CONTROL
+            except Exception as e:
+                rt.runtime_state = RuntimeState.PROVIDER_ACCESS_UNAVAILABLE
+                rt.launch_error = str(e)[:200]
         self._rt[rt.runtime_id] = rt
         audit.record(provider=provider.value, actor="OWNER_INPUT", capability="OPEN_BROWSER",
                      result=rt.runtime_state.value, session_id=rt.runtime_id)
         return rt
 
-    def _launch_headed(self, provider: Provider):
-        """Headed, provider-scoped persistent context for OWNER manual login (real Mac only).
-        SaathiOS opens the window and navigates ONCE to the provider's allowed domain; the
-        owner does everything else. No credential automation. All Playwright work runs on the
-        single executor thread (thread affinity)."""
+    def _launch(self, provider: Provider, *, headless: bool):
+        """Provider-scoped persistent context for OWNER manual login.
+
+        Default (headless=True): no external window — the browser runs headless at a fixed
+        viewport and is seen/driven ONLY through the embedded SaathiOS viewport (screencast +
+        owner input). This is the "browser inside SaathiOS" path; it needs no desktop display.
+        Opt-in (headless=False, SAATHI_FINANCE_HEADED=1): a real external window on the owner's
+        Mac. Either way SaathiOS navigates ONCE to the provider's allowed domain and the owner
+        does everything else — no credential automation. All Playwright work runs on the single
+        executor thread (thread affinity)."""
         ex = self._executor()
         pol = POLICIES[provider]
         udir = str(self._profile_dir(provider))
@@ -124,10 +144,14 @@ class FinancialBrowserRuntimeManager:
         def _do():
             pw = ex.pw_onthread()
             ctx = pw.chromium.launch_persistent_context(
-                user_data_dir=udir, headless=False,
+                user_data_dir=udir, headless=headless,
+                viewport={"width": _EMBED_W, "height": _EMBED_H},
                 args=["--no-first-run", "--no-default-browser-check"])
             page = ctx.pages[0] if ctx.pages else ctx.new_page()
-            page.goto(seed, wait_until="domcontentloaded")  # one owner-facing navigation only
+            try:
+                page.goto(seed, wait_until="domcontentloaded", timeout=45000)  # one nav; owner drives after
+            except Exception:
+                pass  # slow/blocked seed load is non-fatal — owner can reload in the viewport
             return ctx
 
         ctx = ex.submit(_do, timeout=90.0)
@@ -252,13 +276,26 @@ class FinancialBrowserRuntimeManager:
         return [r.to_public() for r in self._rt.values()]
 
 
-def _has_gui() -> bool:
-    """macOS has a window server available to the user session? Heuristic; owner env only."""
-    return bool(os.environ.get("SAATHI_FINANCE_HEADED") == "1")
+def _headed_mode() -> bool:
+    """Legacy opt-in: open a REAL external browser window on the owner's desktop instead of the
+    default embedded (headless-in-SaathiOS) browser. Off by default — the embedded browser needs
+    no external window and no desktop session."""
+    return os.environ.get("SAATHI_FINANCE_HEADED") == "1"
 
 
-def _headed_launch_available() -> bool:
-    return _has_gui() or bool(os.environ.get("DISPLAY"))
+def _display_available() -> bool:
+    """A desktop session that can show an external headed window (headed mode only)."""
+    return bool(os.environ.get("DISPLAY") or os.uname().sysname == "Darwin")
+
+
+def _open_mode(*, launch: bool, headed: bool, display: bool) -> str:
+    """Pure classifier for the open() launch decision (kept side-effect free for tests).
+    Returns one of: NOT_OPEN, DISPLAY_UNAVAILABLE, LAUNCH."""
+    if not launch:
+        return "NOT_OPEN"
+    if headed and not display:
+        return "DISPLAY_UNAVAILABLE"
+    return "LAUNCH"
 
 
 _MANAGER: FinancialBrowserRuntimeManager | None = None
