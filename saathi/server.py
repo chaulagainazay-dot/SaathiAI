@@ -6729,14 +6729,40 @@ def fbr_obs_status(request: Request, provider: str, runtime_id: str | None = Non
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+def _record_portfolio_memory(provider: str, env: dict) -> None:
+    """Record structured Financial Memory from a successful observation (never secrets/raw).
+    Best-effort: memory failures never break the read."""
+    try:
+        if not (env or {}).get("available") or not env.get("view"):
+            return
+        from saathi.platform.finance import financial_memory as fm
+        store = fm.get_memory_store()
+        view = env["view"]; rid = env.get("runtime_id", "")
+        store.record(fm.portfolio_evidence(view, provider=provider.upper(), runtime_id=rid,
+                                           session_id=rid))
+        for ev in fm.position_evidences(view, provider=provider.upper(), runtime_id=rid,
+                                        session_id=rid):
+            store.record(ev)
+        # market facts (current-price authority) for reconciled positions
+        for p in view.get("positions", []):
+            if p.get("current_price") and p.get("current_price_source"):
+                store.record(fm.market_evidence(
+                    provider=provider.upper(),
+                    instrument_id=p.get("instrument_id") or p.get("symbol", ""),
+                    ltp=p.get("current_price"), source_type=p.get("current_price_source")))
+    except Exception:
+        pass
+
+
 @app.post("/api/v1/finance/browser/{provider}/observe-portfolio")
 def fbr_obs_portfolio(request: Request, provider: str, body: dict = Body(default={})):
     if not _fbr_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     try:
         from saathi.platform.finance.observation_bridge import get_observation_service
-        return get_observation_service().observe_portfolio(
-            provider, (body or {}).get("runtime_id"))
+        env = get_observation_service().observe_portfolio(provider, (body or {}).get("runtime_id"))
+        _record_portfolio_memory(provider, env)     # structured memory (Milestone B)
+        return env
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
@@ -6792,6 +6818,65 @@ def _viewport_gate(request, provider: str):
     if not m.is_real_runtime(p):
         return None, None, JSONResponse({"state": "DISPLAY_UNAVAILABLE"}, status_code=409)
     return p, rt, None
+
+
+# ── Financial Memory (structured, provenance-first; read + owner controls) ────────
+@app.get("/api/v1/finance/memory/latest")
+def fin_memory_latest(request: Request, provider: str | None = None,
+                      evidence_type: str | None = None, instrument_id: str | None = None,
+                      limit: int = 20):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        rows = get_memory_store().latest(provider=provider, evidence_type=evidence_type,
+                                         instrument_id=instrument_id, limit=min(int(limit), 100))
+        return {"evidence": rows, "count": len(rows)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/memory/history")
+def fin_memory_history(request: Request, instrument_id: str, limit: int = 50):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        return {"instrument_id": instrument_id,
+                "history": get_memory_store().history(instrument_id, limit=min(int(limit), 200))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/memory/status")
+def fin_memory_status(request: Request, provider: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store, EvidenceType
+        st = get_memory_store()
+        latest = st.latest(provider=provider, evidence_type=EvidenceType.PORTFOLIO_SNAPSHOT.value, limit=1)
+        top = latest[0] if latest else None
+        return {"total": st.count(provider=provider),
+                "latest_portfolio": ({"observed_at": top["observed_at"], "provider": top["provider"],
+                                      "source_type": top["source_type"], "freshness": top["freshness"],
+                                      "canonical_ref": top["canonical_ref"]} if top else None)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/memory/clear-session")
+def fin_memory_clear_session(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        sid = str((body or {}).get("session_id", ""))
+        if not sid:
+            return JSONResponse({"error": "session_id required"}, status_code=400)
+        return {"cleared": get_memory_store().clear_session(sid)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
 @app.post("/api/v1/finance/browser/{provider}/viewport/start")
