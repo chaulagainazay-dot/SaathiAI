@@ -13,6 +13,7 @@ import {
   EmptyState, BlockedState, ErrorState, Pill, Eyebrow,
 } from "@/components/ui";
 import FinancialViewport from "@/components/finance/FinancialViewport";
+import MarketTape from "@/components/finance/MarketTape";
 
 const PROVIDER_ORDER = ["TMS", "BINANCE", "NEPSE", "PORTFOLIO_TRACKER"];
 
@@ -126,6 +127,8 @@ export default function FinancialBrowserPage() {
       </div>
 
       <Divider style={{ margin: "24px 0" }} />
+
+      <MarketTape />
 
       {loading && <div style={{ display: "flex", justifyContent: "center", padding: 48 }}><Spinner size={22} /></div>}
       {err && !loading && <ErrorState title="Cannot reach the Financial Browser API" detail={err} action={<Button onClick={refresh}>Retry</Button>} />}

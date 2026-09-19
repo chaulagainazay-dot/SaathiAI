@@ -1977,7 +1977,17 @@ html, body {
 .retro-live.ok{ background:var(--status-success); box-shadow:0 0 8px rgba(46,226,122,.6); }
 @keyframes retroPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.6)}}
 .retro-glow{ text-shadow:0 0 12px rgba(255,42,42,.4); }
-@media(prefers-reduced-motion:reduce){ .retro-live{animation:none} }
+/* live market tape (observation-only, auto-scroll) */
+.mtape{ overflow:hidden; position:relative }
+.mtape-track{ display:flex; flex-direction:column; animation:mtapeRoll 34s linear infinite; will-change:transform }
+.mtape:hover .mtape-track{ animation-play-state:paused }
+@keyframes mtapeRoll{ from{transform:translateY(0)} to{transform:translateY(-50%)} }
+.mtape-row{ display:grid; grid-template-columns:16px 1fr auto auto; gap:10px; align-items:center;
+  padding:7px 16px; border-bottom:1px solid rgba(255,255,255,.03); font-family:var(--font-mono) }
+.mtape-hstrip{ overflow:hidden; white-space:nowrap }
+.mtape-hstrip > span{ display:inline-block; padding-left:100%; animation:mtapeMarq 26s linear infinite }
+@keyframes mtapeMarq{ from{transform:translateX(0)} to{transform:translateX(-100%)} }
+@media(prefers-reduced-motion:reduce){ .retro-live{animation:none} .mtape-track,.mtape-hstrip>span{animation:none} }
 
 /* CRT scanlines + flicker — the "moving" foundation for further work */
 body::after{

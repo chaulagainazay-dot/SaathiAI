@@ -21,8 +21,10 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
    kept functional green/amber/red.
 3. **[DONE] Global status bar live pulse** — pulsing dot on "Local platform online"
    (every page). (Top-bar pulse optional, folded into showcases.)
-4. **[TODO] Financial Browser showcase** — retro-panel framing + the live auto-scrolling
-   tape component fed by read-only market/memory data (observation-only, no trading).
+4. **[DONE] Financial Browser live tape** — `MarketTape.jsx`: retro corner-bracket panel,
+   real NEPSE index marquee + auto-scrolling per-symbol tape from NEPSE live + Financial
+   Memory MARKET_OBSERVATION rows; honest `○ NO FEED / MARKET CLOSED` state (no fabricated
+   trades); observation-only, no trading controls. On /finance/browser above Providers.
 5. **[TODO] Accent cleanup** — retint stray green/blue (tab underlines, links) to the red
    family where not carrying semantic meaning; keep green-up/red-down data.
 6. **[TODO] Home dashboard motion** — animated metric tiles + sparklines on `/`.
