@@ -33,6 +33,15 @@ export const NAV_GROUPS = [
         authoritySensitivity: "approval-aware",
       },
       {
+        id: "company",
+        label: "AI Company",
+        href: "/company",
+        icon: "▥",
+        description: "Visual organization — offices, agents, missions, authority",
+        accent: "#34D8B8",
+        authoritySensitivity: "observation-only",
+      },
+      {
         id: "orbit",
         label: "Orbit",
         href: "/orbit",
@@ -191,7 +200,7 @@ export const NAV_GROUPS = [
 ];
 
 /** Primary navigable areas. Bump deliberately when a surface is added. */
-export const PRIMARY_AREA_COUNT = 16;
+export const PRIMARY_AREA_COUNT = 17;
 
 /** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [

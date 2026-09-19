@@ -1736,7 +1736,9 @@ async def events_stream(demo: int = 0):
     return StreamingResponse(
         sse_stream(demo=bool(demo)),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive",
+        # no-transform: the :3100 Next rewrite proxy otherwise gzip-compresses
+        # (and so buffers) this stream — browsers received nothing live.
+        headers={"Cache-Control": "no-cache, no-transform", "Connection": "keep-alive",
                  "X-Accel-Buffering": "no"})
 
 try:

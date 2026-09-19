@@ -21,7 +21,7 @@ from pathlib import Path
 from saathi.organization import dependencies as deps
 from saathi.organization.charter import AGENT_RUNTIME_ROLE, load_charter
 from saathi.organization.models import (
-    ACTIVE_STATUSES, AgentStatus, BUSY_STATUS_BY_ACTIVITY, REVIEW_STATUSES,
+    AgentStatus, BUSY_STATUSES, BUSY_STATUS_BY_ACTIVITY, REVIEW_STATUSES,
 )
 from saathi.organization.store import default_store
 
@@ -168,7 +168,8 @@ def metrics(states: dict) -> dict:
     vals = [AgentStatus(s["status"]) for s in states.values()]
     return {
         "total": len(vals),
-        "active": sum(v in ACTIVE_STATUSES for v in vals),
+        "active": sum(v in BUSY_STATUSES for v in vals),
+        "assigned": sum(v == AgentStatus.ASSIGNED for v in vals),
         "idle": sum(v == AgentStatus.IDLE for v in vals),
         "in_review": sum(v in REVIEW_STATUSES for v in vals),
         "waiting": sum(v in (AgentStatus.WAITING, AgentStatus.AWAITING_EVIDENCE) for v in vals),
@@ -241,6 +242,53 @@ def today_focus(owner: str) -> dict:
     items = [{"id": g["id"], "text": g.get("description") or "", "status": g.get("status"),
               "done": g.get("status") in ("done", "completed", "achieved")} for g in goals[:8]]
     return {"state": "OK" if items else "EMPTY", "items": items, "source": "ceo_os.goal"}
+
+
+def owner_desk(owner: str) -> dict:
+    """Owner Office facts — read-only counts from canonical stores. Each field
+    is ``None`` (unknown) when its source cannot be read; never a guessed 0."""
+    import os
+    desk: dict = {"pending_platform_approvals": None, "pending_agent_approvals": None,
+                  "open_decisions": None, "paper_accounts": None, "paper_positions": None}
+    env = os.environ.get("SAATHI_PLATFORM_DB")
+    plat = Path(env) if env else Path(__file__).resolve().parent.parent.parent / "data" / "platform" / "platform.db"
+    queries = {
+        "pending_platform_approvals": ("SELECT COUNT(*) FROM approvals WHERE status='pending' "
+                                       "AND (expires_at=0 OR expires_at IS NULL OR expires_at>?)",
+                                       (time.time(),)),
+        "paper_accounts": ("SELECT COUNT(*) FROM paper_accounts", ()),
+        "paper_positions": ("SELECT COUNT(*) FROM paper_positions WHERE CAST(quantity AS REAL)<>0", ()),
+    }
+    if plat.exists():
+        c = sqlite3.connect(f"file:{plat}?mode=ro", uri=True, timeout=3)
+        try:
+            for key, (q, args) in queries.items():
+                try:
+                    desk[key] = c.execute(q, args).fetchone()[0]
+                except Exception:
+                    desk[key] = None
+        finally:
+            c.close()
+    try:
+        from saathi.agent_runtime.store import DB_PATH
+        if Path(DB_PATH).exists():
+            c = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=3)
+            try:
+                desk["pending_agent_approvals"] = c.execute(
+                    "SELECT COUNT(*) FROM approval_request WHERE status='pending'").fetchone()[0]
+            finally:
+                c.close()
+        else:
+            desk["pending_agent_approvals"] = 0
+    except Exception:
+        pass
+    try:
+        from saathi.ceo.store import default_store as ceo_store
+        desk["open_decisions"] = sum(
+            1 for d in ceo_store().list_decisions(owner) if d.get("status") in ("open", "pending", "proposed"))
+    except Exception:
+        pass
+    return desk
 
 
 def recent_outputs(limit: int = 8) -> list[dict]:
@@ -319,6 +367,7 @@ def company_snapshot(owner: str = "ajay") -> dict:
                             "Investment Committee", "Decision synthesis"],
         "active_missions": active_missions,
         "today_focus": today_focus(owner),
+        "owner_desk": owner_desk(owner),
         "recent_outputs": recent_outputs(),
         "live_activity": live_activity(),
         "sources": sources,

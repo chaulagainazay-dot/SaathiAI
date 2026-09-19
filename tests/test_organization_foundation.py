@@ -278,6 +278,15 @@ def test_stale_pending_tasks_are_ignored(org_env, monkeypatch):
     assert sources["agent_runtime"]["stale_pending_ignored"] == 1
 
 
+def test_owner_desk_counts_real_rows_and_unknown_is_none(org_env, monkeypatch, tmp_path):
+    from saathi.organization.state import owner_desk
+    d = owner_desk("ajay")
+    assert d["paper_accounts"] == 1 and d["paper_positions"] == 1
+    assert d["pending_platform_approvals"] is None  # seeded db has no approvals table → unknown
+    monkeypatch.setenv("SAATHI_PLATFORM_DB", str(tmp_path / "absent.db"))
+    assert owner_desk("ajay")["paper_accounts"] is None
+
+
 # ── missions ────────────────────────────────────────────────────────────────
 def test_templates_are_valid_and_rooted_at_saathi():
     from saathi.organization.missions import validate_templates
@@ -449,6 +458,14 @@ def test_api_evidence_by_id_validates_and_redacts(api, org_env):
     client, h = api
     assert client.get("/api/v1/organization/evidence/..%2f", headers=h).status_code in (400, 404)
     assert client.get("/api/v1/organization/evidence/abcdef12", headers=h).status_code == 404
+
+
+def test_event_stream_is_not_transformable_by_proxies():
+    """The single-origin Next proxy gzip-buffers SSE unless the response forbids
+    transformation; without this header browsers receive no live events."""
+    src = (Path(__file__).resolve().parent.parent / "saathi" / "server.py").read_text()
+    block = src[src.index('@app.get("/api/events/stream")'):][:600]
+    assert "no-transform" in block
 
 
 def test_redaction():
