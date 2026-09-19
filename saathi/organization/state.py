@@ -26,6 +26,7 @@ from saathi.organization.models import (
 from saathi.organization.store import default_store
 
 RECENT_SEC = 15 * 60
+DUTY_RECENT_SEC = 45
 STALE_SEC = 6 * 3600
 _M10_TERMINAL = ("completed", "cancelled", "failed", "timed_out", "rolled_back",
                  "partially_completed")
@@ -97,6 +98,12 @@ def role_states(now: float | None = None) -> tuple[dict, dict]:
             m10_pending.setdefault(rid, t)
         sources["agent_runtime"]["stale_pending_ignored"] = stale_ignored
 
+    try:
+        duties = default_store().duties()
+        sources["duties"] = {"ok": True}
+    except Exception as exc:
+        duties, sources["duties"] = {}, {"ok": False, "error": type(exc).__name__}
+
     req_keys = {k for r in ch.roles.values() for k in r.requires}
     req = deps.check_all(req_keys)
 
@@ -150,12 +157,35 @@ def role_states(now: float | None = None) -> tuple[dict, dict]:
                                     "objective": task["objective"], "started_at": None})
                 states[rid] = st
                 continue
-        # 5. recent organization outcome
-        if step and step["finished_at"]:
+        # 5. standing duty running now
+        duty = duties.get(rid)
+        if duty and duty["started_at"] and not duty["finished_at"]:
+            st.update(status=duty["status"], reason="", activity=_duty_activity(duty))
+            states[rid] = st
+            continue
+        # 6. most recent finished work: mission step or duty, whichever is newer
+        step_done = step["finished_at"] if step and step["finished_at"] else 0
+        duty_done = duty["finished_at"] if duty and duty["finished_at"] else 0
+        if step_done and step_done >= duty_done:
             st.update(status=step["status"], reason=step["reason"],
                       activity=_activity(step, "organization"))
+        elif duty_done:
+            status = duty["status"]
+            if status == "COMPLETE" and now - duty_done > DUTY_RECENT_SEC:
+                status = "IDLE"            # done and waiting for next scheduled run
+            st.update(status=status, reason=duty["reason"] if status != "IDLE" else "",
+                      activity=_duty_activity(duty))
         states[rid] = st
     return states, sources
+
+
+def _duty_activity(duty: dict) -> dict:
+    out = duty.get("output") or {}
+    return {"source": "duty", "objective": duty["title"], "started_at": duty["started_at"],
+            "finished_at": duty["finished_at"] or None, "next_due_at": duty.get("next_due_at") or None,
+            "runs": duty.get("runs", 0), "summary": out.get("summary"),
+            "findings": (out.get("findings") or [])[:6], "gaps": (out.get("gaps") or [])[:6],
+            "evidence": (out.get("evidence") or [])[:6]}
 
 
 def _activity(step: dict, source: str) -> dict:
@@ -328,15 +358,25 @@ def live_activity(limit: int = 12) -> list[dict]:
     out = []
     for e in evs:
         if e["name"] not in ("agent.started", "agent.output_created", "mission.created",
-                             "mission.completed", "decision.proposed", "agent.error"):
+                             "mission.completed", "decision.proposed", "agent.error",
+                             "duty.completed"):
             continue
         r = ch.roles.get(e["role_id"])
         out.append({"id": e["id"], "name": e["name"], "role_id": e["role_id"] or None,
+                    "status": (e.get("detail") or {}).get("status"),
                     "role_name": r.name if r else "Saathi", "mission_id": e["mission_id"],
                     "at": e["created_at"]})
         if len(out) >= limit:
             break
     return out
+
+
+def _operations_status() -> dict:
+    try:
+        from saathi.organization.operations import OperationsLoop
+        return OperationsLoop.instance().status()
+    except Exception as exc:
+        return {"running": False, "error": type(exc).__name__}
 
 
 def company_snapshot(owner: str = "ajay") -> dict:
@@ -372,4 +412,5 @@ def company_snapshot(owner: str = "ajay") -> dict:
         "live_activity": live_activity(),
         "sources": sources,
         "concurrency": {"max_org_missions": 1, "llm_inference_in_org_missions": False},
+        "operations": _operations_status(),
     }

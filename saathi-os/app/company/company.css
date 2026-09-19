@@ -79,6 +79,14 @@
 /* theme-aware: darkens on light surfaces, lightens on dark ones */
 .co-reason { margin: 6px 0 0; color: color-mix(in srgb, var(--co-warning) 55%, var(--co-text)); font-size: 12px; }
 
+/* operations bar */
+.co-ops { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0 0; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--co-line); background: var(--co-panel); font-size: 12.5px; }
+.co-ops-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--co-neutral); flex-shrink: 0; }
+.co-ops[data-state="running"] .co-ops-dot { background: var(--co-success); box-shadow: 0 0 0 3px rgba(62, 207, 142, 0.18); }
+.co-ops[data-state="paused"] .co-ops-dot { background: var(--co-pending); }
+.co-ops-text { flex: 1; min-width: 200px; }
+.co-duty { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--co-line-strong); background: var(--co-panel-2); }
+
 /* layout */
 .co-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
 .co-main { min-width: 0; }

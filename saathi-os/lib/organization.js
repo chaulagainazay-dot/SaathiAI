@@ -154,10 +154,37 @@ const EVENT_VERBS = {
   "mission.completed": "mission finished",
   "decision.proposed": "proposed a decision",
   "agent.error": "hit an error",
+  "duty.completed": "finished duty",
 };
 
+const DUTY_OUTCOME = { COMPLETE: "done", AWAITING_EVIDENCE: "awaiting data", ERROR: "error" };
+
 export function activityText(ev) {
-  return `${ev.role_name || "Saathi"} — ${EVENT_VERBS[ev.name] || ev.name}`;
+  const verb = EVENT_VERBS[ev.name] || ev.name;
+  const outcome = ev.name === "duty.completed" && ev.status ? ` · ${DUTY_OUTCOME[ev.status] || ev.status}` : "";
+  return `${ev.role_name || "Saathi"} — ${verb}${outcome}`;
+}
+
+/** Seconds until a timestamp (epoch s); negative clamps to 0. */
+export function formatIn(ts, now = Date.now() / 1000) {
+  if (!ts) return "—";
+  const s = Math.max(0, ts - now);
+  if (s < 60) return `in ${Math.round(s)}s`;
+  if (s < 3600) return `in ${Math.round(s / 60)}m`;
+  return `in ${(s / 3600).toFixed(1)}h`;
+}
+
+/** One-line operations status for the header bar. */
+export function operationsLine(ops) {
+  if (!ops || ops.error) return { state: "unknown", text: "Operations status unknown" };
+  if (!ops.running) {
+    return { state: "paused", text: ops.owner_setting === "paused"
+      ? "Company paused by owner — standing duties are not running"
+      : "Operations loop not running" };
+  }
+  const cur = ops.current ? ` · now: ${ops.current.title}` : "";
+  return { state: "running",
+    text: `Company running · ${ops.duties_runnable} of ${ops.duties_total} agents on duty · ${ops.completed_since_start} duties done this session${cur}` };
 }
 
 /** Should the view refresh for this SSE event? (org + agent-runtime traffic only) */

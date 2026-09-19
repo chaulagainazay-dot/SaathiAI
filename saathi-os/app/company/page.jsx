@@ -17,7 +17,7 @@ import AgentWorker from "@/components/company/AgentWorker";
 import { orgApi, useOrganization } from "@/lib/useOrganization";
 import {
   activePath, activeRoles, activityText, formatAgo, headerMetrics, indexCompany,
-  statusMeta, systemTone, treeRoleIds,
+  operationsLine, statusMeta, systemTone, treeRoleIds,
 } from "@/lib/organization";
 import { LoadingState, ErrorState } from "@/components/ui";
 
@@ -39,6 +39,37 @@ function Metric({ label, value, tone }) {
     <div className="co-metric" data-tone={tone}>
       <span className="co-metric-value">{value ?? "—"}</span>
       <span className="co-metric-label">{label}</span>
+    </div>
+  );
+}
+
+function OperationsBar({ ops, onChanged }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const line = operationsLine(ops);
+  const toggle = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await orgApi.setOperations(!ops?.running);
+      onChanged();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="co-ops" data-state={line.state} role="status" aria-live="polite">
+      <span className="co-ops-dot" aria-hidden="true" />
+      <span className="co-ops-text">{line.text}</span>
+      {ops && !ops.error ? (
+        <button type="button" className="co-chip" onClick={toggle} disabled={busy}
+          aria-label={ops.running ? "Pause the company's standing duties" : "Run the company's standing duties"}>
+          {ops.running ? "Pause company" : "Run company"}
+        </button>
+      ) : null}
+      {err ? <span className="co-reason">{err}</span> : null}
     </div>
   );
 }
@@ -220,6 +251,7 @@ export default function CompanyPage() {
         </div>
       </header>
 
+      <OperationsBar ops={snap.operations} onChanged={refresh} />
       <CommandBar disabled={missionActive} onStarted={(id) => { open("mission", id); refresh(); }} />
 
       {Object.values(snap.sources || {}).some((s) => s && s.ok === false) ? (

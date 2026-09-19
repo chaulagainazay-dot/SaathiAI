@@ -476,3 +476,136 @@ def test_redaction():
     assert out["nested"][0]["session_id"] == "[REDACTED]"
     assert out["nested"][0]["authority"] == "ADVISE"
     assert out["nested"][0]["authorizes_execution"] is False
+
+
+# ── standing duties / operations loop ───────────────────────────────────────
+@pytest.fixture
+def ops_env(org_env, monkeypatch):
+    monkeypatch.setenv("SAATHI_ORG_DATA_ROOT", str(org_env / "data"))
+    monkeypatch.setenv("SAATHI_ORG_OPERATIONS", "0")
+    (org_env / "data").mkdir(exist_ok=True)
+    from saathi.organization.operations import OperationsLoop
+    OperationsLoop._req_cache = (0.0, {})
+    return org_env
+
+
+def test_every_role_has_a_standing_duty():
+    from saathi.organization.charter import load_charter
+    from saathi.organization.duties import DUTIES
+    roles = set(load_charter().roles)
+    assert set(DUTIES) == roles, sorted(roles ^ set(DUTIES))
+
+
+def _hash_tree(root):
+    import hashlib
+    return {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(Path(root).rglob("*")) if p.is_file() and not p.name.startswith("org")}
+
+
+def test_all_duties_are_read_only_and_never_raise(ops_env):
+    from saathi.organization.duties import DUTIES, run_duty
+    before = _hash_tree(ops_env)
+    results = {rid: run_duty(d, {"recent": {}}) for rid, d in DUTIES.items()}
+    after = _hash_tree(ops_env)
+    assert before == after, "a duty modified a data file"
+    for rid, out in results.items():
+        assert out["status"] in ("complete", "awaiting_evidence", "error"), rid
+        assert out["llm_used"] is False
+        if out["status"] != "complete":
+            assert out["gaps"], f"{rid} must say why it could not complete"
+
+
+def test_operations_run_once_records_and_emits_id_only_events(ops_env):
+    from saathi.events import bus
+    from saathi.organization.operations import OperationsLoop
+    from saathi.organization.store import default_store
+    seen = []
+    handler = lambda ev: seen.append(ev)  # noqa: E731
+    bus.subscribe("*", handler)
+    try:
+        loop = OperationsLoop(tick_sec=0, visible_sec=0)
+        first = loop.run_once()
+    finally:
+        bus._subs["*"].remove(handler)
+    assert first and first["status"] in ("COMPLETE", "AWAITING_EVIDENCE", "ERROR")
+    d = default_store().duties()[first["role_id"]]
+    assert d["finished_at"] > 0 and d["next_due_at"] > d["finished_at"] and d["runs"] == 1
+    org = [e for e in seen if e.name.startswith("org.duty.")]
+    assert {e.name for e in org} == {"org.duty.started", "org.duty.completed"}
+    for e in org:
+        assert set(e.payload) <= {"role_id", "status"}
+
+
+def test_first_pass_runs_specialists_before_digests(ops_env):
+    from saathi.organization.operations import OperationsLoop
+    loop = OperationsLoop(tick_sec=0, visible_sec=0)
+    order = []
+    for _ in range(200):
+        r = loop.run_once()
+        if r is None:
+            break
+        order.append(r["role_id"])
+    assert "nepse.technical" in order and "nepse.lead" in order
+    assert order.index("nepse.technical") < order.index("nepse.lead")
+    assert order.index("pm.manager") < order.index("inv.fund_manager")
+    assert loop.run_once() is None           # nothing due immediately after a full pass
+
+
+def test_owner_missions_take_the_single_slot_first(ops_env):
+    from saathi.organization import missions as M
+    from saathi.organization.operations import OperationsLoop
+    loop = OperationsLoop(tick_sec=0, visible_sec=0)
+    assert M._slots.acquire(blocking=False)
+    try:
+        assert loop.run_once() is None
+    finally:
+        M._slots.release()
+
+
+def test_owner_pause_is_persisted_and_respected(ops_env):
+    from saathi.organization.operations import OperationsLoop
+    loop = OperationsLoop(tick_sec=0, visible_sec=0)
+    st = loop.set_running(False)
+    assert st["owner_setting"] == "paused" and st["running"] is False
+    assert OperationsLoop(tick_sec=0).enabled_by_owner is False
+    loop._stop.set()
+    assert loop.start_if_enabled() is False     # env SAATHI_ORG_OPERATIONS=0 also blocks
+
+
+def test_duty_state_drives_role_status(ops_env):
+    from saathi.organization.state import role_states, DUTY_RECENT_SEC
+    from saathi.organization.store import default_store
+    st = default_store()
+    st.duty_start("eng.debugging", "Scan backend error log")
+    with st._conn() as c:
+        c.execute("UPDATE org_duty SET status='ANALYZING' WHERE role_id='eng.debugging'")
+    assert role_states()[0]["eng.debugging"]["status"] == "ANALYZING"
+    st.duty_finish("eng.debugging", status="COMPLETE", reason="", output={"summary": "ok"},
+                   next_due_at=time.time() + 600)
+    assert role_states()[0]["eng.debugging"]["status"] == "COMPLETE"
+    later = time.time() + DUTY_RECENT_SEC + 5
+    s = role_states(later)[0]["eng.debugging"]
+    assert s["status"] == "IDLE" and s["activity"]["source"] == "duty"
+    st.duty_start("pm.correlation", "Correlation")
+    st.duty_finish("pm.correlation", status="AWAITING_EVIDENCE", reason="No return series",
+                   output={}, next_due_at=time.time() + 600)
+    s = role_states(later)[0]["pm.correlation"]
+    assert s["status"] == "AWAITING_EVIDENCE" and s["reason"] == "No return series"
+
+
+def test_interrupted_duty_is_not_left_working(ops_env):
+    from saathi.organization.store import default_store
+    st = default_store()
+    st.duty_start("eng.cto", "Engineering digest")
+    assert st.reset_running_duties() == 1
+    assert st.duties()["eng.cto"]["status"] == "IDLE"
+
+
+def test_api_operations_requires_auth_and_toggles(api, ops_env):
+    client, h = api
+    assert client.get("/api/v1/organization/operations").status_code == 401
+    assert client.post("/api/v1/organization/operations", json={"running": False}).status_code == 401
+    r = client.post("/api/v1/organization/operations", headers=h, json={"running": False})
+    assert r.status_code == 200 and r.json()["owner_setting"] == "paused"
+    snap = client.get("/api/v1/organization/company", headers=h).json()
+    assert snap["operations"]["running"] is False and snap["operations"]["llm_used"] is False

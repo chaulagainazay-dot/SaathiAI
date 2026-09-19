@@ -37,6 +37,11 @@ CREATE TABLE IF NOT EXISTS org_event(
 CREATE INDEX IF NOT EXISTS idx_org_step_mission ON org_step(mission_id, seq);
 CREATE INDEX IF NOT EXISTS idx_org_step_role ON org_step(role_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_org_event_time ON org_event(created_at);
+CREATE TABLE IF NOT EXISTS org_duty(
+  role_id TEXT PRIMARY KEY, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'IDLE',
+  reason TEXT DEFAULT '', output TEXT DEFAULT '{}', runs INTEGER DEFAULT 0,
+  started_at REAL DEFAULT 0, finished_at REAL DEFAULT 0, next_due_at REAL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS org_setting(key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
 MISSION_TERMINAL = frozenset({"COMPLETE", "COMPLETE_WITH_GAPS", "BLOCKED", "FAILED", "CANCELLED"})
@@ -199,6 +204,48 @@ class OrgStore:
         with self._conn() as c:
             rows = c.execute(q, args).fetchall()
         return [{**dict(r), "detail": json.loads(r["detail"] or "{}")} for r in rows]
+
+
+    # ── standing duties ───────────────────────────────────────────────────
+    def duty_start(self, role_id: str, title: str) -> None:
+        now = _now()
+        with self._conn() as c:
+            c.execute("INSERT INTO org_duty(role_id,title,status,started_at,finished_at) VALUES(?,?,?,?,0) "
+                      "ON CONFLICT(role_id) DO UPDATE SET title=excluded.title, status=excluded.status, "
+                      "started_at=excluded.started_at, finished_at=0", (role_id, title, "WORKING", now))
+
+    def duty_finish(self, role_id: str, *, status: str, reason: str, output: dict,
+                    next_due_at: float) -> None:
+        with self._conn() as c:
+            c.execute("UPDATE org_duty SET status=?, reason=?, output=?, finished_at=?, next_due_at=?, "
+                      "runs=runs+1 WHERE role_id=?",
+                      (status, reason, json.dumps(output, default=str), _now(), next_due_at, role_id))
+
+    def duties(self) -> dict[str, dict]:
+        with self._conn() as c:
+            rows = c.execute("SELECT * FROM org_duty").fetchall()
+        return {r["role_id"]: {**dict(r), "output": json.loads(r["output"] or "{}")} for r in rows}
+
+    def reset_running_duties(self) -> int:
+        """A crash mid-duty must not leave a role 'working' forever."""
+        with self._conn() as c:
+            cur = c.execute("UPDATE org_duty SET status='IDLE', reason='Interrupted by restart', "
+                            "finished_at=? WHERE finished_at=0 AND started_at>0", (_now(),))
+            return cur.rowcount
+
+    def get_setting(self, key: str, default: str | None = None) -> str | None:
+        with self._conn() as c:
+            row = c.execute("SELECT value FROM org_setting WHERE key=?", (key,)).fetchone()
+        return row[0] if row else default
+
+    def set_setting(self, key: str, value: str) -> None:
+        with self._conn() as c:
+            c.execute("INSERT INTO org_setting(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET "
+                      "value=excluded.value", (key, value))
+
+    def prune_events(self, keep_sec: float = 3 * 86400) -> None:
+        with self._conn() as c:
+            c.execute("DELETE FROM org_event WHERE created_at < ? AND mission_id=''", (_now() - keep_sec,))
 
 
 def _mission(row) -> dict:

@@ -227,10 +227,12 @@ def governed_research(ctx: dict) -> dict:
     newest = max(float(r.get("timestamp") or 0) for r in rows)
     facts, hosts, tiers = [], set(), {}
     for r in rows:
-        try:
-            m = json.loads(r.get("metrics") or "{}")
-        except Exception:
-            m = {}
+        m = r.get("metrics") or {}
+        if isinstance(m, str):          # store returns parsed dicts; tolerate raw JSON too
+            try:
+                m = json.loads(m)
+            except Exception:
+                m = {}
         if m.get("statement"):
             facts.append(m["statement"])
             hosts.add(m.get("source_host", "?"))
@@ -392,7 +394,7 @@ def saathi_report(ctx: dict) -> dict:
 
 def system_health(ctx: dict) -> dict:
     from saathi.organization.system_status import system_status
-    rows = system_status(force=True)["systems"]
+    rows = system_status()["systems"]          # 30 s cache — probes are shared
     bad = [r for r in rows if r["status"] not in ("OK",)]
     return _result("complete", f"{len(rows) - len(bad)}/{len(rows)} systems OK",
                    findings=[f"{r['name']}: {r['status']} — {r['detail']}" for r in rows],

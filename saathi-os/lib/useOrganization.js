@@ -34,6 +34,9 @@ export const orgApi = {
   missions: () => getJson(`${BASE}/missions?limit=10`),
   templates: () => getJson(`${BASE}/templates`),
   evidence: (id) => getJson(`${BASE}/evidence/${encodeURIComponent(id)}`),
+  setOperations: (running) => getJson(`${BASE}/operations`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ running }),
+  }),
   startMission: (body) => getJson(`${BASE}/missions`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   }),

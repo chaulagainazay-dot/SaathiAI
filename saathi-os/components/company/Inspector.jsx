@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { orgApi } from "@/lib/useOrganization";
-import { flattenTree, formatAgo, formatElapsed, statusLabel, statusMeta } from "@/lib/organization";
+import { flattenTree, formatAgo, formatElapsed, formatIn, statusLabel, statusMeta } from "@/lib/organization";
 
 function StatusPill({ status, label }) {
   const m = statusMeta(status);
@@ -86,6 +86,22 @@ function AgentPanel({ data, onOpen, nameOf }) {
         <Field label="Escalates to">{r.escalates_to ? nameOf.role(r.escalates_to) : null}</Field>
         <Field label="Token cost">{data.resource_usage?.llm_tokens ?? "Not applicable — no model calls"}</Field>
       </dl>
+
+      {act?.source === "duty" ? (
+        <section className="co-section co-duty">
+          <h3>Standing duty · {act.objective}</h3>
+          <p className="co-muted co-small">
+            {act.finished_at ? `Last run ${formatAgo(act.finished_at)}` : "Running now"}
+            {act.next_due_at ? ` · next ${formatIn(act.next_due_at)}` : ""}
+            {act.runs ? ` · ${act.runs} run(s)` : ""} · deterministic read-only check
+          </p>
+          {act.summary ? <p>{act.summary}</p> : null}
+          <List items={act.findings} empty="No findings" />
+          {act.gaps?.length ? (<><h4>Needs / gaps</h4><List items={act.gaps} /></>) : null}
+          <h4>Evidence</h4>
+          <EvidenceList items={act.evidence} onOpen={onOpen} />
+        </section>
+      ) : null}
 
       {step?.output?.summary ? (
         <section className="co-section">

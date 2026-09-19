@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   STATUS_META, statusMeta, statusLabel, motionFor, agentAriaLabel, indexCompany, officeSummary,
   headerMetrics, activeRoles, flattenTree, activePath, treeRoleIds, formatAgo, isRelevantEvent,
-  systemTone, refreshInterval,
+  systemTone, refreshInterval, activityText, operationsLine, formatIn,
 } from "./organization.js";
 
 const BACKEND_STATUSES = ["OFFLINE", "UNAVAILABLE", "UNKNOWN", "IDLE", "ASSIGNED", "RESEARCHING",
@@ -111,4 +111,17 @@ test("refresh interval is lazy when idle and never polls hidden tabs", () => {
   assert.equal(refreshInterval({ visible: false, missionActive: true, liveConnected: false }), null);
   assert.equal(refreshInterval({ visible: true, missionActive: false, liveConnected: true }), 60000);
   assert.equal(refreshInterval({ visible: true, missionActive: true, liveConnected: false }), 2000);
+});
+
+test("duty activity and operations line are truthful", () => {
+  assert.equal(activityText({ name: "duty.completed", role_name: "Risk", status: "AWAITING_EVIDENCE" }),
+    "Risk — finished duty · awaiting data");
+  assert.equal(operationsLine(null).state, "unknown");
+  assert.equal(operationsLine({ running: false, owner_setting: "paused" }).state, "paused");
+  const run = operationsLine({ running: true, duties_runnable: 97, duties_total: 103, completed_since_start: 4,
+    current: { title: "Scan backend error log" } });
+  assert.equal(run.state, "running");
+  assert.match(run.text, /97 of 103/);
+  assert.match(run.text, /Scan backend error log/);
+  assert.equal(formatIn(130, 100), "in 30s");
 });

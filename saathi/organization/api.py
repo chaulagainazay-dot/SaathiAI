@@ -153,6 +153,32 @@ def office_detail(office_id: str):
             "resource_usage": {"llm_inference": "none (deterministic probes)"}}
 
 
+class OperationsToggle(BaseModel):
+    running: bool
+
+
+@router.get("/operations")
+def operations_status():
+    from saathi.organization.operations import OperationsLoop
+    return OperationsLoop.instance().status()
+
+
+@router.post("/operations")
+def operations_toggle(req: OperationsToggle):
+    """Owner control: run or pause the company's standing duties."""
+    from saathi.organization.operations import OperationsLoop
+    return OperationsLoop.instance().set_running(req.running)
+
+
+@router.on_event("startup")
+def _start_operations() -> None:
+    try:
+        from saathi.organization.operations import OperationsLoop
+        OperationsLoop.instance().start_if_enabled()
+    except Exception as exc:  # never block server startup
+        print(f"[saathi] organization operations not started: {exc}")
+
+
 class StartMission(BaseModel):
     objective: str = Field(default="", max_length=500)
     template_id: str = Field(default="", max_length=64)
