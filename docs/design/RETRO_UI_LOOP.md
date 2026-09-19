@@ -16,8 +16,9 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
 2. **[DONE] Global shared-panel elevation** — red-tinted border + subtle red glow on all
    `.glass`/`.surface`/`.surface-raised`/`.surface-overlay` (border/shadow only, no layout
    change). Covers every page built on the shared Panel/Card primitives.
-2b. **[TODO] Command Center showcase** — the bespoke `/command` page uses its own
-   `command-hybrid.css` (dl-* classes), so retint those + add corner brackets there.
+2b. **[DONE] Command Center showcase** — remapped the bespoke `command-hybrid.css`
+   `.dl-*` palette (was blue-navy) to the retro CRT palette + mono font; ok/warn/crit
+   kept functional green/amber/red.
 3. **[DONE] Global status bar live pulse** — pulsing dot on "Local platform online"
    (every page). (Top-bar pulse optional, folded into showcases.)
 4. **[TODO] Financial Browser showcase** — retro-panel framing + the live auto-scrolling

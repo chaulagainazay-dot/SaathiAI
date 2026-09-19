@@ -7,20 +7,22 @@
 /* UI-NEXT-3 production hybrid — shell remains visible for accessibility */
 
 .dl-root {
-  --dl-bg: #0e1116;
-  --dl-s1: #151a21;
-  --dl-s2: #1b222c;
-  --dl-raised: #232b36;
-  --dl-text: #f2f5fa;
-  --dl-sec: #d0dae8;
-  --dl-muted: #b8c4d6;
-  --dl-border: #3a4556;
-  --dl-active: #4a90d9;
-  --dl-accent: #5b9fd4;
-  --dl-ok: #3d9b6e;
-  --dl-warn: #c9a227;
-  --dl-crit: #c45c5c;
-  --dl-think: #8b7ec8;
+  /* retro CRT palette (was blue-navy) — bg/surfaces near-black, accent blood-red,
+     functional ok/warn/crit kept green/amber/red */
+  --dl-bg: #08060a;
+  --dl-s1: #0f0b10;
+  --dl-s2: #140e15;
+  --dl-raised: #1a1016;
+  --dl-text: #f2e8ea;
+  --dl-sec: #cdbcc0;
+  --dl-muted: #8f8288;
+  --dl-border: rgba(255,64,64,.22);
+  --dl-active: #ff2a2a;
+  --dl-accent: #ff5757;
+  --dl-ok: #2ee27a;
+  --dl-warn: #ffab3d;
+  --dl-crit: #ff4d4d;
+  --dl-think: #c58bff;
   --dl-radius: 10px;
   --dl-gap: 10px;
 
@@ -28,7 +30,7 @@
   color: var(--dl-text);
   min-height: 100vh;
   padding: 12px 14px 28px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-mono, ui-monospace, "Geist Mono", monospace);
 }
 
 .dl-root * {
