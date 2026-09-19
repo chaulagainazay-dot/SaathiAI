@@ -1736,7 +1736,9 @@ async def events_stream(demo: int = 0):
     return StreamingResponse(
         sse_stream(demo=bool(demo)),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive",
+        # no-transform: the :3100 Next rewrite proxy otherwise gzip-compresses
+        # (and so buffers) this stream — browsers received nothing live.
+        headers={"Cache-Control": "no-cache, no-transform", "Connection": "keep-alive",
                  "X-Accel-Buffering": "no"})
 
 try:
@@ -1833,6 +1835,14 @@ try:
     app.include_router(platform_m50_router)
 except Exception as _e:
     print(f"[saathi] platform-m50 router unavailable: {_e}")
+
+# AI Company — visual organization layer over existing runtimes (authenticated,
+# read-mostly; missions run deterministic read-only probes, no execution authority).
+try:
+    from .organization.api import router as organization_router
+    app.include_router(organization_router)
+except Exception as _e:
+    print(f"[saathi] organization router unavailable: {_e}")
 
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
