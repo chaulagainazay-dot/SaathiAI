@@ -953,6 +953,8 @@ html, body {
   margin-bottom: var(--space-5);
 }
 .home-metric {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -963,15 +965,29 @@ html, body {
   text-decoration: none;
   color: inherit;
   min-height: 72px;
-  transition: background var(--motion-fast);
+  transition: background var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
 }
-.home-metric:hover { background: var(--surface-hover); }
+/* red top-accent hairline (retro framed feel) */
+.home-metric::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.45;
+}
+.home-metric:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(255,42,42,.22), 0 0 26px rgba(255,42,42,.10) inset;
+}
 .home-metric-value {
   font-family: var(--font-display);
   font-size: var(--fs-xl);
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 14px rgba(255,42,42,.16);
 }
+@media (prefers-reduced-motion: reduce) { .home-metric:hover { transform: none; } }
 .home-metric-unavail { opacity: 0.92; }
 .home-grid {
   display: grid;

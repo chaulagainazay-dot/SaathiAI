@@ -29,7 +29,9 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
    (`nepse.css`): retinted neutrals to retro black/red, green tab underline → red, serif
    headings → mono; kept `--accent` green (up) + `--down` red for data. (design-lab.css
    blue local palette is a dev surface — minor, deferred.)
-6. **[TODO] Home dashboard motion** — animated metric tiles + sparklines on `/`.
+6. **[DONE] Home dashboard motion** — metric tiles count-up on real values (reuse
+   `Counter`, no fabricated series/sparkline), red top-accent hairline + hover glow/lift +
+   value glow; reduced-motion aware.
 7. **[TODO] Font pass** — selective mono for headings/labels that still fall back to serif/
    sans; verify dense-table density before any global body flip.
 
