@@ -25,8 +25,10 @@ artifact `F1TpBqdoTwCdjgytQGcrc2`.
    real NEPSE index marquee + auto-scrolling per-symbol tape from NEPSE live + Financial
    Memory MARKET_OBSERVATION rows; honest `○ NO FEED / MARKET CLOSED` state (no fabricated
    trades); observation-only, no trading controls. On /finance/browser above Providers.
-5. **[TODO] Accent cleanup** — retint stray green/blue (tab underlines, links) to the red
-   family where not carrying semantic meaning; keep green-up/red-down data.
+5. **[DONE] Accent cleanup** — NEPSE page had its own green-forest/cream palette
+   (`nepse.css`): retinted neutrals to retro black/red, green tab underline → red, serif
+   headings → mono; kept `--accent` green (up) + `--down` red for data. (design-lab.css
+   blue local palette is a dev surface — minor, deferred.)
 6. **[TODO] Home dashboard motion** — animated metric tiles + sparklines on `/`.
 7. **[TODO] Font pass** — selective mono for headings/labels that still fall back to serif/
    sans; verify dense-table density before any global body flip.

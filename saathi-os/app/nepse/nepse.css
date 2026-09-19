@@ -4,48 +4,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 .nepse-root{
-  --bg:#f7f5f0;
-  --surface:#ffffff;
-  --surface-2:#eef0ea;
-  --border:#dcdfd5;
-  --text:#16201b;
-  --text-dim:#55645b;
-  --text-faint:#8a988f;
-  --accent:#1f8a53;
-  --accent-soft:#e4f2e9;
-  --down:#b83f34;
-  --down-soft:#fbeae7;
-  --gold:#9a6d1f;
-  --gold-soft:#f6ecd6;
-  --shadow: 0 1px 2px rgba(22,32,27,0.04), 0 8px 24px -12px rgba(22,32,27,0.12);
+  /* retro CRT (was green-forest/cream): neutrals near-black + red; up=green, down=red kept */
+  --bg:#08060a;
+  --surface:#0f0b10;
+  --surface-2:#140e15;
+  --border:rgba(255,64,64,.18);
+  --text:#f2e8ea;
+  --text-dim:#b7a8ad;
+  --text-faint:#8f8288;
+  --accent:#2ee27a;               /* semantic UP / positive (data) — kept green */
+  --accent-soft:#0f2018;
+  --down:#ff4d4d;                 /* semantic DOWN / negative (data) — red */
+  --down-soft:#2c1414;
+  --gold:#ffab3d;
+  --gold-soft:#2a1e10;
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
 
   background:var(--bg);
   color:var(--text);
-  font-family:'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-  font-size:15px;
+  font-family:var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size:14px;
   line-height:1.55;
   min-height:100vh;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]) .nepse-root:not([data-theme="light"]){
-    --bg:#0b0f0d; --surface:#121a16; --surface-2:#182019; --border:#25332b;
-    --text:#e9efe9; --text-dim:#a3b3a8; --text-faint:#6d7d73;
-    --accent:#3fdc8a; --accent-soft:#152a1e; --down:#ec6a5c; --down-soft:#2c1917;
-    --gold:#e0b256; --gold-soft:#2a2214;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+    --bg:#08060a; --surface:#0f0b10; --surface-2:#140e15; --border:rgba(255,64,64,.18);
+    --text:#f2e8ea; --text-dim:#b7a8ad; --text-faint:#8f8288;
+    --accent:#2ee27a; --accent-soft:#0f2018; --down:#ff4d4d; --down-soft:#2c1414;
+    --gold:#ffab3d; --gold-soft:#2a1e10;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
   }
 }
 [data-theme="dark"] .nepse-root, .nepse-root[data-theme="dark"]{
-  --bg:#0b0f0d; --surface:#121a16; --surface-2:#182019; --border:#25332b;
-  --text:#e9efe9; --text-dim:#a3b3a8; --text-faint:#6d7d73;
-  --accent:#3fdc8a; --accent-soft:#152a1e; --down:#ec6a5c; --down-soft:#2c1917;
-  --gold:#e0b256; --gold-soft:#2a2214;
-  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+  --bg:#08060a; --surface:#0f0b10; --surface-2:#140e15; --border:rgba(255,64,64,.18);
+  --text:#f2e8ea; --text-dim:#b7a8ad; --text-faint:#8f8288;
+  --accent:#2ee27a; --accent-soft:#0f2018; --down:#ff4d4d; --down-soft:#2c1414;
+  --gold:#ffab3d; --gold-soft:#2a1e10;
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
 }
 
 .nepse-root *{ box-sizing:border-box; }
 .nepse-root h1,.nepse-root h2,.nepse-root h3{
-  font-family:'Fraunces', Georgia, serif; font-weight:600; margin:0; color:var(--text); text-wrap:balance;
+  font-family:var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace); font-weight:700;
+  letter-spacing:.02em; margin:0; color:var(--text); text-wrap:balance;
 }
 .nepse-root .num, .nepse-root .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums; }
 .nepse-root a{ color:var(--accent); text-decoration:none; }
@@ -71,7 +73,8 @@
 .nepse-tabs{ display:flex; gap:0.25rem; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0.75rem 0 1.5rem; }
 .nepse-tab{ padding:0.5rem 0.85rem; font-size:0.9rem; color:var(--text-dim); border-bottom:2px solid transparent; border-radius:6px 6px 0 0; }
 .nepse-tab:hover{ background:var(--surface-2); color:var(--text); }
-.nepse-tab.active{ color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.nepse-tab.active{ color:#ff5757; border-bottom-color:#ff2a2a; font-weight:600;
+  text-shadow:0 0 10px rgba(255,42,42,.35); }
 
 /* headers */
 .nepse-head{ padding:1.75rem 0 0.5rem; }
