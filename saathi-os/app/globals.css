@@ -1898,3 +1898,72 @@ html, body {
 }
 .cmd-transcript-partial { font-style: italic; opacity: 0.9; }
 .cmd-transcript-final { font-weight: 500; }
+
+/* ============================================================================
+   RETRO CRT THEME — global override (black + blood-red terminal, animated)
+   Appended LAST so these token VALUES win for the whole app; components keep
+   referencing the same semantic tokens, so the retheme is app-wide + revertible
+   (delete this block to restore the navy theme). Single committed look: dark and
+   light both resolve to the retro terminal palette.
+   ========================================================================= */
+:root, :root[data-theme="light"], :root[data-theme="dark"] {
+  color-scheme: dark;
+  /* ground + surfaces (near-black, faint red bias) */
+  --background:#08060a; --foreground:#f2e8ea;
+  --surface:#0f0b10; --surface-raised:#140e15; --surface-overlay:#120c13;
+  --surface-subtle:#0c090d; --surface-sunken:#070508;
+  --surface-interactive:rgba(255,64,64,.05); --surface-hover:rgba(255,64,64,.09);
+  --surface-active:rgba(255,64,64,.13); --surface-disabled:rgba(255,255,255,.02);
+  --surface-glass:rgba(255,42,42,.05);
+  /* borders (red-dim) */
+  --border:rgba(255,64,64,.20); --border-strong:rgba(255,64,64,.38); --border-subtle:rgba(255,64,64,.10);
+  --color-line:rgba(255,64,64,.12);
+  /* text (red-biased whites/greys) */
+  --text-primary:#f2e8ea; --text-secondary:#cdbcc0; --text-muted:#8f8288; --text-disabled:#5b5158;
+  /* accent = blood red */
+  --accent:#ff2a2a; --accent-foreground:#0a0406; --accent-hover:#ff5757; --focus-ring:#ff6a6a;
+  /* status — functional hues kept (green up / red down), tuned to the red family */
+  --status-success:#2ee27a; --status-danger:#ff4d4d; --status-blocked:#ff4d4d;
+  --status-warning:#ffab3d; --status-pending:#ffab3d; --status-info:#ff6a3d;
+  --status-neutral:#8f8288; --status-paused:#8f8288;
+  /* authority + risk retinted to the family */
+  --authority-advisory:#8f8288; --authority-approval-required:#ffab3d;
+  --authority-limited-autonomous:#ff6a3d; --authority-denied:#ff4d4d;
+  --authority-inactive:#6a5f64; --authority-not-exercised:#6a5f64;
+  --risk-low:#2ee27a; --risk-guarded:#35e0d0; --risk-elevated:#ffab3d;
+  --risk-high:#ff6a3d; --risk-critical:#ff4d4d; --risk-unknown:#8f8288;
+  /* remap primitives so any direct users (var(--color-ink-*) / navy / saathi) go retro too */
+  --color-saathi-400:#ff5757; --color-saathi-500:#ff2a2a; --color-saathi-600:#d61f1f;
+  --color-navy-950:#050307; --color-navy-900:#08060a; --color-navy-850:#0b080d;
+  --color-navy-800:#0c090d; --color-navy-700:#140e15; --color-navy-600:#241016; --color-navy-500:#3a1a20;
+  --color-ink:#050307; --color-bg:#08060a; --color-panel:rgba(255,42,42,.05);
+  --color-ink-050:#fff7f8; --color-ink-100:#f2e8ea; --color-ink-200:#dccfd3; --color-ink-300:#b7a8ad;
+  --color-ink-400:#8f8288; --color-ink-500:#6a5f64; --color-ink-600:#4e454a; --color-ink-700:#372f33;
+  --color-red-400:#ff8a8a; --color-red-500:#ff4d4d; --color-red-600:#e02e2e;
+  --color-green-400:#5fe39a; --color-green-500:#2ee27a; --color-green-600:#22b863;
+  --color-blue-400:#ff8a6a; --color-blue-500:#ff6a3d; --color-blue-600:#e5501f;
+  /* headers → terminal mono (body font kept as-is to protect existing layouts) */
+  --font-display: var(--font-mono, "Geist Mono", ui-monospace, monospace);
+  --elev-2:0 6px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,42,42,.06);
+  --elev-3:0 20px 60px rgba(0,0,0,.6);
+}
+/* ambient wash → red/black CRT (overrides both dark base + light .aurora) */
+.aurora,
+:root[data-theme="light"] .aurora {
+  background:
+    radial-gradient(1100px 820px at 50% -8%, rgba(255,42,42,.13), transparent 60%),
+    radial-gradient(820px 640px at 86% 10%, rgba(120,12,16,.20), transparent 60%),
+    linear-gradient(180deg,#0a0509 0%, #08060a 55%, #050406 100%) !important;
+}
+:root[data-theme="light"] .stars,
+.stars { opacity:.5; }
+/* glass panes take the red edge */
+.glass, .glass-soft { border-color:rgba(255,64,64,.16) !important; }
+/* CRT scanlines + flicker — the "moving" foundation for further work */
+body::after{
+  content:""; position:fixed; inset:0; z-index:9998; pointer-events:none;
+  background:repeating-linear-gradient(to bottom, rgba(255,255,255,.028) 0 1px, transparent 1px 3px);
+  mix-blend-mode:overlay; opacity:.5; animation:crtFlicker 7s steps(1) infinite;
+}
+@keyframes crtFlicker{0%,95%,100%{opacity:.5}96%{opacity:.34}97%{opacity:.6}98%{opacity:.42}99%{opacity:.56}}
+@media (prefers-reduced-motion:reduce){ body::after{ animation:none } }
