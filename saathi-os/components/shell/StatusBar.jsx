@@ -35,7 +35,9 @@ export default function StatusBar({ approvalState }) {
         broker connectivity, market access or execution readiness — none of which
         exist. It now says exactly what is true: the local platform is reachable.
       */}
-      <div className="shell-statusbar-seg" data-testid="local-platform-status">
+      <div className="shell-statusbar-seg" data-testid="local-platform-status"
+           style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        {live.connected && <span className="retro-live ok" aria-hidden="true" />}
         <StatusBadge
           status={live.connected ? "success" : "warning"}
           label={live.connected ? "Local platform online" : "Local platform offline"}
