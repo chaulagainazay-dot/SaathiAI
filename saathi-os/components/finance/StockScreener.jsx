@@ -4,10 +4,9 @@
  * Client-side, instant, observation-only. Not advice.
  */
 import { useMemo, useState } from "react";
-import { STOCKS } from "@/lib/nepse/data";
+import { useNepseUniverse } from "@/lib/useNepseUniverse";
 import { Button, Badge, Text } from "@/components/ui";
 
-const SECTORS = ["All", ...Array.from(new Set(STOCKS.map((s) => s.sector))).sort()];
 const COLS = [
   ["symbol", "Symbol"], ["ltp", "LTP"], ["chg", "%Chg"], ["pe", "P/E"], ["pb", "P/B"],
   ["eps", "EPS"], ["rsi", "RSI"], ["marketCap", "Mkt Cap (Cr)"], ["sector", "Sector"],
@@ -17,6 +16,9 @@ const num = (v) => (Number.isFinite(v) ? v : null);
 const cr = (v) => (v == null ? "—" : (v / 1e7).toLocaleString("en-IN", { maximumFractionDigits: 0 }));
 
 export default function StockScreener() {
+  const uni = useNepseUniverse();
+  const universe = uni.rows;
+  const SECTORS = useMemo(() => ["All", ...Array.from(new Set(universe.map((s) => s.sector).filter((x) => x && x !== "—"))).sort()], [universe]);
   const [sector, setSector] = useState("All");
   const [f, setF] = useState({ priceMin: "", priceMax: "", peMax: "", pbMax: "", epsMin: "", rsiMin: "", rsiMax: "", mcapMin: "" });
   const [sortKey, setSortKey] = useState("marketCap");
@@ -29,7 +31,7 @@ export default function StockScreener() {
     const g = (v) => (v === "" ? null : parseFloat(v));
     const pMin = g(f.priceMin), pMax = g(f.priceMax), peMax = g(f.peMax), pbMax = g(f.pbMax);
     const epsMin = g(f.epsMin), rMin = g(f.rsiMin), rMax = g(f.rsiMax), mMin = g(f.mcapMin);
-    let out = STOCKS.map((s) => ({ ...s, chg: s.prevClose ? ((s.ltp - s.prevClose) / s.prevClose) * 100 : null }));
+    let out = universe.map((s) => ({ ...s, chg: s.percentChange ?? (s.prevClose ? ((s.ltp - s.prevClose) / s.prevClose) * 100 : null) }));
     out = out.filter((s) => {
       if (sector !== "All" && s.sector !== sector) return false;
       if (pMin != null && !(s.ltp >= pMin)) return false;
@@ -44,7 +46,7 @@ export default function StockScreener() {
     });
     out.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * sortDir; });
     return out;
-  }, [f, sector, sortKey, sortDir]);
+  }, [f, sector, sortKey, sortDir, universe]);
 
   const inp = { fontFamily: "inherit", fontSize: 12, padding: "6px 8px", borderRadius: 6, width: 74, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.22)", outline: "none" };
 
@@ -64,7 +66,8 @@ export default function StockScreener() {
         <input style={inp} placeholder="MCap≥Cr" value={f.mcapMin} onChange={(e) => set("mcapMin", e.target.value)} />
         <Button size="sm" variant="ghost" onClick={clear}>Clear</Button>
         <div style={{ flexGrow: 1 }} />
-        <Badge variant="soft" label={`${rows.length} / ${STOCKS.length} match`} />
+        <Badge variant="soft" color={uni.live ? "#2ee27a" : "var(--status-neutral)"} label={uni.live ? `LIVE · ${uni.count}` : uni.loading ? "loading…" : "reference"} />
+        <Badge variant="soft" label={`${rows.length} / ${universe.length} match`} />
       </div>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -90,7 +93,7 @@ export default function StockScreener() {
         </table>
       </div>
       <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>
-        Reference universe ({STOCKS.length} symbols) · fundamentals from the NEPSE reference set · research only, not advice.
+        {uni.live ? `Live full market · ${uni.source}` : "Reference universe"} · fundamentals (P/E, P/B, EPS, sector) shown where known · research only, not advice.
       </Text>
     </div>
   );

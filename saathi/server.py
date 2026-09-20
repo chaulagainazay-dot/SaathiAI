@@ -6173,6 +6173,34 @@ def market_trade_desk(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/free/nepse")
+def market_free_nepse(force: int = 0):
+    """Full NEPSE market from a free public web source (no API key). Observation-only."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_market(force=bool(force))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/movers")
+def market_free_movers(top: int = 5):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.movers(top=min(int(top), 15))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/quote")
+def market_free_quote(symbol: str):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_quote(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
