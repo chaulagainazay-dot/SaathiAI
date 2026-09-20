@@ -20,6 +20,10 @@ import FinancialBrowserPanel from "@/components/finance/FinancialBrowserPanel";
 import { Candles } from "@/components/finance/ChartAnalysis";
 import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 import TradeDesk from "@/components/finance/TradeDesk";
+import StockScreener from "@/components/finance/StockScreener";
+import BrokerDesk from "@/components/finance/BrokerDesk";
+import CompanyCard from "@/components/finance/CompanyCard";
+import PriceAlerts from "@/components/finance/PriceAlerts";
 
 const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
@@ -683,6 +687,30 @@ export default function CommandDeckPage() {
               <TradingSignals />
             </Panel>
           </section>
+
+          {/* Company fundamentals + Price alerts */}
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 16 }}>
+            <Panel style={{ padding: 0 }}>
+              <PanelHead title="Company Fundamentals" right={<Text tone="disabled" size="xs">reference set</Text>} />
+              <CompanyCard />
+            </Panel>
+            <Panel style={{ padding: 0 }}>
+              <PanelHead title="Stock Price Alerts" right={<Text tone="disabled" size="xs">this device</Text>} />
+              <PriceAlerts />
+            </Panel>
+          </section>
+
+          {/* Stock Screener */}
+          <Panel style={{ padding: 0, marginTop: 16 }}>
+            <PanelHead title="Stock Screener" right={<Text tone="disabled" size="xs">fundamental + technical filters</Text>} expandHref="/command-deck/screener" />
+            <StockScreener />
+          </Panel>
+
+          {/* Broker Accumulation / Distribution */}
+          <Panel style={{ padding: 0, marginTop: 16 }}>
+            <PanelHead title="Broker Accumulation / Distribution" right={<Text tone="disabled" size="xs">floorsheet</Text>} expandHref="/command-deck/brokers" />
+            <BrokerDesk />
+          </Panel>
 
           {/* Paper Trading Agent (simulation) */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
