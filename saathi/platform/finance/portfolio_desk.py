@@ -82,16 +82,88 @@ def _record_nav(nav: float):
         _db().commit()
 
 
-def _max_drawdown(navs: list[float]) -> float | None:
-    if len(navs) < 2:
+def _engine_risk(positions: list[dict], total_val: float, nav_rows: list) -> dict:
+    """Real risk view via portfolio_risk_engine (concentration/exposure + drawdown)."""
+    from decimal import Decimal
+    try:
+        from saathi.platform.portfolio_risk_engine.metrics import portfolio_metrics
+        from saathi.platform.portfolio_risk_engine.drawdown import compute_drawdown
+        state = {
+            "nav": str(total_val), "cash": "0", "positions_value": str(total_val),
+            "positions": [{"symbol": p["symbol"], "security_id": p["symbol"],
+                           "market_value": str(p["value"] or 0), "quantity": str(p["qty"] or 0),
+                           "weight": str((p["weight"] or 0) / 100)} for p in positions if p.get("value")],
+        }
+        m = portfolio_metrics(state)
+        dd = compute_drawdown([(r["ts"], Decimal(str(r["nav"]))) for r in nav_rows]) if len(nav_rows) >= 2 else {}
+        def f(v):
+            try:
+                return round(float(v), 2)
+            except (TypeError, ValueError):
+                return None
+        return {
+            "largest_position_pct": f(_pctval(m.get("largest_position_pct"))),
+            "top3_pct": f(_pctval(m.get("top3_concentration_pct") or m.get("top3_pct"))),
+            "top5_pct": f(_pctval(m.get("top5_concentration_pct") or m.get("top5_pct"))),
+            "gross_exposure_pct": f(_pctval(m.get("gross_exposure_pct"))),
+            "position_count": m.get("position_count"),
+            "current_drawdown_pct": f(_pctval(dd.get("current_drawdown"))) if dd else None,
+            "max_drawdown_pct": f(_pctval(dd.get("max_drawdown"))) if dd else None,
+            "peak_nav": f(dd.get("peak_nav")) if dd else None,
+            "engine": "portfolio_risk_engine",
+        }
+    except Exception as e:  # noqa: BLE001
+        return {"engine_error": str(e)[:120]}
+
+
+def _pctval(v):
+    """Risk engine returns weights as fractions (0..1); render as %."""
+    try:
+        f = float(v)
+        return f * 100 if abs(f) <= 1.5 else f
+    except (TypeError, ValueError):
         return None
-    peak = navs[0]
-    mdd = 0.0
-    for v in navs:
-        peak = max(peak, v)
-        if peak > 0:
-            mdd = min(mdd, (v - peak) / peak)
-    return round(mdd * 100, 2)
+
+
+def _engine_rebalance(positions: list[dict], total_val: float, method: str = "equal_weight") -> dict:
+    """Real rebalance proposal via portfolio_construction (target weights + BUY/SELL/HOLD trades)."""
+    from decimal import Decimal
+    import time as _t
+    try:
+        from saathi.platform.portfolio_construction.models import UniverseMember, UniverseStatus, MarkQuote
+        from saathi.platform.portfolio_construction.construct import equal_weight_targets, signal_proportional_targets
+        from saathi.platform.portfolio_construction.rebalance import build_trades
+        invest = [p for p in positions if p.get("value") and p.get("price")]
+        if not invest or total_val <= 0:
+            return {"available": False, "reason": "NO_PRICED_HOLDINGS"}
+        nav = Decimal(str(total_val))
+        universe = [UniverseMember(security_id=p["symbol"], symbol=p["symbol"], status=UniverseStatus.ELIGIBLE) for p in invest]
+        targets, cash_w, warns = equal_weight_targets(universe, nav=nav)
+        now = _t.time()
+        current = {p["symbol"]: {"security_id": p["symbol"], "symbol": p["symbol"],
+                                 "quantity": Decimal(str(p["qty"] or 0)),
+                                 "market_value": Decimal(str(p["value"])),
+                                 "weight": Decimal(str((p["weight"] or 0) / 100))} for p in invest}
+        marks = {p["symbol"]: MarkQuote(security_id=p["symbol"], symbol=p["symbol"],
+                                        price=Decimal(str(p["price"])), source="free", timestamp=now) for p in invest}
+        trades, tw, te = build_trades(current=current, targets=targets, cash_weight=cash_w, nav=nav, marks=marks)
+        def f(v, dp=2):
+            try:
+                return round(float(v), dp)
+            except (TypeError, ValueError):
+                return None
+        out = []
+        for t in trades:
+            out.append({"symbol": t.symbol, "action": t.action.value,
+                        "current_weight": f(float(t.current_weight) * 100),
+                        "target_weight": f(float(t.target_weight) * 100),
+                        "weight_delta": f(float(t.weight_delta) * 100),
+                        "notional_delta": f(t.notional_delta), "qty": f(t.estimated_quantity, 4)})
+        out.sort(key=lambda x: abs(x.get("weight_delta") or 0), reverse=True)
+        return {"available": True, "method": method, "cash_weight_pct": f(float(cash_w) * 100),
+                "trades": out, "warnings": list(warns) + list(tw), "engine": "portfolio_construction"}
+    except Exception as e:  # noqa: BLE001
+        return {"available": False, "reason": f"ENGINE_ERROR:{str(e)[:120]}"}
 
 
 def analysis() -> dict[str, Any]:
@@ -122,19 +194,22 @@ def analysis() -> dict[str, Any]:
     largest = max(positions, key=lambda p: p.get("weight") or 0, default=None)
     if total_val:
         _record_nav(total_val)
-    navs = [r["nav"] for r in _db().execute("SELECT nav FROM nav_history ORDER BY ts").fetchall()]
+    nav_rows = [dict(r) for r in _db().execute("SELECT ts, nav FROM nav_history ORDER BY ts").fetchall()]
 
+    risk = _engine_risk(positions, total_val, nav_rows)
+    rebalance = _engine_rebalance(positions, total_val)
     totals = {
         "value": _r(total_val), "cost": _r(total_cost), "pl": _r(total_pl),
         "pl_pct": _r(total_pl / total_cost * 100) if total_cost else None,
         "positions": len(positions),
         "concentration": largest.get("weight") if largest else None,
         "top_name": largest.get("symbol") if largest else None,
-        "max_drawdown_pct": _max_drawdown(navs), "nav_points": len(navs),
+        "max_drawdown_pct": risk.get("max_drawdown_pct"), "nav_points": len(nav_rows),
     }
     return {"available": True, "empty": False, "positions": positions, "totals": totals,
+            "risk": risk, "rebalance": rebalance,
             "recommendations": _recommend(positions, total_val),
-            "note": "Live valuation from the free market source · observation-only, not advice."}
+            "note": "Live valuation (free source) · risk + rebalance from the fund engines · observation-only, not advice."}
 
 
 def _recommend(positions: list[dict], total_val: float) -> list[dict]:

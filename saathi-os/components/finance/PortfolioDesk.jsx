@@ -69,6 +69,16 @@ export default function PortfolioDesk() {
             <Tile label="Max drawdown" value={t.max_drawdown_pct != null ? `${t.max_drawdown_pct}%` : `— (${t.nav_points || 0} pts)`} tone="down" />
           </div>
 
+          {/* Risk engine */}
+          {data.risk && !data.risk.engine_error && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+              <Badge variant="soft" label={`largest ${data.risk.largest_position_pct ?? "—"}%`} color={data.risk.largest_position_pct > 35 ? "#ffab3d" : "var(--status-neutral)"} />
+              <Badge variant="soft" label={`gross exposure ${data.risk.gross_exposure_pct ?? "—"}%`} />
+              {data.risk.current_drawdown_pct != null && <Badge variant="soft" color="#ff4d4d" label={`drawdown ${data.risk.current_drawdown_pct}%`} />}
+              <Text tone="disabled" size="xs">risk: {data.risk.engine}</Text>
+            </div>
+          )}
+
           {/* Holdings */}
           <div style={{ overflowX: "auto", marginBottom: 14 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -90,6 +100,37 @@ export default function PortfolioDesk() {
               </tbody>
             </table>
           </div>
+
+          {/* Rebalance engine */}
+          {data.rebalance?.available && (data.rebalance.trades || []).length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, letterSpacing: ".1em", color: "#8f8288", marginBottom: 6 }}>
+                REBALANCE PROPOSAL · equal-weight · cash target {data.rebalance.cash_weight_pct}% · {data.rebalance.engine}
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead><tr>{["Symbol", "Action", "Current", "Target", "Δ Weight", "≈ Qty"].map((h, i) => (
+                    <th key={h} style={{ textAlign: i < 2 ? "left" : "right", fontSize: 10, letterSpacing: ".05em", textTransform: "uppercase", color: "#8f8288", fontWeight: 600, padding: "7px 10px", borderBottom: "1px solid rgba(255,64,64,.14)" }}>{h}</th>
+                  ))}</tr></thead>
+                  <tbody>
+                    {data.rebalance.trades.map((t, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: "7px 10px", fontWeight: 600, borderBottom: "1px solid rgba(255,64,64,.06)" }}>{t.symbol}</td>
+                        <td style={{ padding: "7px 10px", borderBottom: "1px solid rgba(255,64,64,.06)", color: t.action === "BUY" ? "#2ee27a" : t.action === "SELL" ? "#ff4d4d" : "#8f8288", fontWeight: 600 }}>{t.action}</td>
+                        <td style={{ padding: "7px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#b7a8ad", borderBottom: "1px solid rgba(255,64,64,.06)" }}>{t.current_weight}%</td>
+                        <td style={{ padding: "7px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#dccfd3", borderBottom: "1px solid rgba(255,64,64,.06)" }}>{t.target_weight}%</td>
+                        <td style={{ padding: "7px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: (t.weight_delta ?? 0) >= 0 ? "#2ee27a" : "#ff4d4d", borderBottom: "1px solid rgba(255,64,64,.06)" }}>{t.weight_delta >= 0 ? "+" : ""}{t.weight_delta}%</td>
+                        <td style={{ padding: "7px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums", color: "#8f8288", borderBottom: "1px solid rgba(255,64,64,.06)" }}>{t.qty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 6 }}>
+                Target weights from the fund construction policy (per-position + cash-buffer caps){data.rebalance.warnings?.length ? ` · ${data.rebalance.warnings.join(", ")}` : ""} · proposal only, not advice.
+              </Text>
+            </div>
+          )}
 
           {/* Recommendations */}
           <div style={{ fontSize: 10, letterSpacing: ".1em", color: "#8f8288", marginBottom: 6 }}>RECOMMENDATIONS · research only, not advice</div>
