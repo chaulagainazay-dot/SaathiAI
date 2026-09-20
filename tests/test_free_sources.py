@@ -37,6 +37,24 @@ def test_parse_company_extracts_52week():
     assert d["week52_high"] == 581.0 and d["week52_low"] == 471.0
 
 
+def test_merolagani_market_fallback_parse():
+    html = ("<table><tbody>"
+            "<tr><td>1</td><td>NABIL</td><td>512.00</td><td>2.40</td><td>515.00</td><td>498.00</td><td>500.00</td><td>1,200</td><td>6,10,000</td></tr>"
+            "</tbody></table>")
+    rows = fs._parse_merolagani(html)
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["symbol"] == "NABIL" and r["ltp"] == 512.0 and r["percent_change"] == 2.4
+    assert r["prev_close"] == 500.0 and r["change"] == 12.0   # derived from ltp & %
+
+
+def test_fundamentals_grab():
+    html = "<td>P/E Ratio</td><td>19.85</td> ... EPS </span><span>28.36</span> Book Value</td><td>247.28</td>"
+    assert fs._grab(html, "P/E Ratio") == 19.85
+    assert fs._grab(html, "EPS") == 28.36
+    assert fs._grab(html, "Book Value") == 247.28
+
+
 def test_parse_skips_non_symbol_rows():
     bad = "<table><tbody><tr><td>x</td><td>not a symbol!!</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr></tbody></table>"
     assert fs._parse_sharesansar(bad) == []

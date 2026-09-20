@@ -13,21 +13,27 @@ export function useNepseUniverse() {
     let alive = true;
     (async () => {
       try {
-        const r = await afetch(`${API_BASE}/api/v1/market/free/nepse`, { cache: "no-store" });
-        const b = await r.json().catch(() => ({}));
+        const [mr, rr] = await Promise.all([
+          afetch(`${API_BASE}/api/v1/market/free/nepse`, { cache: "no-store" }),
+          afetch(`${API_BASE}/api/v1/market/free/ranges?start=1`, { cache: "no-store" }),
+        ]);
+        const b = await mr.json().catch(() => ({}));
+        const rj = await rr.json().catch(() => ({}));
+        const ranges = (rj && rj.ranges) || {};
         if (alive && b?.available && Array.isArray(b.rows) && b.rows.length) {
           const rows = b.rows.map((q) => {
             const s = getStock(q.symbol) || {};
+            const rg = ranges[q.symbol] || {};
             return {
               symbol: q.symbol, name: s.name || q.symbol, sector: s.sector || "—",
               ltp: q.ltp, prevClose: q.prev_close ?? s.prevClose,
               high: q.high, low: q.low, volume: q.volume, percentChange: q.percent_change,
-              high52: s.high52 ?? null, low52: s.low52 ?? null,
+              high52: rg.high ?? s.high52 ?? null, low52: rg.low ?? s.low52 ?? null,
               eps: s.eps ?? null, bookValue: s.bookValue ?? null, paidUp: s.paidUp ?? null,
               rsi: s.rsi ?? null, pe: s.pe ?? null, pb: s.pb ?? null, marketCap: s.marketCap ?? null,
             };
           });
-          setState({ rows, source: b.source || "free public source", live: true, loading: false, count: b.count || rows.length, stale: b.stale });
+          setState({ rows, source: b.source || "free public source", live: true, loading: false, count: b.count || rows.length, stale: b.stale, rangesFilled: Object.keys(ranges).length });
         } else if (alive) {
           setState((st) => ({ ...st, loading: false }));
         }

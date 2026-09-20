@@ -4,19 +4,21 @@
  * Support/resistance referenced from the 52-week range (labelled as such). Observation-only.
  */
 import { useMemo, useState } from "react";
-import { STOCKS } from "@/lib/nepse/data";
+import { useNepseUniverse } from "@/lib/useNepseUniverse";
 import { Text, Badge } from "@/components/ui";
 
-const SECTORS = ["All sectors", ...Array.from(new Set(STOCKS.map((s) => s.sector))).sort()];
 const band = (v) => (v == null ? "—" : `${Math.round(v * 0.98)} – ${Math.round(v)}`);
 
 export default function SRScreener() {
+  const uni = useNepseUniverse();
+  const universe = uni.rows;
+  const SECTORS = useMemo(() => ["All sectors", ...Array.from(new Set(universe.map((s) => s.sector).filter((x) => x && x !== "—"))).sort()], [universe]);
   const [mode, setMode] = useState("support");   // support | resistance
   const [sector, setSector] = useState("All sectors");
   const [q, setQ] = useState("");
 
   const rows = useMemo(() => {
-    let out = STOCKS.map((s) => ({
+    let out = universe.filter((s) => s.high52 != null && s.low52 != null).map((s) => ({
       ...s,
       nearSupport: s.low52 ? ((s.ltp - s.low52) / s.low52) * 100 : null,
       nearResistance: s.high52 ? ((s.high52 - s.ltp) / s.high52) * 100 : null,
@@ -26,7 +28,7 @@ export default function SRScreener() {
     const key = mode === "support" ? "nearSupport" : "nearResistance";
     out.sort((a, b) => { const x = a[key], y = b[key]; if (x == null) return 1; if (y == null) return -1; return x - y; });
     return out;
-  }, [mode, sector, q]);
+  }, [mode, sector, q, universe]);
 
   const inp = { fontFamily: "inherit", fontSize: 12, padding: "6px 10px", borderRadius: 8, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.22)", outline: "none" };
 
@@ -41,6 +43,7 @@ export default function SRScreener() {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
         <select style={{ ...inp, width: "auto" }} value={sector} onChange={(e) => setSector(e.target.value)}>{SECTORS.map((s) => <option key={s}>{s}</option>)}</select>
         <input style={{ ...inp, flexGrow: 1, minWidth: 120 }} placeholder="Search company…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Badge variant="soft" color={uni.rangesFilled ? "#2ee27a" : "var(--status-neutral)"} label={`${rows.length} with 52W`} />
       </div>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -65,7 +68,7 @@ export default function SRScreener() {
         </table>
       </div>
       <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>
-        Support/resistance referenced from the 52-week range · nearest first · research only, not advice.
+        Support/resistance from real 52-week highs/lows (filled in the background from the free source — coverage grows as it scans) · nearest first · research only, not advice.
       </Text>
     </div>
   );

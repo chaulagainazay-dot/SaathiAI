@@ -65,18 +65,54 @@ def _parse_sharesansar(html: str) -> list[dict]:
     return out
 
 
+_MEROLAGANI = "https://merolagani.com/StockQuote.aspx"
+
+
+def _parse_merolagani(html: str) -> list[dict]:
+    """Fallback market table (Merolagani StockQuote): #,Symbol,LTP,%Chg,High,Low,Open,Qty,Turnover."""
+    m = re.search(r"<tbody>(.*?)</tbody>", html, re.S)
+    if not m:
+        return []
+    out = []
+    for r in re.findall(r"<tr[^>]*>(.*?)</tr>", m.group(1), re.S):
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)
+        if len(cells) < 9:
+            continue
+        symbol = re.sub(r"<[^>]+>", "", cells[1]).strip().upper()
+        if not re.match(r"^[A-Z0-9/]{2,16}$", symbol):
+            continue
+        ltp, pct = _num(cells[2]), _num(cells[3])
+        prev = (ltp / (1 + pct / 100)) if (ltp is not None and pct not in (None, -100)) else None
+        chg = (ltp - prev) if (ltp is not None and prev is not None) else None
+        out.append({"symbol": symbol, "ltp": ltp, "open": _num(cells[6]), "high": _num(cells[4]),
+                    "low": _num(cells[5]), "close": ltp, "prev_close": None if prev is None else round(prev, 2),
+                    "change": None if chg is None else round(chg, 2),
+                    "percent_change": pct, "vwap": None, "volume": _num(cells[7]), "turnover": _num(cells[8])})
+    return out
+
+
 def _fetch() -> dict:
     import httpx
     try:
         r = httpx.get(_SHARESANSAR, timeout=25, headers=_UA, follow_redirects=True)
         r.raise_for_status()
         rows = _parse_sharesansar(r.text)
-        if not rows:
-            return {"available": False, "error": "PARSE_EMPTY", "source": "sharesansar"}
-        return {"available": True, "source": "ShareSansar · today-share-price (public web)",
-                "count": len(rows), "rows": rows}
+        if rows:
+            return {"available": True, "source": "ShareSansar · today-share-price (public web)",
+                    "count": len(rows), "rows": rows}
+    except Exception:
+        pass
+    # Fallback: Merolagani (partial — top ~100 by activity)
+    try:
+        r = httpx.get(_MEROLAGANI, timeout=25, headers=_UA, follow_redirects=True)
+        r.raise_for_status()
+        rows = _parse_merolagani(r.text)
+        if rows:
+            return {"available": True, "source": "Merolagani · StockQuote (fallback, partial)",
+                    "count": len(rows), "rows": rows}
     except Exception as e:  # noqa: BLE001
-        return {"available": False, "error": f"FETCH_FAILED:{str(e)[:80]}", "source": "sharesansar"}
+        return {"available": False, "error": f"ALL_SOURCES_FAILED:{str(e)[:60]}", "source": "none"}
+    return {"available": False, "error": "PARSE_EMPTY", "source": "none"}
 
 
 def nepse_market(force: bool = False) -> dict:
@@ -150,6 +186,90 @@ def nepse_company(symbol: str) -> dict:
         return data
     except Exception as e:  # noqa: BLE001
         return {"available": False, "symbol": sym, "error": f"FETCH_FAILED:{str(e)[:80]}"}
+
+
+# ── Full fundamentals (#1) — Merolagani company detail, static HTML, no API key ──
+_fund_cache: dict[str, Any] = {}
+_FUND_TTL = 6 * 3600.0
+_MEROLAGANI_DETAIL = "https://merolagani.com/CompanyDetail.aspx?symbol="
+
+
+def _grab(html: str, label: str):
+    for pat in (re.escape(label) + r"\s*</[^>]+>\s*<[^>]*>\s*([0-9][0-9,\.]*)",
+                re.escape(label) + r"[^<]{0,6}</t[dh]>\s*<td[^>]*>\s*([0-9][0-9,\.]*)"):
+        m = re.search(pat, html, re.I)
+        if m:
+            return _num(m.group(1))
+    return None
+
+
+def nepse_fundamentals(symbol: str) -> dict:
+    """Full fundamentals (EPS, P/E, P/B, book value, market cap) scraped from the public
+    company detail page. Static HTML, no API key, cached ~6h."""
+    sym = (symbol or "").strip().upper()
+    if not re.match(r"^[A-Z0-9/]{2,16}$", sym):
+        return {"available": False, "symbol": sym, "error": "BAD_SYMBOL"}
+    now = time.time()
+    hit = _fund_cache.get(sym)
+    if hit and (now - hit["at"] < _FUND_TTL):
+        return {**hit["data"], "cached": True}
+    import httpx
+    try:
+        r = httpx.get(_MEROLAGANI_DETAIL + sym, timeout=20, headers=_UA, follow_redirects=True)
+        r.raise_for_status()
+        h = r.text
+        data = {"available": True, "symbol": sym, "source": "Merolagani company detail (public web)",
+                "eps": _grab(h, "EPS"), "pe": _grab(h, "P/E Ratio"),
+                "pb": _grab(h, "PBV"), "book_value": _grab(h, "Book Value"),
+                "market_cap": _grab(h, "Market Capitalization")}
+        if not any(data[k] is not None for k in ("eps", "pe", "pb", "book_value", "market_cap")):
+            return {"available": False, "symbol": sym, "error": "PARSE_EMPTY"}
+        _fund_cache[sym] = {"at": now, "data": data}
+        return data
+    except Exception as e:  # noqa: BLE001
+        return {"available": False, "symbol": sym, "error": f"FETCH_FAILED:{str(e)[:80]}"}
+
+
+# ── Background 52-week range enrichment (#2) — fills all symbols slowly into a cache ──
+_ranges: dict[str, dict] = {}          # symbol -> {high, low}
+_range_state = {"running": False, "done": 0, "total": 0, "started_at": 0.0, "finished_at": 0.0}
+_range_lock = threading.Lock()
+_RANGE_GAP_SEC = 1.2                    # polite pacing between per-symbol page hits
+
+
+def _enrich_ranges_worker():
+    snap = nepse_market()
+    symbols = [r["symbol"] for r in snap.get("rows", [])] if snap.get("available") else []
+    with _range_lock:
+        _range_state.update(total=len(symbols), done=0, started_at=time.time(), finished_at=0.0)
+    for sym in symbols:
+        if sym not in _ranges:
+            c = nepse_company(sym)
+            if c.get("available") and c.get("week52_high") is not None:
+                _ranges[sym] = {"high": c["week52_high"], "low": c.get("week52_low")}
+        with _range_lock:
+            _range_state["done"] += 1
+        time.sleep(_RANGE_GAP_SEC)
+    with _range_lock:
+        _range_state.update(running=False, finished_at=time.time())
+
+
+def start_range_enrichment() -> dict:
+    with _range_lock:
+        if _range_state["running"]:
+            return {"started": False, "already_running": True, **_range_state}
+        _range_state["running"] = True
+    threading.Thread(target=_enrich_ranges_worker, daemon=True).start()
+    return {"started": True}
+
+
+def ranges(start: bool = False) -> dict:
+    if start and not _range_state["running"] and _range_state["done"] == 0:
+        start_range_enrichment()
+    with _range_lock:
+        st = dict(_range_state)
+    return {"available": True, "count": len(_ranges), "ranges": _ranges,
+            "status": st, "source": "ShareSansar company pages (background, public web)"}
 
 
 def movers(top: int = 5) -> dict:

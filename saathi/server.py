@@ -6210,6 +6210,26 @@ def market_free_company(symbol: str):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/free/fundamentals")
+def market_free_fundamentals(symbol: str):
+    """Full fundamentals (EPS/PE/PB/book/market cap) scraped free, any listed symbol."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_fundamentals(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/ranges")
+def market_free_ranges(start: int = 0):
+    """Bulk 52-week ranges filled by a background job (kick off with ?start=1)."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.ranges(start=bool(start))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
