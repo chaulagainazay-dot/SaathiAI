@@ -27,6 +27,7 @@ export default function ChartAnalysis({ expanded = false, onTech }) {
   const [loading, setLoading] = useState(true);
   const [smcOn, setSmcOn] = useState(true);
   const [smcData, setSmcData] = useState(null);
+  const [deskData, setDeskData] = useState(null);
   const [full, setFull] = useState(false);
 
   const loadChart = useCallback(async (sym, range) => {
@@ -39,8 +40,16 @@ export default function ChartAnalysis({ expanded = false, onTech }) {
     const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
     setSmcData(r.ok ? r.body : null);
   }, []);
+  const loadDesk = useCallback(async (sym) => {
+    const r = await api("/api/v1/market/analysis/desk", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
+    setDeskData(r.ok ? r.body : null);
+  }, []);
   useEffect(() => { loadChart(symbol, tfRange); }, [symbol, tfRange, loadChart]);
   useEffect(() => { if (smcOn) loadSMC(symbol); }, [smcOn, symbol, loadSMC]);
+  useEffect(() => { loadDesk(symbol); }, [symbol, loadDesk]);
+
+  const deskTrade = deskData?.trade_setup?.setup ? { entry: deskData.trade_setup.entry, stop: deskData.trade_setup.stop, target: deskData.trade_setup.target } : null;
+  const deskZones = deskData?.sr_zones || null;
 
   const tech = useMemo(() => {
     const pts = (chart?.ohlc || []).map((p) => ({ d: p.business_date, o: numOr(p.open), h: numOr(p.high), l: numOr(p.low), c: numOr(p.close) })).filter((p) => p.c != null);
@@ -98,7 +107,7 @@ export default function ChartAnalysis({ expanded = false, onTech }) {
             <div style={{ color: tech.day >= 0 ? "#2ee27a" : "#ff4d4d", fontSize: 13, fontWeight: 600 }}>{pct(tech.day)}</div>
             <Badge variant="soft" label={`${symbol} · ${tfRange}`} />
           </div>
-          <Candles tech={tech} smc={smcOn ? smcData?.smc : null} height={expanded ? 480 : 220} />
+          <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} height={expanded ? 480 : 220} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
             {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
@@ -141,7 +150,7 @@ export default function ChartAnalysis({ expanded = false, onTech }) {
               <div style={{ flexGrow: 1 }} />
               <button onClick={() => setFull(false)} style={{ fontFamily: "inherit", fontSize: 12, padding: "5px 12px", borderRadius: 6, cursor: "pointer", border: "1px solid rgba(255,42,42,.4)", background: "transparent", color: "#ff5757" }}>Close ✕</button>
             </div>
-            {tech.available ? <Candles tech={tech} smc={smcOn ? smcData?.smc : null} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
+            {tech.available ? <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
           </div>
         </div>
       )}
@@ -149,12 +158,13 @@ export default function ChartAnalysis({ expanded = false, onTech }) {
   );
 }
 
-export function Candles({ tech, trade, smc, height = 220 }) {
+export function Candles({ tech, trade, smc, zones, height = 220 }) {
   const pts = tech.pts;
   const W = 560, pad = 10, padR = 62;
   const volH = Math.round(height * 0.18), gap = 6;
   const cBot = height - volH - gap;
   const highs = pts.map((p) => p.h ?? p.c), lows = pts.map((p) => p.l ?? p.c);
+  const zoneList = zones ? Object.entries(zones).map(([k, z]) => ({ k, ...z })) : [];
   const smcVals = smc ? [
     ...(smc.fair_value_gaps || []).flatMap((g) => [g.top, g.bottom]),
     ...(smc.order_blocks || []).flatMap((o) => [o.top, o.bottom]),
@@ -162,7 +172,8 @@ export function Candles({ tech, trade, smc, height = 220 }) {
     ...(smc.liquidity || []).map((q) => q.price),
     smc.premium_discount?.high, smc.premium_discount?.low, smc.premium_discount?.equilibrium,
   ].filter((v) => v != null) : [];
-  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target, ...smcVals].filter((v) => v != null);
+  const zoneVals = zoneList.flatMap((z) => [z.low, z.high]).filter((v) => v != null);
+  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target, ...smcVals, ...zoneVals].filter((v) => v != null);
   const hi = Math.max(...highs, ...extra), lo = Math.min(...lows, ...extra);
   const span = hi - lo || 1;
   const y = (v) => pad + (hi - v) / span * (cBot - pad * 2);
@@ -181,6 +192,16 @@ export function Candles({ tech, trade, smc, height = 220 }) {
   return (
     <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
       {[0.25, 0.5, 0.75].map((g) => <line key={g} x1="0" y1={pad + g * (cBot - pad * 2)} x2={plotW} y2={pad + g * (cBot - pad * 2)} stroke="rgba(255,64,64,.06)" strokeWidth="1" />)}
+      {/* S/R zones (drawn first, behind everything) */}
+      {zoneList.map((z, i) => {
+        const yt = y(z.high), yb = y(z.low), isR = z.k[0] === "R", rgb = isR ? "255,106,106" : "46,226,122";
+        return (
+          <g key={`z${i}`}>
+            <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${rgb},0.06)`} stroke={`rgba(${rgb},0.45)`} strokeWidth="0.6" strokeDasharray="4 3" />
+            <text x={plotW + 4} y={(yt + yb) / 2 + 3} fill={`rgba(${rgb},0.95)`} fontSize="9" fontWeight="700" fontFamily="IBM Plex Mono, monospace">{z.k}</text>
+          </g>
+        );
+      })}
       {smc && (smc.fair_value_gaps || []).map((g, i) => <Band key={`f${i}`} top={g.top} bottom={g.bottom} rgb={g.dir === "bullish" ? "46,226,122" : "255,77,77"} label="FVG" num={g.bottom} />)}
       {smc && (smc.order_blocks || []).map((o, i) => <Band key={`o${i}`} top={o.top} bottom={o.bottom} rgb={o.dir === "bullish" ? "79,176,198" : "255,171,61"} label="OB" num={o.bottom} />)}
       {pts.map((p, i) => {
@@ -194,8 +215,8 @@ export function Candles({ tech, trade, smc, height = 220 }) {
       {smc?.inducement && <HLine v={smc.inducement.price} color="#8fb3ff" label="IDM" dash="2 2" />}
       {smc && (smc.liquidity || []).map((q, i) => <HLine key={`l${i}`} v={q.price} color="#8fb3ff" label={q.side === "buy" ? "BSL" : "SSL"} dash="1 3" />)}
       {smc?.premium_discount && <HLine v={smc.premium_discount.equilibrium} color="#8f8288" label="EQ" dash="1 4" />}
-      <HLine v={tech.resistance} color="#ff6a6a" label="R" />
-      <HLine v={tech.support} color="#2ee27a" label="S" />
+      {zoneList.length === 0 && <HLine v={tech.resistance} color="#ff6a6a" label="R" />}
+      {zoneList.length === 0 && <HLine v={tech.support} color="#2ee27a" label="S" />}
       {trade && <HLine v={trade.entry} color="#f2e8ea" label="Entry" dash="2 3" />}
       {trade && <HLine v={trade.target} color="#2ee27a" label="Target" dash="6 3" />}
       {trade && <HLine v={trade.stop} color="#ff4d4d" label="Stop" dash="6 3" />}

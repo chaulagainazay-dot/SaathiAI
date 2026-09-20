@@ -194,6 +194,15 @@ export default function CommandDeckPage() {
   }, []);
   useEffect(() => { if (smcOn) loadSMC(symbol); }, [smcOn, symbol, loadSMC]);
 
+  const [deskData, setDeskData] = useState(null);
+  const loadDesk = useCallback(async (sym) => {
+    const r = await api("/api/v1/market/analysis/desk", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
+    setDeskData(r.ok ? r.body : null);
+  }, []);
+  useEffect(() => { loadDesk(symbol); }, [symbol, loadDesk]);
+  const deckDeskTrade = deskData?.trade_setup?.setup ? { entry: deskData.trade_setup.entry, stop: deskData.trade_setup.stop, target: deskData.trade_setup.target } : null;
+  const deckDeskZones = deskData?.sr_zones || null;
+
   // ── derived: chart technicals (deterministic, from real OHLC) ──
   const tech = useMemo(() => {
     const pts = (chart?.ohlc || []).map((p) => ({
@@ -418,7 +427,7 @@ export default function CommandDeckPage() {
                         <div style={{ flexGrow: 1 }} />
                         <Badge variant="soft" label={`${chart?.source_badge || "tracker"}`} />
                       </div>
-                      <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} smc={smcOn ? smcData?.smc : null} />
+                      <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN") || deckDeskTrade} smc={smcOn ? smcData?.smc : null} zones={deckDeskZones} />
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                         <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
                         {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
@@ -802,7 +811,7 @@ export default function CommandDeckPage() {
               </div>
             </div>
             {tech.available
-              ? <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} smc={smcOn ? smcData?.smc : null} height={520} />
+              ? <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN") || deckDeskTrade} smc={smcOn ? smcData?.smc : null} zones={deckDeskZones} height={520} />
               : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable for {symbol}.</div>}
           </div>
         </div>
