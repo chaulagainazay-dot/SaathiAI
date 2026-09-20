@@ -26,7 +26,7 @@ if _fb_json_str and not _fb_file.exists():
 # If GOOGLE_API_KEY is set, Gemini is used; otherwise falls back to Claude.
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 # Gemini 3.5 Flash — the default brain (free tier, strong quality). Override via env.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 # Cheap proxy — routes Anthropic API calls to Groq (free) via anthropic-proxy

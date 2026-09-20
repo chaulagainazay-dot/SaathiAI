@@ -53,7 +53,14 @@ def env_availability(name: str) -> bool:
     if name.startswith(("deepseek/", "glm/", "qwen/")):
         return credential_present("OPENROUTER_API_KEY")
     if name.startswith("ollama/"):
-        return bool(os.getenv("OLLAMA_HOST") or os.getenv("OLLAMA_URL"))
+        # Local Ollama is the keyless fallback brain. The caller (call_ollama) defaults its
+        # host to http://localhost:11434, so treat Ollama as available by default too —
+        # requiring OLLAMA_HOST to be set left the local chain empty even when Ollama was
+        # running, so chat had no fallback when every cloud key was missing/invalid. Opt out
+        # explicitly with OLLAMA_DISABLED=1. A truly-down endpoint fails fast to the next spec.
+        if os.getenv("OLLAMA_DISABLED") == "1":
+            return False
+        return True
     return False
 
 
