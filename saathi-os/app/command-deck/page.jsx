@@ -28,6 +28,21 @@ import PriceAlerts from "@/components/finance/PriceAlerts";
 const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
 
+const DECK_TILES = [
+  { icon: "◈", label: "Chart Analysis", desc: "Candles · ICT/SMC · volume · full workspace", href: "/command-deck/chart" },
+  { icon: "◧", label: "Financial Browser", desc: "Embedded provider browser · read-only", href: "/command-deck/browser" },
+  { icon: "🛡", label: "Trading Guardian", desc: "No trade authority · paper agent", href: "/command-deck/guardian" },
+  { icon: "▦", label: "Stock Screener", desc: "Full market · fundamental + technical", href: "/command-deck/screener" },
+  { icon: "◨", label: "Broker Analysis", desc: "Accumulation vs distribution · floorsheet", href: "/command-deck/brokers" },
+  { icon: "◮", label: "Trade Desk", desc: "Setup · volume strength · S/R zones", href: "#trade-desk" },
+  { icon: "◪", label: "NEPSE Tracker", desc: "Index · breadth · movers (live)", href: "#nepse" },
+  { icon: "✦", label: "AI Analysis", desc: "TA desk + ICT/IDM strategy", href: "#ta" },
+  { icon: "▣", label: "Company Financials", desc: "EPS · P/E · P/B · 52W · any symbol", href: "#company" },
+  { icon: "◔", label: "Price Alerts", desc: "Target crosses · on this device", href: "#alerts" },
+  { icon: "▤", label: "News", desc: "Market research surface", href: "#news" },
+  { icon: "◎", label: "Signals", desc: "Watchlist setup scan", href: "#signals" },
+];
+
 function api(path, opts = {}) {
   return afetch(`${API_BASE}${path}`, {
     cache: "no-store",
@@ -324,8 +339,13 @@ export default function CommandDeckPage() {
 
       {!booting && (
         <>
+          {/* Function launcher — clean boxes, one per tool */}
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12, marginTop: 20 }}>
+            {DECK_TILES.map((t) => <DeckTile key={t.label} {...t} />)}
+          </section>
+
           {/* KPI row */}
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginTop: 20 }}>
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginTop: 16 }}>
             <Kpi label="Portfolio value" value={pf.total != null ? fmtNpr(pf.total) : "Awaiting read"} tone={pf.total != null ? "" : "muted"} />
             <Kpi label="Positions" value={pf.positions.length ? String(pf.positions.length) : "—"} />
             <Kpi label="Top concentration" value={pf.conc != null ? `${pf.conc.toFixed(0)}%` : "—"} tone={pf.conc > 35 ? "warn" : ""} />
@@ -345,6 +365,7 @@ export default function CommandDeckPage() {
               </Panel>
 
               {/* NEPSE Tracker */}
+              <span id="nepse" style={{ scrollMarginTop: 20 }} />
               <Panel style={{ padding: 0 }}>
                 <PanelHead title="NEPSE Tracker" right={<Text tone="disabled" size="xs" mono>{nepse?.freshness ? String(nepse.freshness).toLowerCase() : "live"}</Text>} />
                 <div style={{ padding: 14 }}>
@@ -583,12 +604,14 @@ export default function CommandDeckPage() {
             </div>
           </section>
 
+          <span id="trade-desk" style={{ scrollMarginTop: 20 }} />
           {/* Trade Desk (setup + volume strength + S/R zones) */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
             <PanelHead title="Trade Desk" right={<Text tone="disabled" size="xs">setup · volume strength · S/R zones</Text>} />
             <TradeDesk />
           </Panel>
 
+          <span id="ta" style={{ scrollMarginTop: 20 }} />
           {/* Technical Analysis Team (agent) */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
             <PanelHead title="Technical Analysis Team · agent" right={<Text tone="disabled" size="xs">NEPSE + Crypto · research only, not advice</Text>} />
@@ -687,6 +710,7 @@ export default function CommandDeckPage() {
             </div>
           </Panel>
 
+          <span id="news" style={{ scrollMarginTop: 20 }} /><span id="signals" style={{ scrollMarginTop: 20 }} />
           {/* News + Signals */}
           <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 16 }}>
             <Panel style={{ padding: 0 }}>
@@ -699,6 +723,7 @@ export default function CommandDeckPage() {
             </Panel>
           </section>
 
+          <span id="company" style={{ scrollMarginTop: 20 }} /><span id="alerts" style={{ scrollMarginTop: 20 }} />
           {/* Company fundamentals + Price alerts */}
           <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 16 }}>
             <Panel style={{ padding: 0 }}>
@@ -860,6 +885,22 @@ export default function CommandDeckPage() {
 }
 
 // ── small presentational pieces ──────────────────────────────────────────────
+function DeckTile({ icon, label, desc, href }) {
+  const inner = (
+    <div className="deck-tile" style={{ position: "relative", background: "#0f0b10", border: "1px solid rgba(255,64,64,.18)", borderRadius: 12, padding: "16px 14px", overflow: "hidden", height: "100%", boxShadow: "inset 0 0 40px rgba(255,42,42,.03)" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent,rgba(255,42,42,.6),transparent)" }} />
+      <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#f2e8ea" }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#8f8288", marginTop: 4, lineHeight: 1.4 }}>{desc}</div>
+      <div style={{ fontSize: 11, color: "#ff5757", marginTop: 8, fontWeight: 600 }}>open →</div>
+    </div>
+  );
+  const style = { textDecoration: "none", display: "block", height: "100%" };
+  return href.startsWith("/")
+    ? <Link href={href} style={style}>{inner}</Link>
+    : <a href={href} style={style}>{inner}</a>;
+}
+
 function PanelHead({ title, right, expandHref }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,64,64,.12)" }}>
