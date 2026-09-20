@@ -16,7 +16,7 @@ import {
   Panel, Card, Button, Badge, StatusBadge, Heading, Text, Divider, Spinner,
   EmptyState, ErrorState, Pill, Eyebrow,
 } from "@/components/ui";
-import FinancialViewport from "@/components/finance/FinancialViewport";
+import FinancialBrowserPanel from "@/components/finance/FinancialBrowserPanel";
 
 const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
@@ -76,8 +76,11 @@ export default function CommandDeckPage() {
   const [symbol, setSymbol] = useState("NABIL");
   const [chart, setChart] = useState(null);
   const [chartLoading, setChartLoading] = useState(true);
-  const [smcOn, setSmcOn] = useState(false);
+  const [smcOn, setSmcOn] = useState(true);       // auto-draw ICT/SMC by default
   const [smcData, setSmcData] = useState(null);
+  const [tfRange, setTfRange] = useState("3M");   // timeframe
+  const [symInput, setSymInput] = useState("");   // stock search box
+  const [fullChart, setFullChart] = useState(false);
   const [providers, setProviders] = useState(null);
   const [runtimes, setRuntimes] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
@@ -133,9 +136,9 @@ export default function CommandDeckPage() {
     else setNepseErr(r.body?.error || `HTTP ${r.status}`);
   }, []);
 
-  const loadChart = useCallback(async (sym) => {
+  const loadChart = useCallback(async (sym, range) => {
     setChartLoading(true);
-    const r = await api(`/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=3M`);
+    const r = await api(`/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`);
     setChart(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
     setChartLoading(false);
   }, []);
@@ -159,7 +162,7 @@ export default function CommandDeckPage() {
 
   useEffect(() => {
     (async () => {
-      await Promise.all([loadNepse(), loadChart(symbol), loadFinance(), loadJournal()]);
+      await Promise.all([loadNepse(), loadChart(symbol, tfRange), loadFinance(), loadJournal()]);
       setBooting(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,7 +173,7 @@ export default function CommandDeckPage() {
     return () => clearInterval(id);
   }, [loadNepse]);
 
-  useEffect(() => { loadChart(symbol); }, [symbol, loadChart]);
+  useEffect(() => { loadChart(symbol, tfRange); }, [symbol, tfRange, loadChart]);
 
   const loadSMC = useCallback(async (sym) => {
     const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
@@ -198,7 +201,20 @@ export default function CommandDeckPage() {
     // Support/resistance drawn by the desk: recent swing low / range high in the window.
     const support = Math.min(...win.map((p) => p.l ?? p.c));
     const resistance = Math.max(...win.map((p) => p.h ?? p.c));
-    return { pts: win, s20: s20.slice(-48), s50: s50.slice(-48), closes, last, day, rsi, trend, l20, l50, support, resistance, available: true };
+    // Volume desk: align volumes to the window, flag spikes (>1.5x avg) as buy/sell by candle dir.
+    const volAll = (chart?.volume || []).map((v) => numOr(v.volume) || 0);
+    const vols = volAll.slice(-48);
+    const avgVol = vols.length ? vols.reduce((a, b) => a + b, 0) / vols.length : 0;
+    const volSignals = win.map((p, i) => {
+      const v = vols[i] ?? 0;
+      if (avgVol > 0 && v >= 1.5 * avgVol && p.o != null) {
+        return (p.c >= p.o) ? "BUY" : "SELL";
+      }
+      return null;
+    });
+    const lastSig = [...volSignals].reverse().find((s) => s) || null;
+    return { pts: win, s20: s20.slice(-48), s50: s50.slice(-48), closes, last, day, rsi, trend, l20, l50,
+             support, resistance, vols, avgVol, volSignals, lastSig, available: true };
   }, [chart]);
 
   // ── derived: portfolio ──
@@ -229,8 +245,6 @@ export default function CommandDeckPage() {
     return { allBlocked, sample: actions[0] || "PROHIBITED_AGENT_ACTION" };
   }, [providers]);
 
-  const openRuntime = runtimes.find((r) => r.runtime_state === "OPEN_OWNER_CONTROL");
-  const readableRuntime = runtimes.find((r) => r.agent_read && r.runtime_state !== "CLOSED");
 
   // Exact keys from NepseLiveMarketSnapshot.to_public()
   const idx = numOr(nepse?.nepse_index);
@@ -290,25 +304,7 @@ export default function CommandDeckPage() {
               {/* Financial Browser */}
               <Panel style={{ padding: 0, overflow: "hidden" }}>
                 <PanelHead title="Financial Browser" right={<StatusBadge status="success" label="EMBEDDED" />} />
-                <div style={{ padding: 14 }}>
-                  {openRuntime ? (
-                    <FinancialViewport provider={openRuntime.provider} runtimeId={openRuntime.runtime_id} />
-                  ) : (
-                    <EmptyState
-                      title="No embedded browser open"
-                      description="Open a provider to load its site inside SaathiOS — no external Chrome. You log in yourself."
-                      action={<Link href="/finance/browser"><Button size="sm">Open Financial Browser</Button></Link>}
-                    />
-                  )}
-                  {readableRuntime && (
-                    <div style={{ marginTop: 10 }}>
-                      <StatusBadge status="success" label="SAATHI READ · ON" />
-                      <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 4 }}>
-                        Owner-visual only — pixels never sent to any model.
-                      </Text>
-                    </div>
-                  )}
-                </div>
+                <FinancialBrowserPanel onPortfolio={(env) => { if (env?.available) setPortfolio(env); }} />
               </Panel>
 
               {/* NEPSE Tracker */}
@@ -350,25 +346,52 @@ export default function CommandDeckPage() {
                   title={`Chart Analysis · ${symbol}`}
                   right={
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                      {CHART_SYMBOLS.map((s) => (
-                        <button key={s} onClick={() => setSymbol(s)}
-                          style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 8px", borderRadius: 100, cursor: "pointer",
-                            border: "1px solid rgba(255,64,64,.25)",
-                            background: s === symbol ? "#ff2a2a" : "transparent",
-                            color: s === symbol ? "#08060a" : "#b7a8ad", fontWeight: s === symbol ? 700 : 400 }}>
-                          {s}
-                        </button>
-                      ))}
                       <button onClick={() => setSmcOn((v) => !v)} title="Draw ICT / Smart Money Concepts structure"
                         style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 9px", borderRadius: 100, cursor: "pointer",
                           border: "1px solid rgba(79,176,198,.5)",
                           background: smcOn ? "#4fb0c6" : "transparent", color: smcOn ? "#08060a" : "#4fb0c6", fontWeight: 700 }}>
                         SMC/ICT
                       </button>
+                      <button onClick={() => setFullChart(true)} title="Open full chart"
+                        style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 9px", borderRadius: 100, cursor: "pointer",
+                          border: "1px solid rgba(255,64,64,.25)", background: "transparent", color: "#b7a8ad" }}>
+                        ⤢ Full chart
+                      </button>
                     </div>
                   }
                 />
                 <div style={{ padding: 14 }}>
+                  {/* Stock search + presets + timeframe */}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+                    <input
+                      value={symInput}
+                      onChange={(e) => setSymInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => { if (e.key === "Enter" && symInput.trim()) { setSymbol(symInput.trim()); setSymInput(""); } }}
+                      placeholder="Search stock (e.g. NABIL, NTC, SCB)…"
+                      style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 10px", borderRadius: 8, width: 220,
+                        background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }}
+                    />
+                    <button onClick={() => { if (symInput.trim()) { setSymbol(symInput.trim()); setSymInput(""); } }}
+                      style={{ fontFamily: "inherit", fontSize: 11, padding: "6px 10px", borderRadius: 8, cursor: "pointer",
+                        border: "1px solid rgba(255,64,64,.25)", background: "transparent", color: "#b7a8ad" }}>Search</button>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {CHART_SYMBOLS.map((s) => (
+                        <button key={s} onClick={() => setSymbol(s)}
+                          style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 8px", borderRadius: 100, cursor: "pointer",
+                            border: "1px solid rgba(255,64,64,.2)", background: s === symbol ? "#ff2a2a" : "transparent",
+                            color: s === symbol ? "#08060a" : "#8f8288", fontWeight: s === symbol ? 700 : 400 }}>{s}</button>
+                      ))}
+                    </div>
+                    <div style={{ flexGrow: 1 }} />
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {["1M", "3M", "6M", "1Y"].map((tf) => (
+                        <button key={tf} onClick={() => setTfRange(tf)}
+                          style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 6, cursor: "pointer",
+                            border: "1px solid rgba(255,64,64,.2)", background: tf === tfRange ? "#140e15" : "transparent",
+                            color: tf === tfRange ? "#ff5757" : "#8f8288", fontWeight: tf === tfRange ? 700 : 400 }}>{tf}</button>
+                      ))}
+                    </div>
+                  </div>
                   {chartLoading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><Spinner size={18} /></div>}
                   {!chartLoading && !tech.available && (
                     <EmptyState title="Chart unavailable" description={`No historical series for ${symbol} (${chart?.status || chart?.error || "unavailable"}).`} />
@@ -393,7 +416,16 @@ export default function CommandDeckPage() {
                         <span><span style={{ color: "#4fb0c6" }}>—</span> MA50</span>
                         <span><span style={{ color: "#2ee27a" }}>--</span> Support</span>
                         <span><span style={{ color: "#ff6a6a" }}>--</span> Resistance</span>
-                        <span><span style={{ color: "#f2e8ea" }}>··</span> Entry / Target / Stop (open dummy trade)</span>
+                        <span><span style={{ color: "#2ee27a" }}>▲</span>/<span style={{ color: "#ff4d4d" }}>▼</span> volume buy/sell</span>
+                        <span><span style={{ color: "#f2e8ea" }}>··</span> Entry / Target / Stop</span>
+                      </div>
+                      {/* Volume desk */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, background: "#0b0709", border: "1px solid rgba(255,64,64,.12)", borderRadius: 8, padding: "8px 11px" }}>
+                        <span style={{ fontSize: 10, letterSpacing: ".08em", color: "#8f8288", fontWeight: 700 }}>VOLUME DESK</span>
+                        <Badge variant="soft"
+                          color={tech.lastSig === "BUY" ? "#2ee27a" : tech.lastSig === "SELL" ? "#ff4d4d" : "var(--status-neutral)"}
+                          label={tech.lastSig ? `latest signal: ${tech.lastSig}` : "no volume signal"} />
+                        <Text tone="disabled" size="xs">A signal fires on a volume spike (&gt;1.5× the {tfRange} average) — BUY on an up candle, SELL on a down candle. Drawn as arrows on the chart.</Text>
                       </div>
                       <div style={{ marginTop: 8, background: "#0b0709", border: "1px solid rgba(255,64,64,.12)", borderRadius: 8, padding: "9px 11px" }}>
                         <Text size="xs" tone="muted" style={{ display: "block" }}>
@@ -690,6 +722,38 @@ export default function CommandDeckPage() {
           </Panel>
         </>
       )}
+
+      {/* Full chart modal */}
+      {fullChart && (
+        <div onClick={() => setFullChart(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(4,3,7,0.88)", zIndex: 50, display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(1200px,96vw)", background: "#0f0b10", border: "1px solid rgba(255,64,64,.25)", borderRadius: 12, padding: 18, boxShadow: "0 30px 80px rgba(0,0,0,.7)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontWeight: 700, fontSize: 16 }}>{symbol}</span>
+              <Badge variant="soft" label={tfRange} />
+              {tech.available && <Badge variant="soft" color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} label={tech.trend} />}
+              {smcOn && <Badge variant="soft" color="#4fb0c6" label="SMC/ICT" />}
+              <div style={{ flexGrow: 1 }} />
+              <div style={{ display: "flex", gap: 4 }}>
+                {["1M", "3M", "6M", "1Y"].map((tf) => (
+                  <button key={tf} onClick={() => setTfRange(tf)}
+                    style={{ fontFamily: "inherit", fontSize: 12, padding: "5px 11px", borderRadius: 6, cursor: "pointer",
+                      border: "1px solid rgba(255,64,64,.2)", background: tf === tfRange ? "#140e15" : "transparent",
+                      color: tf === tfRange ? "#ff5757" : "#8f8288", fontWeight: tf === tfRange ? 700 : 400 }}>{tf}</button>
+                ))}
+                <button onClick={() => setFullChart(false)}
+                  style={{ fontFamily: "inherit", fontSize: 12, padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+                    border: "1px solid rgba(255,42,42,.4)", background: "transparent", color: "#ff5757" }}>Close ✕</button>
+              </div>
+            </div>
+            {tech.available
+              ? <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} smc={smcOn ? smcData?.smc : null} height={520} />
+              : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable for {symbol}.</div>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -791,9 +855,11 @@ function PlanCard({ symbol, tag, text, evidence, muted }) {
   );
 }
 
-function Candles({ tech, trade, smc }) {
+function Candles({ tech, trade, smc, height = 220 }) {
   const pts = tech.pts;
-  const W = 560, H = 220, pad = 10, padR = 62;  // padR: room for right-edge line labels
+  const W = 560, pad = 10, padR = 62;           // padR: room for right-edge line labels
+  const volH = Math.round(height * 0.18), gap = 6;
+  const cBot = height - volH - gap;             // bottom of candle area / top of volume strip
   const highs = pts.map((p) => p.h ?? p.c), lows = pts.map((p) => p.l ?? p.c);
   const smcVals = smc ? [
     ...(smc.fair_value_gaps || []).flatMap((g) => [g.top, g.bottom]),
@@ -805,24 +871,41 @@ function Candles({ tech, trade, smc }) {
   const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target, ...smcVals].filter((v) => v != null);
   const hi = Math.max(...highs, ...extra), lo = Math.min(...lows, ...extra);
   const span = hi - lo || 1;
-  const y = (v) => pad + (hi - v) / span * (H - pad * 2);
+  const y = (v) => pad + (hi - v) / span * (cBot - pad * 2);
   const n = pts.length;
   const plotW = W - padR;
   const slot = plotW / n;
   const bw = Math.max(2, slot * 0.6);
+  const volMax = Math.max(1, ...(tech.vols || []));
   const linePts = (arr) => arr.map((v, i) => v == null ? null : `${(i * slot + slot / 2).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
-  // A drawn technical line: horizontal, dashed, right-edge label.
   const HLine = ({ v, color, label, dash = "5 4" }) => (v == null ? null : (
     <g>
       <line x1="0" y1={y(v)} x2={plotW} y2={y(v)} stroke={color} strokeWidth="1" strokeDasharray={dash} opacity="0.9" />
       <text x={plotW + 4} y={y(v) + 3} fill={color} fontSize="9" fontFamily="IBM Plex Mono, monospace">{label} {Math.round(v * 100) / 100}</text>
     </g>
   ));
+  const Band = ({ top, bottom, rgb, label, num }) => {
+    const yt = y(top), yb = y(bottom);
+    return (
+      <g>
+        <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${rgb},0.10)`} stroke={`rgba(${rgb},0.4)`} strokeWidth="0.5" strokeDasharray={label === "OB" ? "3 2" : ""} />
+        <text x="3" y={Math.min(yt, yb) + 9} fill={`rgba(${rgb},0.95)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">{label} {num}</text>
+      </g>
+    );
+  };
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="220" preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
+    <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
       {[0.25, 0.5, 0.75].map((g) => (
-        <line key={g} x1="0" y1={pad + g * (H - pad * 2)} x2={plotW} y2={pad + g * (H - pad * 2)} stroke="rgba(255,64,64,.06)" strokeWidth="1" />
+        <line key={g} x1="0" y1={pad + g * (cBot - pad * 2)} x2={plotW} y2={pad + g * (cBot - pad * 2)} stroke="rgba(255,64,64,.06)" strokeWidth="1" />
       ))}
+      {/* ICT/SMC bands with numbers */}
+      {smc && (smc.fair_value_gaps || []).map((g, i) => (
+        <Band key={`fvg${i}`} top={g.top} bottom={g.bottom} rgb={g.dir === "bullish" ? "46,226,122" : "255,77,77"} label="FVG" num={g.bottom} />
+      ))}
+      {smc && (smc.order_blocks || []).map((o, i) => (
+        <Band key={`ob${i}`} top={o.top} bottom={o.bottom} rgb={o.dir === "bullish" ? "79,176,198" : "255,171,61"} label="OB" num={o.bottom} />
+      ))}
+      {/* candles */}
       {pts.map((p, i) => {
         const x = i * slot + slot / 2;
         const up = (p.c ?? 0) >= (p.o ?? p.c ?? 0);
@@ -836,27 +919,6 @@ function Candles({ tech, trade, smc }) {
           </g>
         );
       })}
-      {/* ICT / SMC structure (drawn under MAs and levels) */}
-      {smc && (smc.fair_value_gaps || []).map((g, i) => {
-        const yt = y(g.top), yb = y(g.bottom);
-        const col = g.dir === "bullish" ? "46,226,122" : "255,77,77";
-        return (
-          <g key={`fvg${i}`}>
-            <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${col},0.10)`} stroke={`rgba(${col},0.35)`} strokeWidth="0.5" />
-            <text x="3" y={Math.min(yt, yb) + 9} fill={`rgba(${col},0.9)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">FVG</text>
-          </g>
-        );
-      })}
-      {smc && (smc.order_blocks || []).map((o, i) => {
-        const yt = y(o.top), yb = y(o.bottom);
-        const col = o.dir === "bullish" ? "79,176,198" : "255,171,61";
-        return (
-          <g key={`ob${i}`}>
-            <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${col},0.08)`} stroke={`rgba(${col},0.4)`} strokeWidth="0.5" strokeDasharray="3 2" />
-            <text x="30" y={Math.min(yt, yb) + 9} fill={`rgba(${col},0.9)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">OB</text>
-          </g>
-        );
-      })}
       {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
       {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
       {/* SMC lines */}
@@ -865,13 +927,30 @@ function Candles({ tech, trade, smc }) {
         <HLine key={`liq${i}`} v={q.price} color="#8fb3ff" label={q.side === "buy" ? "BSL" : "SSL"} dash="1 3" />
       ))}
       {smc?.premium_discount && <HLine v={smc.premium_discount.equilibrium} color="#8f8288" label="EQ" dash="1 4" />}
-      {/* Desk-drawn levels */}
+      {/* desk levels */}
       <HLine v={tech.resistance} color="#ff6a6a" label="R" />
       <HLine v={tech.support} color="#2ee27a" label="S" />
-      {/* Open paper-trade levels */}
       {trade && <HLine v={trade.entry} color="#f2e8ea" label="Entry" dash="2 3" />}
       {trade && <HLine v={trade.target} color="#2ee27a" label="Target" dash="6 3" />}
       {trade && <HLine v={trade.stop} color="#ff4d4d" label="Stop" dash="6 3" />}
+      {/* volume strip */}
+      {(tech.vols || []).map((v, i) => {
+        const x = i * slot + slot / 2;
+        const bh = Math.max(0.5, (v / volMax) * (volH - 2));
+        const up = (pts[i]?.c ?? 0) >= (pts[i]?.o ?? pts[i]?.c ?? 0);
+        return <rect key={`v${i}`} x={x - bw / 2} y={height - bh} width={bw} height={bh} fill={up ? "rgba(46,226,122,0.5)" : "rgba(255,77,77,0.5)"} />;
+      })}
+      {/* volume buy/sell signal markers */}
+      {(tech.volSignals || []).map((sig, i) => {
+        if (!sig) return null;
+        const x = i * slot + slot / 2;
+        if (sig === "BUY") {
+          const yb = y(pts[i].l ?? pts[i].c) + 4;
+          return <g key={`sg${i}`}><polygon points={`${x - 4},${yb + 7} ${x + 4},${yb + 7} ${x},${yb}`} fill="#2ee27a" /></g>;
+        }
+        const yt = y(pts[i].h ?? pts[i].c) - 4;
+        return <g key={`sg${i}`}><polygon points={`${x - 4},${yt - 7} ${x + 4},${yt - 7} ${x},${yt}`} fill="#ff4d4d" /></g>;
+      })}
     </svg>
   );
 }

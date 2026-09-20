@@ -20,7 +20,7 @@ import { DEPARTMENTS } from "./departments.js";
 describe("navigation model integrity", () => {
   it("has exactly 4 groups and 16 primary areas", () => {
     assert.equal(NAV_GROUPS.length, 4);
-    assert.equal(getPrimaryAreas().length, 18); // +orbit +nepse +analysis +finance-browser +company +command-deck
+    assert.equal(getPrimaryAreas().length, 15); // finance surfaces (analysis/nepse/finance-browser) folded into command-deck
   });
 
   it("has expected group ids", () => {
@@ -35,17 +35,14 @@ describe("navigation model integrity", () => {
     assert.deepEqual(hrefs, [
       "/",
       "/agents",
-      "/analysis",
       "/automation",
       "/business",
       "/command",
       "/command-deck",
       "/company",
-      "/finance/browser",
       "/knowledge",
       "/missions",
       "/monitoring",
-      "/nepse",
       "/orbit",
       "/projects",
       "/security",

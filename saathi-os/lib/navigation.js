@@ -150,39 +150,6 @@ export const NAV_GROUPS = [
         authoritySensitivity: "paper-only",
         environmentSensitivity: "never-imply-production",
       },
-      {
-        id: "analysis",
-        label: "Chart Analysis",
-        href: "/analysis",
-        icon: "◈",
-        description: "NEPSE and crypto chart analysis — research only, never advice",
-        accent: "#1F8A53",
-        riskFlag: true,
-        authoritySensitivity: "observation-only",
-        environmentSensitivity: "never-imply-production",
-      },
-      {
-        id: "nepse",
-        label: "NEPSE Tracker",
-        href: "/nepse",
-        icon: "◪",
-        description: "NEPSE portfolio, screener and market — snapshot data, not a live feed",
-        accent: "#35C47A",
-        riskFlag: true,
-        authoritySensitivity: "observation-only",
-        environmentSensitivity: "never-imply-production",
-      },
-      {
-        id: "finance-browser",
-        label: "Financial Browser",
-        href: "/finance/browser",
-        icon: "◧",
-        description: "Owner-controlled provider browser — you log in; Saathi reads only when you enable it. No trading.",
-        accent: "#4FB0C6",
-        riskFlag: true,
-        authoritySensitivity: "observation-only",
-        environmentSensitivity: "never-imply-production",
-      },
     ],
   },
   {
@@ -211,7 +178,7 @@ export const NAV_GROUPS = [
 ];
 
 /** Primary navigable areas. Bump deliberately when a surface is added. */
-export const PRIMARY_AREA_COUNT = 18;
+export const PRIMARY_AREA_COUNT = 15;
 
 /** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [
