@@ -175,7 +175,10 @@ def analysis() -> dict[str, Any]:
     total_val = 0.0
     total_cost = 0.0
     for h in holdings:
-        price, day = _price(h["market"], h["symbol"])
+        try:
+            price, day = _price(h["market"], h["symbol"])
+        except Exception:
+            price, day = None, None
         qty, avg = h["qty"], h["avg_cost"]
         val = (price * qty) if price is not None else None
         cost = (avg * qty) if avg else None

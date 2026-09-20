@@ -18,9 +18,9 @@ export default function PortfolioDesk() {
   const [loading, setLoading] = useState(true);
   const [f, setF] = useState({ symbol: "", market: "NEPSE", qty: "", avg_cost: "" });
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true);
     const r = await api("/api/v1/finance/portfolio/analysis");
     setData(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
     setLoading(false);
@@ -28,13 +28,19 @@ export default function PortfolioDesk() {
   useEffect(() => { load(); }, [load]);
 
   const add = async () => {
-    if (!f.symbol.trim() || !f.qty) return;
-    setBusy(true);
-    await api("/api/v1/finance/portfolio/add", { method: "POST", body: JSON.stringify({ symbol: f.symbol.trim(), market: f.market, qty: parseFloat(f.qty), avg_cost: parseFloat(f.avg_cost || 0) }) });
-    setF({ symbol: "", market: f.market, qty: "", avg_cost: "" });
-    await load(); setBusy(false);
+    if (!f.symbol.trim() || !f.qty) { setMsg("Enter a symbol and quantity."); return; }
+    setBusy(true); setMsg("Adding & valuing…");
+    const r = await api("/api/v1/finance/portfolio/add", { method: "POST", body: JSON.stringify({ symbol: f.symbol.trim(), market: f.market, qty: parseFloat(f.qty), avg_cost: parseFloat(f.avg_cost || 0) }) });
+    if (r.ok && r.body?.ok) {
+      setMsg(`Added ${f.symbol.trim()}.`);
+      setF({ symbol: "", market: f.market, qty: "", avg_cost: "" });
+      await load();
+    } else {
+      setMsg(r.body?.error || "Add failed — check you're signed in.");
+    }
+    setBusy(false);
   };
-  const remove = async (id) => { setBusy(true); await api("/api/v1/finance/portfolio/remove", { method: "POST", body: JSON.stringify({ id }) }); await load(); setBusy(false); };
+  const remove = async (id) => { setBusy(true); setMsg("Removing…"); await api("/api/v1/finance/portfolio/remove", { method: "POST", body: JSON.stringify({ id }) }); await load(); setMsg(""); setBusy(false); };
 
   const t = data?.totals || {};
   const inp = { fontFamily: "inherit", fontSize: 12, padding: "7px 10px", borderRadius: 8, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" };
@@ -51,10 +57,11 @@ export default function PortfolioDesk() {
         <input style={{ ...inp, width: 110 }} placeholder="Symbol" value={f.symbol} onChange={(e) => setF((o) => ({ ...o, symbol: e.target.value.toUpperCase() }))} />
         <input style={{ ...inp, width: 90 }} placeholder="Qty" value={f.qty} onChange={(e) => setF((o) => ({ ...o, qty: e.target.value }))} />
         <input style={{ ...inp, width: 110 }} placeholder="Avg cost" value={f.avg_cost} onChange={(e) => setF((o) => ({ ...o, avg_cost: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
-        <Button size="sm" onClick={add} disabled={busy}>Add holding</Button>
+        <Button size="sm" onClick={add} disabled={busy}>{busy ? "Working…" : "Add holding"}</Button>
+        {(busy || msg) && <Text tone="muted" size="xs" style={{ display: "flex", alignItems: "center", gap: 6 }}>{busy && <Spinner size={12} />}{msg}</Text>}
       </div>
 
-      {loading && <div style={{ display: "flex", justifyContent: "center", padding: 24 }}><Spinner size={16} /></div>}
+      {loading && !data && <div style={{ display: "flex", justifyContent: "center", padding: 24 }}><Spinner size={16} /></div>}
       {!loading && data && !data.available && <EmptyState title="Portfolio unavailable" description={data.error || "sign in"} />}
       {!loading && data?.empty && <EmptyState title="No holdings yet" description="Add a position above to track and analyse your portfolio." />}
 
