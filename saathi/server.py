@@ -6139,6 +6139,43 @@ def market_technical_analysis(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+# ── Paper trading agent (SIMULATION ONLY — no real orders / broker / execution) ──
+@app.post("/api/v1/trading/paper/propose")
+def paper_propose(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.propose(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/trading/paper/open")
+def paper_open(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.open_trade(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/trading/paper/evaluate")
+def paper_evaluate():
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.evaluate()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/trading/paper/journal")
+def paper_journal(limit: int = 30):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.journal(min(int(limit), 100))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/market/chart", response_class=HTMLResponse, include_in_schema=False)
 def tracker_chart_panel():
     """Native SaathiOS chart from tracker structured history. No TradingView, no iframe."""

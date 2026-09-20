@@ -97,6 +97,34 @@ export default function CommandDeckPage() {
     setTaLoading(false);
   }, []);
 
+  // Paper trading agent (SIMULATION ONLY)
+  const [journal, setJournal] = useState(null);
+  const [paBusy, setPaBusy] = useState("");
+  const [paMsg, setPaMsg] = useState("");
+
+  const loadJournal = useCallback(async () => {
+    const r = await api("/api/v1/trading/paper/journal?limit=20");
+    if (r.ok) setJournal(r.body);
+  }, []);
+
+  const runAgent = useCallback(async (market, sym) => {
+    setPaBusy("run"); setPaMsg("");
+    const r = await api("/api/v1/trading/paper/open", { method: "POST", body: JSON.stringify({ market, symbol: sym }) });
+    if (r.ok && r.body?.status === "OPEN") setPaMsg(`Opened dummy ${r.body.side} ${r.body.symbol} @ ${r.body.entry}`);
+    else if (r.ok && r.body?.setup === false) setPaMsg(`No clean setup for ${sym}: ${r.body.reason}`);
+    else setPaMsg(r.body?.error || "Run failed");
+    await loadJournal();
+    setPaBusy("");
+  }, [loadJournal]);
+
+  const evaluateTrades = useCallback(async () => {
+    setPaBusy("eval"); setPaMsg("");
+    const r = await api("/api/v1/trading/paper/evaluate", { method: "POST", body: "{}" });
+    if (r.ok) setPaMsg(`Evaluated ${r.body.evaluated} open · closed ${r.body.closed?.length || 0}`);
+    await loadJournal();
+    setPaBusy("");
+  }, [loadJournal]);
+
   const loadNepse = useCallback(async () => {
     const r = await api("/api/v1/market/nepse/live/full");
     if (r.ok) { setNepse(r.body); setNepseErr(""); }
@@ -129,7 +157,7 @@ export default function CommandDeckPage() {
 
   useEffect(() => {
     (async () => {
-      await Promise.all([loadNepse(), loadChart(symbol), loadFinance()]);
+      await Promise.all([loadNepse(), loadChart(symbol), loadFinance(), loadJournal()]);
       setBooting(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +187,10 @@ export default function CommandDeckPage() {
       ? (last > l20 && l20 >= l50 ? "UPTREND" : last < l20 && l20 <= l50 ? "DOWNTREND" : "SIDEWAYS")
       : "INSUFFICIENT";
     const win = pts.slice(-48);
-    return { pts: win, s20: s20.slice(-48), s50: s50.slice(-48), closes, last, day, rsi, trend, l20, l50, available: true };
+    // Support/resistance drawn by the desk: recent swing low / range high in the window.
+    const support = Math.min(...win.map((p) => p.l ?? p.c));
+    const resistance = Math.max(...win.map((p) => p.h ?? p.c));
+    return { pts: win, s20: s20.slice(-48), s50: s50.slice(-48), closes, last, day, rsi, trend, l20, l50, support, resistance, available: true };
   }, [chart]);
 
   // ── derived: portfolio ──
@@ -336,12 +367,28 @@ export default function CommandDeckPage() {
                         <div style={{ flexGrow: 1 }} />
                         <Badge variant="soft" label={`${chart?.source_badge || "tracker"}`} />
                       </div>
-                      <Candles tech={tech} />
+                      <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} />
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                         <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
                         {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
                         {tech.l20 != null && <Badge variant="soft" label={`MA20 ${tech.l20.toFixed(1)}`} />}
                         {tech.l50 != null && <Badge variant="soft" label={`MA50 ${tech.l50.toFixed(1)}`} />}
+                      </div>
+                      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: 10, color: "#8f8288" }}>
+                        <span><span style={{ color: "#ffab3d" }}>—</span> MA20</span>
+                        <span><span style={{ color: "#4fb0c6" }}>—</span> MA50</span>
+                        <span><span style={{ color: "#2ee27a" }}>--</span> Support</span>
+                        <span><span style={{ color: "#ff6a6a" }}>--</span> Resistance</span>
+                        <span><span style={{ color: "#f2e8ea" }}>··</span> Entry / Target / Stop (open dummy trade)</span>
+                      </div>
+                      <div style={{ marginTop: 8, background: "#0b0709", border: "1px solid rgba(255,64,64,.12)", borderRadius: 8, padding: "9px 11px" }}>
+                        <Text size="xs" tone="muted" style={{ display: "block" }}>
+                          <strong style={{ color: "#f2e8ea" }}>Plain read:</strong> {symbol} is in a{" "}
+                          <strong style={{ color: tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "#ffab3d" }}>{tech.trend.toLowerCase()}</strong>.{" "}
+                          Momentum (RSI {tech.rsi != null ? tech.rsi.toFixed(0) : "—"}) is{" "}
+                          {tech.rsi > 70 ? "hot — often near a pullback" : tech.rsi < 30 ? "cold — often near a bounce" : "neutral"}.{" "}
+                          The desk drew support ~{tech.support?.toFixed(0)} and resistance ~{tech.resistance?.toFixed(0)} — price often reacts at these lines.
+                        </Text>
                       </div>
                       <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>
                         Descriptive analytics from third-party historical series — research only, not a signal or advice.
@@ -510,6 +557,68 @@ export default function CommandDeckPage() {
             </div>
           </Panel>
 
+          {/* Paper Trading Agent (simulation) */}
+          <Panel style={{ padding: 0, marginTop: 16 }}>
+            <PanelHead title="Paper Trading Agent · simulation" right={<Badge variant="soft" color="#ffab3d" label="SIMULATION ONLY · NO REAL ORDERS" />} />
+            <div style={{ padding: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10 }}>
+                <StatTile label="Success rate" value={journal?.stats?.win_rate != null ? `${journal.stats.win_rate}%` : "—"} big
+                  tone={journal?.stats?.win_rate == null ? "muted" : journal.stats.win_rate >= 50 ? "up" : "down"} />
+                <StatTile label="Wins / Losses" value={`${journal?.stats?.won ?? 0} / ${journal?.stats?.lost ?? 0}`} />
+                <StatTile label="Open" value={String(journal?.stats?.open ?? 0)} />
+                <StatTile label="Total R" value={journal?.stats?.total_r != null ? `${journal.stats.total_r > 0 ? "+" : ""}${journal.stats.total_r}R` : "—"}
+                  tone={(journal?.stats?.total_r ?? 0) >= 0 ? "up" : "down"} />
+                <StatTile label="Expectancy" value={journal?.stats?.expectancy_r != null ? `${journal.stats.expectancy_r}R` : "—"} />
+              </div>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+                <Button size="sm" onClick={() => runAgent(taMarket, taSymbol)} disabled={paBusy === "run"}>
+                  {paBusy === "run" ? "Running…" : `Run agent on ${taMarket} ${taSymbol}`}
+                </Button>
+                <Button size="sm" variant="secondary" onClick={evaluateTrades} disabled={paBusy === "eval"}>
+                  {paBusy === "eval" ? "Evaluating…" : "Evaluate open trades"}
+                </Button>
+                {paMsg && <Text tone="muted" size="xs">{paMsg}</Text>}
+              </div>
+
+              <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>
+                The agent opens a dummy trade only when there is a clean ATR trend setup (else it honestly skips),
+                then marks it to the live price — win when target hits, loss when stop hits. No broker, no real money.
+              </Text>
+
+              {(journal?.trades || []).length > 0 && (
+                <div style={{ overflowX: "auto", marginTop: 12 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        {["Symbol", "Side", "Entry", "Stop", "Target", "Now/Exit", "R", "Status"].map((h, i) => (
+                          <th key={h} style={{ textAlign: i === 0 || i === 1 ? "left" : "right", fontSize: 10, letterSpacing: ".06em", textTransform: "uppercase", color: "#8f8288", fontWeight: 500, padding: "8px 12px", borderBottom: "1px solid rgba(255,64,64,.14)" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {journal.trades.map((t) => {
+                        const sc = t.status === "WON" ? "#2ee27a" : t.status === "LOST" ? "#ff4d4d" : "#ffab3d";
+                        return (
+                          <tr key={t.id}>
+                            <td style={{ padding: "8px 12px", fontWeight: 600, borderBottom: "1px solid rgba(255,64,64,.07)" }}>{t.symbol}<span style={{ color: "#8f8288", fontWeight: 400 }}> · {t.market}</span></td>
+                            <td style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,64,64,.07)", color: t.side === "LONG" ? "#2ee27a" : "#ff4d4d" }}>{t.side}</td>
+                            <Td>{t.entry}</Td><Td>{t.stop}</Td><Td>{t.target}</Td>
+                            <Td>{t.exit_price ?? t.last_price ?? "—"}</Td>
+                            <Td>{t.r_multiple != null ? `${t.r_multiple > 0 ? "+" : ""}${t.r_multiple}` : "—"}</Td>
+                            <td style={{ padding: "8px 12px", textAlign: "right", borderBottom: "1px solid rgba(255,64,64,.07)" }}>
+                              <span style={{ color: sc, fontWeight: 600, fontSize: 12 }}>{t.status}</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </Panel>
+
           {/* Holdings */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
             <PanelHead title="My Portfolio · observed" right={<Text tone="disabled" size="xs">{pf.view ? "owner-authenticated browser · read-only" : "not connected"}</Text>} />
@@ -576,6 +685,16 @@ function Kpi({ label, value, sub, subTone, tone, small }) {
   );
 }
 
+function StatTile({ label, value, big, tone }) {
+  const col = tone === "up" ? "#2ee27a" : tone === "down" ? "#ff4d4d" : tone === "muted" ? "#8f8288" : "#f2e8ea";
+  return (
+    <div style={{ background: "#0b0709", border: "1px solid rgba(255,64,64,.12)", borderRadius: 8, padding: "10px 12px" }}>
+      <div style={{ fontSize: 10, letterSpacing: ".1em", color: "#8f8288", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: big ? 24 : 17, fontWeight: 700, marginTop: 3, color: col, fontVariantNumeric: "tabular-nums" }}>{value}</div>
+    </div>
+  );
+}
+
 function Breadth({ adv, unch, dec }) {
   const a = adv || 0, u = unch || 0, d = dec || 0, t = a + u + d || 1;
   return (
@@ -639,21 +758,30 @@ function PlanCard({ symbol, tag, text, evidence, muted }) {
   );
 }
 
-function Candles({ tech }) {
+function Candles({ tech, trade }) {
   const pts = tech.pts;
-  const W = 560, H = 200, pad = 8;
+  const W = 560, H = 220, pad = 10, padR = 62;  // padR: room for right-edge line labels
   const highs = pts.map((p) => p.h ?? p.c), lows = pts.map((p) => p.l ?? p.c);
-  const hi = Math.max(...highs), lo = Math.min(...lows);
+  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target].filter((v) => v != null);
+  const hi = Math.max(...highs, ...extra), lo = Math.min(...lows, ...extra);
   const span = hi - lo || 1;
   const y = (v) => pad + (hi - v) / span * (H - pad * 2);
   const n = pts.length;
-  const slot = W / n;
+  const plotW = W - padR;
+  const slot = plotW / n;
   const bw = Math.max(2, slot * 0.6);
   const linePts = (arr) => arr.map((v, i) => v == null ? null : `${(i * slot + slot / 2).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
+  // A drawn technical line: horizontal, dashed, right-edge label.
+  const HLine = ({ v, color, label, dash = "5 4" }) => (v == null ? null : (
+    <g>
+      <line x1="0" y1={y(v)} x2={plotW} y2={y(v)} stroke={color} strokeWidth="1" strokeDasharray={dash} opacity="0.9" />
+      <text x={plotW + 4} y={y(v) + 3} fill={color} fontSize="9" fontFamily="IBM Plex Mono, monospace">{label} {Math.round(v * 100) / 100}</text>
+    </g>
+  ));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="200" preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="220" preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
       {[0.25, 0.5, 0.75].map((g) => (
-        <line key={g} x1="0" y1={pad + g * (H - pad * 2)} x2={W} y2={pad + g * (H - pad * 2)} stroke="rgba(255,64,64,.07)" strokeWidth="1" />
+        <line key={g} x1="0" y1={pad + g * (H - pad * 2)} x2={plotW} y2={pad + g * (H - pad * 2)} stroke="rgba(255,64,64,.06)" strokeWidth="1" />
       ))}
       {pts.map((p, i) => {
         const x = i * slot + slot / 2;
@@ -670,6 +798,13 @@ function Candles({ tech }) {
       })}
       {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
       {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
+      {/* Desk-drawn levels */}
+      <HLine v={tech.resistance} color="#ff6a6a" label="R" />
+      <HLine v={tech.support} color="#2ee27a" label="S" />
+      {/* Open paper-trade levels */}
+      {trade && <HLine v={trade.entry} color="#f2e8ea" label="Entry" dash="2 3" />}
+      {trade && <HLine v={trade.target} color="#2ee27a" label="Target" dash="6 3" />}
+      {trade && <HLine v={trade.stop} color="#ff4d4d" label="Stop" dash="6 3" />}
     </svg>
   );
 }

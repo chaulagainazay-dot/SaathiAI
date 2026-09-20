@@ -81,6 +81,19 @@ def _levels(highs: list[float], lows: list[float], last: float) -> tuple[float |
     return sup, res
 
 
+def _atr(highs: list[float], lows: list[float], closes: list[float], period: int = 14) -> float | None:
+    n = min(len(highs), len(lows), len(closes))
+    if n < period + 1:
+        return None
+    trs = []
+    for i in range(1, n):
+        tr = max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1]))
+        trs.append(tr)
+    if len(trs) < period:
+        return None
+    return sum(trs[-period:]) / period
+
+
 def compute_signals(ohlc: list[dict]) -> dict[str, Any] | None:
     """ohlc: list of {open,high,low,close} (strings or numbers). Returns deterministic evidence."""
     closes = _f([p.get("close") for p in ohlc])
@@ -100,6 +113,11 @@ def compute_signals(ohlc: list[dict]) -> dict[str, Any] | None:
     else:
         trend = "INSUFFICIENT_HISTORY"
     sup, res = _levels(highs, lows, last)
+    # Swing levels for trade structure (real observed extrema, never projected/fabricated):
+    swing_low = min(lows[-10:]) if len(lows) >= 3 else None      # recent protective low
+    swing_high = max(highs[-10:]) if len(highs) >= 3 else None   # recent protective high
+    range_low = min(lows[-40:]) if lows else None                # range floor
+    range_high = max(highs[-40:]) if highs else None             # range ceiling
 
     def r(v, dp=2):
         return None if v is None else round(v, dp)
@@ -108,6 +126,9 @@ def compute_signals(ohlc: list[dict]) -> dict[str, Any] | None:
         "n_points": len(closes), "last": r(last), "change_pct": r(change_pct),
         "sma20": r(s20), "sma50": r(s50), "rsi14": r(rsi, 1),
         "trend": trend, "support": r(sup), "resistance": r(res),
+        "swing_low": r(swing_low), "swing_high": r(swing_high),
+        "range_low": r(range_low), "range_high": r(range_high),
+        "atr14": r(_atr(highs, lows, closes)),
     }
 
 
@@ -195,29 +216,51 @@ def _fallback_text(sig: dict) -> str:
     )
 
 
-def analyze(market: str, symbol: str) -> dict[str, Any]:
+def _gather(market: str, symbol: str) -> tuple[str, str, list[dict] | None, str]:
+    """Return (market, symbol, ohlc, source_or_error). Pure fetch, no compute/agent."""
     market = (market or "").upper()
     symbol = (symbol or "").strip().upper()
     if not symbol:
-        return {"available": False, "error": "NO_SYMBOL", "disclaimer": DISCLAIMER}
+        return market, symbol, None, "NO_SYMBOL"
     if market == "NEPSE":
         ohlc, source = _fetch_nepse_ohlc(symbol)
     elif market in ("CRYPTO", "BINANCE"):
         market = "CRYPTO"
         ohlc, source = _fetch_crypto_ohlc(symbol)
     else:
-        return {"available": False, "error": f"UNKNOWN_MARKET:{market}", "disclaimer": DISCLAIMER}
+        return market, symbol, None, f"UNKNOWN_MARKET:{market}"
+    return market, symbol, ohlc, source
 
+
+def signals_only(market: str, symbol: str) -> dict[str, Any]:
+    """Deterministic evidence with NO agent call (fast; reused by the paper trader).
+    Also returns the recent OHLC window so callers can draw levels/trendlines."""
+    market, symbol, ohlc, source = _gather(market, symbol)
     if not ohlc:
-        return {"available": False, "market": market, "symbol": symbol,
-                "error": source, "disclaimer": DISCLAIMER}
+        return {"available": False, "market": market, "symbol": symbol, "error": source,
+                "disclaimer": DISCLAIMER}
     sig = compute_signals(ohlc)
     if sig is None:
         return {"available": False, "market": market, "symbol": symbol,
                 "error": "INSUFFICIENT_HISTORY", "source": source, "disclaimer": DISCLAIMER}
-    analysis, provider = _run_agent(market, symbol, sig)
-    return {
-        "available": True, "market": market, "symbol": symbol,
-        "evidence": sig, "analysis": analysis, "provider": provider, "source": source,
-        "authority": "OBSERVATION_ONLY", "advice": False, "disclaimer": DISCLAIMER,
-    }
+    return {"available": True, "market": market, "symbol": symbol, "evidence": sig,
+            "source": source, "ohlc": ohlc[-60:], "authority": "OBSERVATION_ONLY",
+            "advice": False, "disclaimer": DISCLAIMER}
+
+
+def current_price(market: str, symbol: str) -> float | None:
+    """Latest close for the symbol (used to mark paper trades to market)."""
+    _, _, ohlc, _ = _gather(market, symbol)
+    if not ohlc:
+        return None
+    closes = _f([p.get("close") for p in ohlc])
+    return closes[-1] if closes else None
+
+
+def analyze(market: str, symbol: str) -> dict[str, Any]:
+    base = signals_only(market, symbol)
+    if not base.get("available"):
+        return base
+    sig = base["evidence"]
+    analysis, provider = _run_agent(base["market"], base["symbol"], sig)
+    return {**base, "analysis": analysis, "provider": provider}
