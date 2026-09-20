@@ -129,6 +129,17 @@ export const NAV_GROUPS = [
         accent: "#10C98A",
       },
       {
+        id: "command-deck",
+        label: "Command Deck",
+        href: "/command-deck",
+        icon: "◮",
+        description: "Unified financial intelligence — browser, NEPSE, charts, guardian and AI advisory in one frame. Observation-only.",
+        accent: "#ff5757",
+        riskFlag: true,
+        authoritySensitivity: "observation-only",
+        environmentSensitivity: "never-imply-production",
+      },
+      {
         id: "trading",
         label: "Trading Guardian",
         href: "/trading",
@@ -200,7 +211,7 @@ export const NAV_GROUPS = [
 ];
 
 /** Primary navigable areas. Bump deliberately when a surface is added. */
-export const PRIMARY_AREA_COUNT = 17;
+export const PRIMARY_AREA_COUNT = 18;
 
 /** Global chrome destinations (not in the primary areas list for group count). */
 export const GLOBAL_NAV = [
