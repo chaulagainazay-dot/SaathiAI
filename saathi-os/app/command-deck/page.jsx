@@ -164,29 +164,35 @@ export default function CommandDeckPage() {
   }, [portfolio]);
 
   // ── derived: guardian (from real capability matrix) ──
+  // /api/v1/finance/providers → { providers: { TMS: {agent_actions, ...}, ... }, components, policies }
   const guardian = useMemo(() => {
-    const caps = providers || {};
-    // capability_matrix keys per provider carry agent_actions etc.
-    const anyActions = Object.entries(caps)
-      .filter(([k]) => !["policies"].includes(k))
-      .map(([, v]) => (v && typeof v === "object" ? String(v.agent_actions || "") : ""))
+    const perProvider = providers?.providers || {};
+    const actions = Object.values(perProvider)
+      .map((v) => (v && typeof v === "object" ? String(v.agent_actions || "") : ""))
       .filter(Boolean);
-    const allBlocked = anyActions.length > 0 && anyActions.every((a) => /PROHIBIT|UNSUPPORT|NONE/i.test(a));
-    return { allBlocked, sample: anyActions[0] || "PROHIBITED" };
+    const allBlocked = actions.length > 0 && actions.every((a) => /PROHIBIT|UNSUPPORT|NONE/i.test(a));
+    return { allBlocked, sample: actions[0] || "PROHIBITED_AGENT_ACTION" };
   }, [providers]);
 
   const openRuntime = runtimes.find((r) => r.runtime_state === "OPEN_OWNER_CONTROL");
   const readableRuntime = runtimes.find((r) => r.agent_read && r.runtime_state !== "CLOSED");
 
-  const idx = numOr(nepse?.index ?? nepse?.nepse_index ?? nepse?.value);
-  const idxChg = numOr(nepse?.change ?? nepse?.point_change);
-  const idxPct = numOr(nepse?.percent_change ?? nepse?.change_percent);
-  const adv = numOr(nepse?.advances ?? nepse?.advancers);
-  const dec = numOr(nepse?.declines ?? nepse?.decliners);
+  // Exact keys from NepseLiveMarketSnapshot.to_public()
+  const idx = numOr(nepse?.nepse_index);
+  const idxChg = numOr(nepse?.index_change);
+  const idxPct = numOr(nepse?.index_change_percent);
+  const adv = numOr(nepse?.advancers);
+  const dec = numOr(nepse?.decliners);
   const unch = numOr(nepse?.unchanged);
-  const movers = nepse?.top_gainers || nepse?.gainers || [];
-  const losers = nepse?.top_losers || nepse?.losers || [];
-  const marketState = nepse?.market_state || nepse?.state || nepse?.status;
+  const marketState = nepse?.market_status;
+  // No top_gainers/losers fields — derive movers from per-security rows.
+  const { movers, losers } = useMemo(() => {
+    const secs = (nepse?.securities || [])
+      .map((s) => ({ symbol: s.symbol, pct: numOr(s.percent_change) }))
+      .filter((s) => s.symbol && s.pct != null);
+    const byPct = [...secs].sort((a, b) => b.pct - a.pct);
+    return { movers: byPct.slice(0, 3), losers: byPct.slice(-2).reverse() };
+  }, [nepse]);
 
   return (
     <div style={{ maxWidth: 1440, margin: "0 auto", padding: "24px 24px 56px" }}>
@@ -252,7 +258,7 @@ export default function CommandDeckPage() {
 
               {/* NEPSE Tracker */}
               <Panel style={{ padding: 0 }}>
-                <PanelHead title="NEPSE Tracker" right={<Text tone="disabled" size="xs" mono>{nepse?.source_badge ? "observed" : "live"}</Text>} />
+                <PanelHead title="NEPSE Tracker" right={<Text tone="disabled" size="xs" mono>{nepse?.freshness ? String(nepse.freshness).toLowerCase() : "live"}</Text>} />
                 <div style={{ padding: 14 }}>
                   {nepseErr && <Text tone="muted" size="xs">Feed unavailable: {nepseErr}</Text>}
                   {!nepseErr && (
@@ -495,8 +501,8 @@ function Breadth({ adv, unch, dec }) {
 
 function MoversList({ gainers, losers }) {
   const rows = [
-    ...(gainers || []).slice(0, 3).map((g) => ({ s: g.symbol || g.ticker, v: numOr(g.percent_change ?? g.change_percent ?? g.pct), up: true })),
-    ...(losers || []).slice(0, 2).map((g) => ({ s: g.symbol || g.ticker, v: numOr(g.percent_change ?? g.change_percent ?? g.pct), up: false })),
+    ...(gainers || []).map((g) => ({ s: g.symbol, v: g.pct, up: true })),
+    ...(losers || []).map((g) => ({ s: g.symbol, v: g.pct, up: false })),
   ].filter((r) => r.s);
   if (rows.length === 0) return null;
   return (
