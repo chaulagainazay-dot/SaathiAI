@@ -81,6 +81,22 @@ export default function CommandDeckPage() {
   const [portfolio, setPortfolio] = useState(null);
   const [booting, setBooting] = useState(true);
 
+  // Technical Analysis Team (agent-assisted; NEPSE + crypto)
+  const [taMarket, setTaMarket] = useState("NEPSE");
+  const [taSymbol, setTaSymbol] = useState("NABIL");
+  const [taResult, setTaResult] = useState(null);
+  const [taLoading, setTaLoading] = useState(false);
+
+  const runTA = useCallback(async (market, sym) => {
+    if (!sym.trim()) return;
+    setTaLoading(true); setTaResult(null);
+    const r = await api("/api/v1/market/analysis/technical", {
+      method: "POST", body: JSON.stringify({ market, symbol: sym.trim() }),
+    });
+    setTaResult(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
+    setTaLoading(false);
+  }, []);
+
   const loadNepse = useCallback(async () => {
     const r = await api("/api/v1/market/nepse/live/full");
     if (r.ok) { setNepse(r.body); setNepseErr(""); }
@@ -417,6 +433,83 @@ export default function CommandDeckPage() {
             </div>
           </section>
 
+          {/* Technical Analysis Team (agent) */}
+          <Panel style={{ padding: 0, marginTop: 16 }}>
+            <PanelHead title="Technical Analysis Team · agent" right={<Text tone="disabled" size="xs">NEPSE + Crypto · research only, not advice</Text>} />
+            <div style={{ padding: 14 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {["NEPSE", "CRYPTO"].map((m) => (
+                    <button key={m} onClick={() => { setTaMarket(m); setTaSymbol(m === "NEPSE" ? "NABIL" : "BTC"); }}
+                      style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                        border: "1px solid rgba(255,64,64,.25)",
+                        background: m === taMarket ? "#ff2a2a" : "transparent",
+                        color: m === taMarket ? "#08060a" : "#b7a8ad", fontWeight: m === taMarket ? 700 : 400 }}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  value={taSymbol}
+                  onChange={(e) => setTaSymbol(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === "Enter") runTA(taMarket, taSymbol); }}
+                  placeholder={taMarket === "NEPSE" ? "NABIL, HDL, UPPER…" : "BTC, ETH, SOL…"}
+                  style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 10px", borderRadius: 8, width: 180,
+                    background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }}
+                />
+                <Button size="sm" onClick={() => runTA(taMarket, taSymbol)} disabled={taLoading}>
+                  {taLoading ? "Analyzing…" : "Run analysis"}
+                </Button>
+                <div style={{ flexGrow: 1 }} />
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {["Trend", "Momentum", "Levels", "Risk"].map((a) => <Badge key={a} variant="soft" label={a} />)}
+                </div>
+              </div>
+
+              {taLoading && <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}><Spinner size={16} /><Text tone="muted" size="sm">The desk is reading {taSymbol}…</Text></div>}
+
+              {!taLoading && taResult && !taResult.available && (
+                <div style={{ marginTop: 12 }}>
+                  <EmptyState title="Analysis unavailable" description={`${taSymbol}: ${taResult.error || "no data"}. Try another symbol or market.`} />
+                </div>
+              )}
+
+              {!taLoading && taResult && taResult.available && (
+                <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 16, alignItems: "start" }}>
+                  <div style={{ background: "#0b0709", border: "1px solid rgba(255,64,64,.14)", borderRadius: 10, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: 14 }}>{taResult.market} · {taResult.symbol}</span>
+                      <Badge variant="soft" color={taResult.evidence?.trend === "UPTREND" ? "#2ee27a" : taResult.evidence?.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} label={taResult.evidence?.trend} />
+                      <div style={{ flexGrow: 1 }} />
+                      <Text tone="disabled" size="xs" mono>agent: {taResult.provider}</Text>
+                    </div>
+                    <div style={{ whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.6, color: "#dccfd3" }}>
+                      {String(taResult.analysis || "").replace(/^#+\s*/gm, "").replace(/\*\*/g, "")}
+                    </div>
+                    <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 10 }}>{taResult.disclaimer}</Text>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 10, letterSpacing: ".1em", color: "#8f8288" }}>DETERMINISTIC EVIDENCE</div>
+                    <EvRow k="Last" v={taResult.evidence?.last} />
+                    <EvRow k="Change %" v={taResult.evidence?.change_pct} tone={(taResult.evidence?.change_pct ?? 0) >= 0 ? "up" : "down"} />
+                    <EvRow k="RSI(14)" v={taResult.evidence?.rsi14} />
+                    <EvRow k="SMA20" v={taResult.evidence?.sma20} />
+                    <EvRow k="SMA50" v={taResult.evidence?.sma50} />
+                    <EvRow k="Support" v={taResult.evidence?.support} />
+                    <EvRow k="Resistance" v={taResult.evidence?.resistance} />
+                    <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 4 }}>source: {taResult.source}</Text>
+                  </div>
+                </div>
+              )}
+
+              {!taResult && !taLoading && (
+                <Text tone="muted" size="sm" style={{ display: "block", marginTop: 12 }}>
+                  Pick a market and symbol, then Run analysis. The desk computes real indicators from live OHLC and an agent explains them — research only, never a buy/sell call.
+                </Text>
+              )}
+            </div>
+          </Panel>
+
           {/* Holdings */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
             <PanelHead title="My Portfolio · observed" right={<Text tone="disabled" size="xs">{pf.view ? "owner-authenticated browser · read-only" : "not connected"}</Text>} />
@@ -578,6 +671,15 @@ function Candles({ tech }) {
       {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
       {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
     </svg>
+  );
+}
+
+function EvRow({ k, v, tone }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: "1px solid rgba(255,64,64,.08)", fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ color: "#8f8288" }}>{k}</span>
+      <span style={{ color: tone === "up" ? "#2ee27a" : tone === "down" ? "#ff4d4d" : "#dccfd3" }}>{v == null ? "—" : String(v)}</span>
+    </div>
   );
 }
 

@@ -6126,6 +6126,19 @@ def tracker_reconcile(symbol: str):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/market/analysis/technical")
+def market_technical_analysis(body: dict = Body(...)):
+    """Agent-assisted technical analysis for NEPSE / crypto. Research-only: deterministic
+    indicators from real OHLC, then a governed-agent synthesis. Never advice, never execution."""
+    try:
+        from saathi.platform.market_data.technical_analysis import analyze
+        market = str(body.get("market", "NEPSE"))
+        symbol = str(body.get("symbol", ""))
+        return analyze(market, symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/market/chart", response_class=HTMLResponse, include_in_schema=False)
 def tracker_chart_panel():
     """Native SaathiOS chart from tracker structured history. No TradingView, no iframe."""
