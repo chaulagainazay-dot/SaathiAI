@@ -20,12 +20,15 @@ DISCLAIMER = ("Research and education only — descriptive analytics from third-
 
 ANALYST_SYSTEM = (
     "You are the SaathiOS Technical Analysis desk — a small team (Trend, Momentum, Levels, "
-    "Risk). You are given DETERMINISTIC indicators already computed from real price history. "
-    "Explain what they describe in clear, plain language for the owner. Rules you must follow: "
-    "use ONLY the numbers provided; never invent prices, targets, or news; be concise (120-180 "
-    "words); output four short labelled sections — Trend, Momentum, Key levels, Risk. This is "
-    "research and education, NOT financial advice: never say buy/sell/hold as an instruction, "
-    "never promise outcomes. End with one line starting 'Watch:' naming what to monitor next."
+    "Structure/ICT, Risk). You are given DETERMINISTIC indicators AND Smart Money Concepts / "
+    "ICT structure (market-structure trend, BOS/CHoCH, order blocks, fair value gaps, "
+    "liquidity, premium/discount) already computed from real price history. Explain what they "
+    "describe in clear, plain language a beginner can follow — briefly define each ICT term you "
+    "use. Rules: use ONLY the numbers provided; never invent prices, targets, or news; be "
+    "concise (150-220 words); output labelled sections — Trend, Momentum, Key levels, "
+    "Structure (ICT/SMC), Risk. This is research and education, NOT financial advice: never say "
+    "buy/sell/hold as an instruction, never promise outcomes. End with one line starting "
+    "'Watch:' naming the level or event to monitor next."
 )
 
 
@@ -184,7 +187,7 @@ def _fetch_crypto_ohlc(symbol: str) -> tuple[list[dict] | None, str]:
         return None, f"CRYPTO_FEED_UNAVAILABLE:{str(e)[:80]}"
 
 
-def _run_agent(market: str, symbol: str, sig: dict) -> tuple[str, str]:
+def _run_agent(market: str, symbol: str, sig: dict, smc_text: str = "") -> tuple[str, str]:
     """Return (analysis_text, provider). Agent failure yields a deterministic fallback."""
     try:
         from saathi.chat.api import default_engine, default_store
@@ -192,7 +195,8 @@ def _run_agent(market: str, symbol: str, sig: dict) -> tuple[str, str]:
         eng = default_engine()
         conv = st.create_conversation(title=f"TA {market} {symbol}")
         cid = conv.get("id") if isinstance(conv, dict) else getattr(conv, "id", None)
-        prompt = (_evidence_text(market, symbol, sig) +
+        smc_block = (f"\n\nSmart Money Concepts / ICT structure:\n{smc_text}" if smc_text else "")
+        prompt = (_evidence_text(market, symbol, sig) + smc_block +
                   "\n\nWrite the technical read now (research only, not advice).")
         res = eng.send(cid, prompt, system=ANALYST_SYSTEM, agent="")
         text = (res.message or {}).get("content", "") if res else ""
@@ -262,5 +266,13 @@ def analyze(market: str, symbol: str) -> dict[str, Any]:
     if not base.get("available"):
         return base
     sig = base["evidence"]
-    analysis, provider = _run_agent(base["market"], base["symbol"], sig)
-    return {**base, "analysis": analysis, "provider": provider}
+    # Attach ICT/SMC structure so the desk can explain market structure too.
+    smc_obj, smc_text = None, ""
+    try:
+        from saathi.platform.market_data import smc as _smc
+        smc_obj = _smc.detect(base.get("ohlc") or [])
+        smc_text = _smc.summarize(smc_obj) if smc_obj else ""
+    except Exception:
+        pass
+    analysis, provider = _run_agent(base["market"], base["symbol"], sig, smc_text)
+    return {**base, "analysis": analysis, "provider": provider, "smc": smc_obj}

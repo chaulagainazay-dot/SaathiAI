@@ -76,6 +76,8 @@ export default function CommandDeckPage() {
   const [symbol, setSymbol] = useState("NABIL");
   const [chart, setChart] = useState(null);
   const [chartLoading, setChartLoading] = useState(true);
+  const [smcOn, setSmcOn] = useState(false);
+  const [smcData, setSmcData] = useState(null);
   const [providers, setProviders] = useState(null);
   const [runtimes, setRuntimes] = useState([]);
   const [portfolio, setPortfolio] = useState(null);
@@ -169,6 +171,12 @@ export default function CommandDeckPage() {
   }, [loadNepse]);
 
   useEffect(() => { loadChart(symbol); }, [symbol, loadChart]);
+
+  const loadSMC = useCallback(async (sym) => {
+    const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
+    setSmcData(r.ok ? r.body : null);
+  }, []);
+  useEffect(() => { if (smcOn) loadSMC(symbol); }, [smcOn, symbol, loadSMC]);
 
   // ── derived: chart technicals (deterministic, from real OHLC) ──
   const tech = useMemo(() => {
@@ -341,7 +349,7 @@ export default function CommandDeckPage() {
                 <PanelHead
                   title={`Chart Analysis · ${symbol}`}
                   right={
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       {CHART_SYMBOLS.map((s) => (
                         <button key={s} onClick={() => setSymbol(s)}
                           style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 8px", borderRadius: 100, cursor: "pointer",
@@ -351,6 +359,12 @@ export default function CommandDeckPage() {
                           {s}
                         </button>
                       ))}
+                      <button onClick={() => setSmcOn((v) => !v)} title="Draw ICT / Smart Money Concepts structure"
+                        style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 9px", borderRadius: 100, cursor: "pointer",
+                          border: "1px solid rgba(79,176,198,.5)",
+                          background: smcOn ? "#4fb0c6" : "transparent", color: smcOn ? "#08060a" : "#4fb0c6", fontWeight: 700 }}>
+                        SMC/ICT
+                      </button>
                     </div>
                   }
                 />
@@ -367,7 +381,7 @@ export default function CommandDeckPage() {
                         <div style={{ flexGrow: 1 }} />
                         <Badge variant="soft" label={`${chart?.source_badge || "tracker"}`} />
                       </div>
-                      <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} />
+                      <Candles tech={tech} trade={(journal?.trades || []).find((t) => t.symbol === symbol && t.status === "OPEN")} smc={smcOn ? smcData?.smc : null} />
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                         <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
                         {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
@@ -390,6 +404,25 @@ export default function CommandDeckPage() {
                           The desk drew support ~{tech.support?.toFixed(0)} and resistance ~{tech.resistance?.toFixed(0)} — price often reacts at these lines.
                         </Text>
                       </div>
+                      {smcOn && (
+                        <div style={{ marginTop: 8, background: "#0b0709", border: "1px solid rgba(79,176,198,.25)", borderRadius: 8, padding: "10px 12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <span style={{ color: "#4fb0c6", fontSize: 11, fontWeight: 700, letterSpacing: ".08em" }}>ICT / SMC STRUCTURE</span>
+                            {smcData?.smc?.trend && <Badge variant="soft" color={smcData.smc.trend === "UP" ? "#2ee27a" : smcData.smc.trend === "DOWN" ? "#ff4d4d" : "var(--status-neutral)"} label={`structure ${smcData.smc.trend}`} />}
+                            {smcData?.smc?.structure_break && <Badge variant="soft" color="#c99bff" label={`${smcData.smc.structure_break.type} ${smcData.smc.structure_break.dir}`} />}
+                          </div>
+                          {!smcData?.smc && <Text tone="muted" size="xs">Loading structure… (or unavailable for {symbol}).</Text>}
+                          {smcData?.smc && (
+                            <Text tone="muted" size="xs" style={{ display: "block", lineHeight: 1.6 }}>
+                              <b style={{ color: "#f2e8ea" }}>FVG</b> (shaded) = a price gap the market often revisits ·{" "}
+                              <b style={{ color: "#f2e8ea" }}>OB</b> (dashed box) = the last opposing candle before a big move ·{" "}
+                              <b style={{ color: "#f2e8ea" }}>BOS/CHoCH</b> = trend continues / trend may be flipping ·{" "}
+                              <b style={{ color: "#f2e8ea" }}>BSL/SSL</b> = resting liquidity (equal highs/lows) ·{" "}
+                              <b style={{ color: "#f2e8ea" }}>EQ</b> = 50% of the range ({smcData.smc.premium_discount?.current_zone} now).
+                            </Text>
+                          )}
+                        </div>
+                      )}
                       <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>
                         Descriptive analytics from third-party historical series — research only, not a signal or advice.
                       </Text>
@@ -758,11 +791,18 @@ function PlanCard({ symbol, tag, text, evidence, muted }) {
   );
 }
 
-function Candles({ tech, trade }) {
+function Candles({ tech, trade, smc }) {
   const pts = tech.pts;
   const W = 560, H = 220, pad = 10, padR = 62;  // padR: room for right-edge line labels
   const highs = pts.map((p) => p.h ?? p.c), lows = pts.map((p) => p.l ?? p.c);
-  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target].filter((v) => v != null);
+  const smcVals = smc ? [
+    ...(smc.fair_value_gaps || []).flatMap((g) => [g.top, g.bottom]),
+    ...(smc.order_blocks || []).flatMap((o) => [o.top, o.bottom]),
+    smc.structure_break?.price,
+    ...(smc.liquidity || []).map((q) => q.price),
+    smc.premium_discount?.high, smc.premium_discount?.low, smc.premium_discount?.equilibrium,
+  ].filter((v) => v != null) : [];
+  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target, ...smcVals].filter((v) => v != null);
   const hi = Math.max(...highs, ...extra), lo = Math.min(...lows, ...extra);
   const span = hi - lo || 1;
   const y = (v) => pad + (hi - v) / span * (H - pad * 2);
@@ -796,8 +836,35 @@ function Candles({ tech, trade }) {
           </g>
         );
       })}
+      {/* ICT / SMC structure (drawn under MAs and levels) */}
+      {smc && (smc.fair_value_gaps || []).map((g, i) => {
+        const yt = y(g.top), yb = y(g.bottom);
+        const col = g.dir === "bullish" ? "46,226,122" : "255,77,77";
+        return (
+          <g key={`fvg${i}`}>
+            <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${col},0.10)`} stroke={`rgba(${col},0.35)`} strokeWidth="0.5" />
+            <text x="3" y={Math.min(yt, yb) + 9} fill={`rgba(${col},0.9)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">FVG</text>
+          </g>
+        );
+      })}
+      {smc && (smc.order_blocks || []).map((o, i) => {
+        const yt = y(o.top), yb = y(o.bottom);
+        const col = o.dir === "bullish" ? "79,176,198" : "255,171,61";
+        return (
+          <g key={`ob${i}`}>
+            <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${col},0.08)`} stroke={`rgba(${col},0.4)`} strokeWidth="0.5" strokeDasharray="3 2" />
+            <text x="30" y={Math.min(yt, yb) + 9} fill={`rgba(${col},0.9)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">OB</text>
+          </g>
+        );
+      })}
       {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
       {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
+      {/* SMC lines */}
+      {smc?.structure_break && <HLine v={smc.structure_break.price} color="#c99bff" label={smc.structure_break.type} dash="1 2" />}
+      {smc && (smc.liquidity || []).map((q, i) => (
+        <HLine key={`liq${i}`} v={q.price} color="#8fb3ff" label={q.side === "buy" ? "BSL" : "SSL"} dash="1 3" />
+      ))}
+      {smc?.premium_discount && <HLine v={smc.premium_discount.equilibrium} color="#8f8288" label="EQ" dash="1 4" />}
       {/* Desk-drawn levels */}
       <HLine v={tech.resistance} color="#ff6a6a" label="R" />
       <HLine v={tech.support} color="#2ee27a" label="S" />

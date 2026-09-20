@@ -6139,6 +6139,17 @@ def market_technical_analysis(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/market/analysis/smc")
+def market_smc_analysis(body: dict = Body(...)):
+    """ICT / Smart Money Concepts structure (order blocks, FVG, BOS/CHoCH, liquidity,
+    premium/discount) from real OHLC. Descriptive research only — never advice/execution."""
+    try:
+        from saathi.platform.market_data import smc
+        return smc.analyze(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 # ── Paper trading agent (SIMULATION ONLY — no real orders / broker / execution) ──
 @app.post("/api/v1/trading/paper/propose")
 def paper_propose(body: dict = Body(...)):
