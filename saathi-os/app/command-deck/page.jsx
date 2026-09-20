@@ -19,6 +19,7 @@ import {
 import FinancialBrowserPanel from "@/components/finance/FinancialBrowserPanel";
 import { Candles } from "@/components/finance/ChartAnalysis";
 import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
+import TradeDesk from "@/components/finance/TradeDesk";
 
 const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
@@ -557,6 +558,12 @@ export default function CommandDeckPage() {
               </Panel>
             </div>
           </section>
+
+          {/* Trade Desk (setup + volume strength + S/R zones) */}
+          <Panel style={{ padding: 0, marginTop: 16 }}>
+            <PanelHead title="Trade Desk" right={<Text tone="disabled" size="xs">setup · volume strength · S/R zones</Text>} />
+            <TradeDesk />
+          </Panel>
 
           {/* Technical Analysis Team (agent) */}
           <Panel style={{ padding: 0, marginTop: 16 }}>

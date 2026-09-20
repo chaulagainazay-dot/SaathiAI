@@ -6162,6 +6162,17 @@ def market_strategy(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/market/analysis/desk")
+def market_trade_desk(body: dict = Body(...)):
+    """Trade Desk bundle: trade setup (entry/SL/target/RR + loss%/profit%), volume strength
+    (buyer vs seller by period), and S/R zones. Deterministic, observation-only — not advice."""
+    try:
+        from saathi.platform.market_data import trade_desk
+        return trade_desk.desk(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
