@@ -28,6 +28,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [smcOn, setSmcOn] = useState(true);
+  const [vpOn, setVpOn] = useState(true);
   const [smcData, setSmcData] = useState(null);
   const [deskData, setDeskData] = useState(null);
   const [full, setFull] = useState(false);
@@ -89,6 +90,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
       </div>
       <div style={{ flexGrow: 1 }} />
       <button onClick={() => setSmcOn((v) => !v)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(79,176,198,.5)", background: smcOn ? "#4fb0c6" : "transparent", color: smcOn ? "#08060a" : "#4fb0c6", fontWeight: 700 }}>SMC/ICT</button>
+      <button onClick={() => setVpOn((v) => !v)} title="Volume profile (volume by price)" style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,171,61,.5)", background: vpOn ? "#ffab3d" : "transparent", color: vpOn ? "#08060a" : "#ffab3d", fontWeight: 700 }}>VP</button>
       <div style={{ display: "flex", gap: 4 }}>
         {["1M", "3M", "6M", "1Y"].map((tf) => (
           <button key={tf} onClick={() => setTfRange(tf)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 6, cursor: "pointer", border: "1px solid rgba(255,64,64,.2)", background: tf === tfRange ? "#140e15" : "transparent", color: tf === tfRange ? "#ff5757" : "#8f8288", fontWeight: tf === tfRange ? 700 : 400 }}>{tf}</button>
@@ -109,7 +111,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
             <div style={{ color: tech.day >= 0 ? "#2ee27a" : "#ff4d4d", fontSize: 13, fontWeight: 600 }}>{pct(tech.day)}</div>
             <Badge variant="soft" label={`${symbol} · ${tfRange}`} />
           </div>
-          <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} height={expanded ? 480 : 220} />
+          <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} volumeProfile={vpOn} height={expanded ? 480 : 220} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
             {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
@@ -152,7 +154,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
               <div style={{ flexGrow: 1 }} />
               <button onClick={() => setFull(false)} style={{ fontFamily: "inherit", fontSize: 12, padding: "5px 12px", borderRadius: 6, cursor: "pointer", border: "1px solid rgba(255,42,42,.4)", background: "transparent", color: "#ff5757" }}>Close ✕</button>
             </div>
-            {tech.available ? <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
+            {tech.available ? <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} volumeProfile={vpOn} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
           </div>
         </div>
       )}
@@ -160,7 +162,24 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
   );
 }
 
-export function Candles({ tech, trade, smc, zones, height = 220 }) {
+function _volumeProfile(pts, vols, hi, lo, n = 20) {
+  if (!pts.length || hi <= lo) return { buckets: [], maxVol: 0, pocPrice: null };
+  const buckets = new Array(n).fill(0);
+  const span = hi - lo;
+  pts.forEach((p, i) => {
+    const price = p.c ?? p.o;
+    if (price == null) return;
+    let b = Math.floor(((price - lo) / span) * n);
+    if (b < 0) b = 0; if (b >= n) b = n - 1;
+    buckets[b] += vols[i] || 0;
+  });
+  const maxVol = Math.max(1, ...buckets);
+  let pocIdx = 0; buckets.forEach((v, i) => { if (v > buckets[pocIdx]) pocIdx = i; });
+  const pocPrice = lo + ((pocIdx + 0.5) / n) * span;
+  return { buckets, maxVol, pocPrice, n };
+}
+
+export function Candles({ tech, trade, smc, zones, volumeProfile = true, height = 220 }) {
   const pts = tech.pts;
   const W = 560, pad = 10, padR = 62;
   const volH = Math.round(height * 0.18), gap = 6;
@@ -181,6 +200,8 @@ export function Candles({ tech, trade, smc, zones, height = 220 }) {
   const y = (v) => pad + (hi - v) / span * (cBot - pad * 2);
   const n = pts.length, plotW = W - padR, slot = plotW / n, bw = Math.max(2, slot * 0.6);
   const volMax = Math.max(1, ...(tech.vols || []));
+  const vp = volumeProfile ? _volumeProfile(pts, tech.vols || [], hi, lo) : null;
+  const vpMaxW = plotW * 0.26;
   const linePts = (arr) => arr.map((v, i) => v == null ? null : `${(i * slot + slot / 2).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
   const HLine = ({ v, color, label, dash = "5 4" }) => (v == null ? null : (
     <g><line x1="0" y1={y(v)} x2={plotW} y2={y(v)} stroke={color} strokeWidth="1" strokeDasharray={dash} opacity="0.9" />
@@ -206,6 +227,17 @@ export function Candles({ tech, trade, smc, zones, height = 220 }) {
       })}
       {smc && (smc.fair_value_gaps || []).map((g, i) => <Band key={`f${i}`} top={g.top} bottom={g.bottom} rgb={g.dir === "bullish" ? "46,226,122" : "255,77,77"} label="FVG" num={g.bottom} />)}
       {smc && (smc.order_blocks || []).map((o, i) => <Band key={`o${i}`} top={o.top} bottom={o.bottom} rgb={o.dir === "bullish" ? "79,176,198" : "255,171,61"} label="OB" num={o.bottom} />)}
+      {vp && vp.buckets.map((bv, i) => {
+        const bandH = (cBot - pad * 2) / vp.n;
+        const yTop = pad + (vp.n - 1 - i) * bandH;
+        const w = (bv / vp.maxVol) * vpMaxW;
+        const isPoc = bv === vp.maxVol && bv > 0;
+        return <rect key={`vp${i}`} x={plotW - w} y={yTop + 0.5} width={w} height={Math.max(1, bandH - 1)} fill={isPoc ? "rgba(255,171,61,0.28)" : "rgba(79,176,198,0.16)"} />;
+      })}
+      {vp?.pocPrice != null && (
+        <g><line x1="0" y1={y(vp.pocPrice)} x2={plotW} y2={y(vp.pocPrice)} stroke="#ffab3d" strokeWidth="0.8" strokeDasharray="2 4" opacity="0.7" />
+          <text x={plotW - vpMaxW - 26} y={y(vp.pocPrice) - 2} fill="#ffab3d" fontSize="8" fontFamily="IBM Plex Mono, monospace">POC</text></g>
+      )}
       {pts.map((p, i) => {
         const x = i * slot + slot / 2, up = (p.c ?? 0) >= (p.o ?? p.c ?? 0), col = up ? "#2ee27a" : "#ff4d4d";
         const yo = y(p.o ?? p.c), yc = y(p.c), top = Math.min(yo, yc), h = Math.max(1.5, Math.abs(yc - yo));
