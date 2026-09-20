@@ -6230,6 +6230,40 @@ def market_free_ranges(start: int = 0):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/finance/portfolio/add")
+def portfolio_add(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.add_holding(str(body.get("symbol", "")), str(body.get("market", "NEPSE")),
+                              float(body.get("qty", 0) or 0), float(body.get("avg_cost", 0) or 0))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/portfolio/remove")
+def portfolio_remove(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.remove_holding(str(body.get("id", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/portfolio/analysis")
+def portfolio_analysis(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.analysis()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade

@@ -49,6 +49,10 @@ def handle_finance_chat(message: str) -> dict[str, Any] | None:
     msg = message.strip()
     low = msg.lower()
 
+    # portfolio (no symbol needed)
+    if _kw(low, ["my portfolio", "my holdings", "my book", "portfolio analysis", "how is my portfolio", "rebalance"]):
+        return _portfolio()
+
     # market-wide (no symbol needed)
     if _kw(low, ["top gainers", "top losers", "movers", "market today", "how is the market",
                  "gainers", "losers", "nepse today"]):
@@ -155,6 +159,20 @@ def _movers():
     l = ", ".join(f"{x['symbol']} {x.get('percent_change')}%" for x in r.get("losers", []))
     return {"handled": True, "kind": "movers",
             "text": f"NEPSE movers (free live):\nTop gainers: {g or '—'}\nTop losers: {l or '—'}\nsource: {r.get('source')} · {DISCLAIMER}"}
+
+
+def _portfolio():
+    from saathi.platform.finance import portfolio_desk as pd
+    a = pd.analysis()
+    if a.get("empty"):
+        return {"handled": True, "kind": "portfolio", "text": "Your portfolio is empty. Add holdings in Command Deck → Portfolio."}
+    t = a.get("totals", {})
+    lines = [f"Portfolio — value {t.get('value')} · P/L {t.get('pl')} ({t.get('pl_pct')}%) · "
+             f"{t.get('positions')} positions · top {t.get('top_name')} {t.get('concentration')}%."]
+    for r in (a.get("recommendations") or [])[:4]:
+        lines.append(f"• {r['tag']}: {r['text']}")
+    lines.append(DISCLAIMER)
+    return {"handled": True, "kind": "portfolio", "text": "\n".join(lines)}
 
 
 def _paper(market, sym):

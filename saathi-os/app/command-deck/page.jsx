@@ -29,6 +29,7 @@ const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
 
 const DECK_TILES = [
+  { icon: "▤", label: "Portfolio", desc: "Add · track · analyse · recommend · research", href: "/command-deck/portfolio" },
   { icon: "◈", label: "Chart Analysis", desc: "Candles · ICT/SMC · volume · full workspace", href: "/command-deck/chart" },
   { icon: "◧", label: "Financial Browser", desc: "Embedded provider browser · read-only", href: "/command-deck/browser" },
   { icon: "🛡", label: "Trading Guardian", desc: "No trade authority · paper agent", href: "/command-deck/guardian" },
