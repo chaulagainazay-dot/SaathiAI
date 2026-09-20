@@ -281,13 +281,24 @@ export default function CommandDeckPage() {
   const unch = numOr(nepse?.unchanged);
   const marketState = nepse?.market_status;
   // No top_gainers/losers fields — derive movers from per-security rows.
+  // Free-source movers (no API key); fall back to deriving from the licensed snapshot.
+  const [freeMovers, setFreeMovers] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    const run = async () => { const r = await api("/api/v1/market/free/movers?top=4"); if (alive && r.ok && r.body?.available) setFreeMovers(r.body); };
+    run(); const id = setInterval(run, 60000); return () => { alive = false; clearInterval(id); };
+  }, []);
   const { movers, losers } = useMemo(() => {
+    if (freeMovers?.available) {
+      const map = (arr) => (arr || []).map((s) => ({ symbol: s.symbol, pct: numOr(s.percent_change) })).filter((s) => s.symbol && s.pct != null);
+      return { movers: map(freeMovers.gainers).slice(0, 3), losers: map(freeMovers.losers).slice(0, 2) };
+    }
     const secs = (nepse?.securities || [])
       .map((s) => ({ symbol: s.symbol, pct: numOr(s.percent_change) }))
       .filter((s) => s.symbol && s.pct != null);
     const byPct = [...secs].sort((a, b) => b.pct - a.pct);
     return { movers: byPct.slice(0, 3), losers: byPct.slice(-2).reverse() };
-  }, [nepse]);
+  }, [nepse, freeMovers]);
 
   return (
     <div style={{ maxWidth: 1440, margin: "0 auto", padding: "24px 24px 56px" }}>

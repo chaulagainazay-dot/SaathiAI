@@ -31,6 +31,12 @@ def test_parse_extracts_rows_and_derives_change():
     assert hdl["symbol"] == "HDL" and hdl["high"] == 1210.0 and hdl["volume"] == 500.0
 
 
+def test_parse_company_extracts_52week():
+    html = 'foo <div>52 Week High-Low : <span>581.00 - 471.00</span></div> bar'
+    d = fs._parse_company(html)
+    assert d["week52_high"] == 581.0 and d["week52_low"] == 471.0
+
+
 def test_parse_skips_non_symbol_rows():
     bad = "<table><tbody><tr><td>x</td><td>not a symbol!!</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr></tbody></table>"
     assert fs._parse_sharesansar(bad) == []

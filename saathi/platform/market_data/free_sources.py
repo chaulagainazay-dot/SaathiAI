@@ -107,6 +107,51 @@ def nepse_quote(symbol: str) -> dict:
     return {"available": True, "symbol": sym, "quote": row, "source": snap.get("source")}
 
 
+_company_cache: dict[str, Any] = {}
+_COMPANY_TTL = 3600.0
+
+
+def _parse_company(html: str) -> dict:
+    out = {}
+    m = re.search(r"52\s*Week\s*High-?Low\s*:?\s*(?:<[^>]*>\s*)*([\d,]+\.?\d*)\s*-\s*([\d,]+\.?\d*)", html, re.I)
+    if m:
+        out["week52_high"] = _num(m.group(1))
+        out["week52_low"] = _num(m.group(2))
+    m = re.search(r"(?:Last\s*Traded\s*Price|LTP)\s*:?\s*(?:<[^>]*>\s*)*([\d,]+\.?\d*)", html, re.I)
+    if m:
+        out["ltp"] = _num(m.group(1))
+    m = re.search(r"Sector\s*:?\s*(?:<[^>]*>\s*)*([A-Za-z &/]{3,40})", html)
+    if m:
+        sec = m.group(1).strip()
+        if sec.lower() not in ("wise share price",):
+            out["sector"] = sec
+    return out
+
+
+def nepse_company(symbol: str) -> dict:
+    """Per-company details scraped from the public company page (52-week high/low, LTP,
+    sector where present). Cached ~1h. No API key."""
+    sym = (symbol or "").strip().upper()
+    if not re.match(r"^[A-Z0-9/]{2,16}$", sym):
+        return {"available": False, "symbol": sym, "error": "BAD_SYMBOL"}
+    now = time.time()
+    hit = _company_cache.get(sym)
+    if hit and (now - hit["at"] < _COMPANY_TTL):
+        return {**hit["data"], "cached": True}
+    import httpx
+    try:
+        r = httpx.get(f"https://www.sharesansar.com/company/{sym}", timeout=20, headers=_UA, follow_redirects=True)
+        r.raise_for_status()
+        parsed = _parse_company(r.text)
+        if not parsed:
+            return {"available": False, "symbol": sym, "error": "PARSE_EMPTY"}
+        data = {"available": True, "symbol": sym, "source": "ShareSansar company page (public web)", **parsed}
+        _company_cache[sym] = {"at": now, "data": data}
+        return data
+    except Exception as e:  # noqa: BLE001
+        return {"available": False, "symbol": sym, "error": f"FETCH_FAILED:{str(e)[:80]}"}
+
+
 def movers(top: int = 5) -> dict:
     snap = nepse_market()
     if not snap.get("available"):

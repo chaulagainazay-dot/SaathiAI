@@ -19,25 +19,33 @@ export default function CompanyCard({ symbol: symbolProp }) {
   const symbol = symbolProp ?? symbolState;
   const controlled = symbolProp != null;
   const [input, setInput] = useState("");
-  const [fund, setFund] = useState(null);
   const [divs, setDivs] = useState(null);
+  const [live, setLive] = useState(null);   // free quote
+  const [co, setCo] = useState(null);       // free company page (52w, sector)
 
   const load = useCallback(async (sym) => {
-    setFund(null); setDivs(null);
-    const [f, d] = await Promise.all([
-      api(`/api/v1/market/tracker/fundamentals?symbol=${encodeURIComponent(sym)}`),
+    setDivs(null); setLive(null); setCo(null);
+    const [d, q, c] = await Promise.all([
       api(`/api/v1/market/tracker/dividends?symbol=${encodeURIComponent(sym)}`),
+      api(`/api/v1/market/free/quote?symbol=${encodeURIComponent(sym)}`),
+      api(`/api/v1/market/free/company?symbol=${encodeURIComponent(sym)}`),
     ]);
-    setFund(f.ok ? f.body : null);
     setDivs(d.ok ? d.body : null);
+    setLive(q.ok && q.body?.available ? q.body.quote : null);
+    setCo(c.ok && c.body?.available ? c.body : null);
   }, []);
   useEffect(() => { load(symbol); }, [symbol, load]);
 
-  const s = getStock(symbol);
-  const rows = s ? [
-    ["Sector", s.sector], ["LTP", s.ltp], ["EPS", s.eps], ["P/E", s.pe], ["P/B", s.pb],
-    ["Book value", s.bookValue], ["Paid-up (Cr)", s.paidUp != null ? (s.paidUp / 100).toFixed(0) : "—"],
-    ["Market cap", cr(s.marketCap)], ["52W high", s.high52], ["52W low", s.low52], ["RSI", s.rsi],
+  const s = getStock(symbol) || {};                       // reference fundamentals (where known)
+  const known = getStock(symbol) != null || live != null || co != null;
+  const ltp = live?.ltp ?? s.ltp ?? null;
+  const w52h = co?.week52_high ?? s.high52 ?? null;
+  const w52l = co?.week52_low ?? s.low52 ?? null;
+  const rows = known ? [
+    ["Sector", s.sector ?? co?.sector ?? "—"], ["LTP", ltp], ["Day %", live?.percent_change != null ? `${live.percent_change >= 0 ? "+" : ""}${live.percent_change}%` : "—"],
+    ["EPS", s.eps ?? "—"], ["P/E", s.pe ?? "—"], ["P/B", s.pb ?? "—"],
+    ["Book value", s.bookValue ?? "—"], ["Paid-up (Cr)", s.paidUp != null ? (s.paidUp / 100).toFixed(0) : "—"],
+    ["Market cap", s.marketCap != null ? cr(s.marketCap) : "—"], ["52W high", w52h ?? "—"], ["52W low", w52l ?? "—"], ["RSI", s.rsi ?? "—"],
   ] : [];
   const latestDiv = (divs?.dividends || [])[0];
 
@@ -55,10 +63,11 @@ export default function CompanyCard({ symbol: symbolProp }) {
         )}
         <div style={{ flexGrow: 1 }} />
         <span style={{ fontWeight: 700, fontSize: 15 }}>{symbol}</span>
-        {s?.name && <Badge variant="soft" label={s.name} />}
+        {s.name && <Badge variant="soft" label={s.name} />}
+        {live && <Badge variant="soft" color="#2ee27a" label="LIVE" />}
       </div>
-      {!s ? (
-        <Text tone="muted" size="sm">Not in the reference universe. Fundamentals: {fund?.available ? "tracker only" : "unavailable"}.</Text>
+      {!known ? (
+        <Text tone="muted" size="sm">No data for {symbol} — not listed or the free source is unreachable.</Text>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
           {rows.map(([k, v]) => (
@@ -74,7 +83,9 @@ export default function CompanyCard({ symbol: symbolProp }) {
           Latest dividend {latestDiv.fiscal_year ? `(FY ${latestDiv.fiscal_year})` : ""}: cash {latestDiv.cash_dividend ?? "—"}, bonus {latestDiv.bonus_dividend ?? "—"}.
         </Text>
       )}
-      <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 6 }}>Reference fundamentals · research only, not advice.</Text>
+      <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 6 }}>
+        Live LTP + 52-week from the free public source; P/E, P/B, EPS shown where known · research only, not advice.
+      </Text>
     </div>
   );
 }

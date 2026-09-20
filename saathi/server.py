@@ -6201,6 +6201,15 @@ def market_free_quote(symbol: str):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/free/company")
+def market_free_company(symbol: str):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_company(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
