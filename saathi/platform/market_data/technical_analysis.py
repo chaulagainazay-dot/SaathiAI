@@ -166,14 +166,19 @@ def _crypto_pair(symbol: str) -> str:
     return s + "USDT"
 
 
-def _fetch_crypto_ohlc(symbol: str) -> tuple[list[dict] | None, str]:
-    """Binance public market-data mirror (keyless, no account). Daily klines, ~30 sessions."""
+_TF_INTERVAL = {"15m": ("15m", "96"), "1h": ("1h", "120"), "4h": ("4h", "120"),
+                "1d": ("1d", "60"), "1w": ("1w", "60")}
+
+
+def _fetch_crypto_ohlc(symbol: str, timeframe: str = "1d") -> tuple[list[dict] | None, str]:
+    """Binance public market-data mirror (keyless, no account). Interval per timeframe."""
     pair = _crypto_pair(symbol)
+    interval, limit = _TF_INTERVAL.get(timeframe, ("1d", "60"))
     try:
         import httpx
         r = httpx.get(
             "https://data-api.binance.vision/api/v3/klines",
-            params={"symbol": pair, "interval": "1d", "limit": "60"}, timeout=20,
+            params={"symbol": pair, "interval": interval, "limit": limit}, timeout=20,
         )
         if r.status_code == 400:
             return None, f"UNKNOWN_CRYPTO_PAIR:{pair}"
@@ -182,7 +187,7 @@ def _fetch_crypto_ohlc(symbol: str) -> tuple[list[dict] | None, str]:
         ohlc = [{"open": k[1], "high": k[2], "low": k[3], "close": k[4]} for k in rows]
         if len(ohlc) < 5:
             return None, "CRYPTO_SERIES_TOO_SHORT"
-        return ohlc, f"Binance public market data · {pair} (third-party)"
+        return ohlc, f"Binance public market data · {pair} {interval} (third-party)"
     except Exception as e:  # noqa: BLE001
         return None, f"CRYPTO_FEED_UNAVAILABLE:{str(e)[:80]}"
 
@@ -220,8 +225,9 @@ def _fallback_text(sig: dict) -> str:
     )
 
 
-def _gather(market: str, symbol: str) -> tuple[str, str, list[dict] | None, str]:
-    """Return (market, symbol, ohlc, source_or_error). Pure fetch, no compute/agent."""
+def _gather(market: str, symbol: str, timeframe: str = "1d") -> tuple[str, str, list[dict] | None, str]:
+    """Return (market, symbol, ohlc, source_or_error). Pure fetch, no compute/agent.
+    timeframe applies to crypto (Binance intraday); NEPSE is daily only."""
     market = (market or "").upper()
     symbol = (symbol or "").strip().upper()
     if not symbol:
@@ -230,16 +236,16 @@ def _gather(market: str, symbol: str) -> tuple[str, str, list[dict] | None, str]
         ohlc, source = _fetch_nepse_ohlc(symbol)
     elif market in ("CRYPTO", "BINANCE"):
         market = "CRYPTO"
-        ohlc, source = _fetch_crypto_ohlc(symbol)
+        ohlc, source = _fetch_crypto_ohlc(symbol, timeframe)
     else:
         return market, symbol, None, f"UNKNOWN_MARKET:{market}"
     return market, symbol, ohlc, source
 
 
-def signals_only(market: str, symbol: str) -> dict[str, Any]:
+def signals_only(market: str, symbol: str, timeframe: str = "1d") -> dict[str, Any]:
     """Deterministic evidence with NO agent call (fast; reused by the paper trader).
     Also returns the recent OHLC window so callers can draw levels/trendlines."""
-    market, symbol, ohlc, source = _gather(market, symbol)
+    market, symbol, ohlc, source = _gather(market, symbol, timeframe)
     if not ohlc:
         return {"available": False, "market": market, "symbol": symbol, "error": source,
                 "disclaimer": DISCLAIMER}
@@ -259,6 +265,57 @@ def current_price(market: str, symbol: str) -> float | None:
         return None
     closes = _f([p.get("close") for p in ohlc])
     return closes[-1] if closes else None
+
+
+STRATEGY_SYSTEM = (
+    "You are the SaathiOS ICT/SMC strategy desk. Using ONLY the deterministic indicators and "
+    "the Smart Money Concepts structure provided (market structure, BOS/CHoCH, order blocks, "
+    "fair value gaps, liquidity, premium/discount, and the potential IDM/inducement), write a "
+    "concise, beginner-clear trading PLAYBOOK for this timeframe. Structure it as: "
+    "1) Bias (from structure); 2) Structure map (what the swings/BOS/CHoCH say); "
+    "3) Inducement (IDM) — the liquidity likely swept first, and why; "
+    "4) Entry idea — the order block or FVG to watch, in discount (for longs) or premium (for "
+    "shorts); 5) Invalidation — where the idea is wrong (beyond structure/IDM); "
+    "6) Target — the opposing liquidity. Briefly define each ICT term. 180-260 words. "
+    "This is EDUCATION/RESEARCH, NOT financial advice: never a buy/sell instruction, never "
+    "promise outcomes. End with 'Watch:' naming the single trigger to wait for."
+)
+
+
+def strategy(market: str, symbol: str, timeframe: str = "") -> dict[str, Any]:
+    """ICT/SMC playbook with structure mapping + inducement. Crypto defaults to 15m; NEPSE daily."""
+    market = (market or "").upper()
+    tf = timeframe or ("15m" if market in ("CRYPTO", "BINANCE") else "1d")
+    base = signals_only(market, symbol, tf)
+    if not base.get("available"):
+        return {**base, "timeframe": tf}
+    sig = base["evidence"]
+    smc_obj, smc_text = None, ""
+    try:
+        from saathi.platform.market_data import smc as _smc
+        smc_obj = _smc.detect(base.get("ohlc") or [])
+        smc_text = _smc.summarize(smc_obj) if smc_obj else ""
+    except Exception:
+        pass
+    try:
+        from saathi.chat.api import default_engine, default_store
+        st = default_store()
+        eng = default_engine()
+        conv = st.create_conversation(title=f"Strategy {market} {symbol} {tf}")
+        cid = conv.get("id") if isinstance(conv, dict) else getattr(conv, "id", None)
+        prompt = (f"Timeframe: {tf}\n" + _evidence_text(base["market"], base["symbol"], sig) +
+                  (f"\n\nSMC/ICT structure:\n{smc_text}" if smc_text else "") +
+                  "\n\nWrite the ICT playbook now (research only, not advice).")
+        res = eng.send(cid, prompt, system=STRATEGY_SYSTEM, agent="")
+        text = (res.message or {}).get("content", "") if res else ""
+        provider = (res.execution or {}).get("provider", "") if res else ""
+    except Exception as e:  # noqa: BLE001
+        text, provider = "", f"agent_error:{type(e).__name__}"
+    if not (text or "").strip():
+        text = ("Strategy engine needs the analysis brain (local Ollama or a cloud key). "
+                "Structure evidence is available below; connect a model for the written playbook.")
+    return {**base, "timeframe": tf, "smc": smc_obj, "strategy": text.strip(),
+            "provider": provider or "unknown"}
 
 
 def analyze(market: str, symbol: str) -> dict[str, Any]:

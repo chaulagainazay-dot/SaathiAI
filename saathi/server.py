@@ -6142,10 +6142,45 @@ def market_technical_analysis(body: dict = Body(...)):
 @app.post("/api/v1/market/analysis/smc")
 def market_smc_analysis(body: dict = Body(...)):
     """ICT / Smart Money Concepts structure (order blocks, FVG, BOS/CHoCH, liquidity,
-    premium/discount) from real OHLC. Descriptive research only — never advice/execution."""
+    premium/discount, inducement/IDM) from real OHLC. Descriptive research only."""
     try:
         from saathi.platform.market_data import smc
         return smc.analyze(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/analysis/strategy")
+def market_strategy(body: dict = Body(...)):
+    """ICT/SMC trading PLAYBOOK: structure mapping (15m for crypto) + potential IDM +
+    entry/invalidation/target ideas. Education/research only — never advice/execution."""
+    try:
+        from saathi.platform.market_data.technical_analysis import strategy
+        return strategy(str(body.get("market", "CRYPTO")), str(body.get("symbol", "")),
+                        str(body.get("timeframe", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/signals")
+def market_signals():
+    """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
+    setup gate — no orders, no advice; a list of where a clean ATR trend setup currently exists."""
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        watch = [("NEPSE", s) for s in ("NABIL", "HDL", "UPPER", "GBIME", "NRIC")] + \
+                [("CRYPTO", s) for s in ("BTC", "ETH", "SOL")]
+        out = []
+        for mk, sym in watch:
+            try:
+                p = pt.propose(mk, sym)
+            except Exception:
+                continue
+            if p.get("setup"):
+                out.append({"market": mk, "symbol": sym, "side": p["side"], "entry": p["entry"],
+                            "stop": p["stop"], "target": p["target"], "rr": p["planned_r"]})
+        return {"signals": out, "scanned": len(watch), "count": len(out),
+                "note": "Deterministic ATR trend setups · observation-only · not advice."}
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 

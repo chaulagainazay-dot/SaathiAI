@@ -130,6 +130,23 @@ def _liquidity(sh, sl, tol=0.003):
     return liq
 
 
+def _inducement(sh, sl, last, trend, brk):
+    """Potential IDM (inducement): the minor opposing liquidity likely swept before the real
+    move — for a bullish bias, the nearest swing low BELOW price (sell-side liquidity that gets
+    grabbed before an up leg); for bearish, the nearest swing high ABOVE price."""
+    bull_bias = trend == "UP" or (brk and brk["dir"] == "bullish")
+    bear_bias = trend == "DOWN" or (brk and brk["dir"] == "bearish")
+    if bull_bias and last is not None:
+        below = [s["price"] for s in sl if s["price"] is not None and s["price"] < last]
+        if below:
+            return {"price": max(below), "side": "sell-side", "bias": "bullish"}
+    if bear_bias and last is not None:
+        above = [s["price"] for s in sh if s["price"] is not None and s["price"] > last]
+        if above:
+            return {"price": min(above), "side": "buy-side", "bias": "bearish"}
+    return None
+
+
 def _premium_discount(highs, lows, last, window=40):
     hs = [h for h in highs[-window:] if h is not None]
     ls = [l for l in lows[-window:] if l is not None]
@@ -155,6 +172,7 @@ def detect(ohlc: list[dict]) -> dict[str, Any] | None:
     obs = _order_blocks(opens, highs, lows, closes, brk)
     liq = _liquidity(sh, sl)
     pd = _premium_discount(highs, lows, closes[-1] if closes else None)
+    idm = _inducement(sh, sl, closes[-1] if closes else None, trend, brk)
 
     return {
         "trend": trend,
@@ -165,6 +183,7 @@ def detect(ohlc: list[dict]) -> dict[str, Any] | None:
         "fair_value_gaps": [{"dir": g["dir"], "top": _rnd(g["top"]), "bottom": _rnd(g["bottom"]), "i": g["i"], "filled": g["filled"]} for g in fvg],
         "liquidity": [{"side": q["side"], "price": _rnd(q["price"])} for q in liq],
         "premium_discount": ({k: _rnd(v) if k != "current_zone" else v for k, v in pd.items()} if pd else None),
+        "inducement": ({"price": _rnd(idm["price"]), "side": idm["side"], "bias": idm["bias"]} if idm else None),
     }
 
 
@@ -182,6 +201,9 @@ def summarize(smc: dict) -> str:
         lines.append(f"- {o['dir']} order block: {o['bottom']}–{o['top']}")
     for q in smc.get("liquidity", []):
         lines.append(f"- {q['side']}-side liquidity at {q['price']}")
+    idm = smc.get("inducement")
+    if idm:
+        lines.append(f"- potential IDM (inducement): {idm['side']} liquidity at {idm['price']} likely swept before the {idm['bias']} move")
     pd = smc.get("premium_discount")
     if pd:
         lines.append(f"- dealing range {pd['low']}–{pd['high']}, equilibrium {pd['equilibrium']} (price in {pd['current_zone']})")

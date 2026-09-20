@@ -17,6 +17,8 @@ import {
   EmptyState, ErrorState, Pill, Eyebrow,
 } from "@/components/ui";
 import FinancialBrowserPanel from "@/components/finance/FinancialBrowserPanel";
+import { Candles } from "@/components/finance/ChartAnalysis";
+import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 
 const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
@@ -91,6 +93,16 @@ export default function CommandDeckPage() {
   const [taSymbol, setTaSymbol] = useState("NABIL");
   const [taResult, setTaResult] = useState(null);
   const [taLoading, setTaLoading] = useState(false);
+  const [taStrategy, setTaStrategy] = useState(null);
+  const [stratLoading, setStratLoading] = useState(false);
+
+  const runStrategy = useCallback(async (market, sym) => {
+    if (!sym.trim()) return;
+    setStratLoading(true); setTaStrategy(null);
+    const r = await api("/api/v1/market/analysis/strategy", { method: "POST", body: JSON.stringify({ market, symbol: sym.trim() }) });
+    setTaStrategy(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
+    setStratLoading(false);
+  }, []);
 
   const runTA = useCallback(async (market, sym) => {
     if (!sym.trim()) return;
@@ -303,7 +315,7 @@ export default function CommandDeckPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {/* Financial Browser */}
               <Panel style={{ padding: 0, overflow: "hidden" }}>
-                <PanelHead title="Financial Browser" right={<StatusBadge status="success" label="EMBEDDED" />} />
+                <PanelHead title="Financial Browser" right={<StatusBadge status="success" label="EMBEDDED" />} expandHref="/command-deck/browser" />
                 <FinancialBrowserPanel onPortfolio={(env) => { if (env?.available) setPortfolio(env); }} />
               </Panel>
 
@@ -344,6 +356,7 @@ export default function CommandDeckPage() {
               <Panel style={{ padding: 0 }}>
                 <PanelHead
                   title={`Chart Analysis · ${symbol}`}
+                  expandHref="/command-deck/chart"
                   right={
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       <button onClick={() => setSmcOn((v) => !v)} title="Draw ICT / Smart Money Concepts structure"
@@ -486,7 +499,7 @@ export default function CommandDeckPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {/* Trading Guardian */}
               <Panel style={{ padding: 0 }}>
-                <PanelHead title="Trading Guardian" right={<StatusBadge status="danger" label="OBSERVATION-ONLY" />} />
+                <PanelHead title="Trading Guardian" right={<StatusBadge status="danger" label="OBSERVATION-ONLY" />} expandHref="/command-deck/guardian" />
                 <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,42,42,.06)", border: "1px solid rgba(255,42,42,.28)", borderRadius: 9, padding: "11px 13px" }}>
                     <div style={{ fontSize: 22 }}>🛡️</div>
@@ -572,6 +585,10 @@ export default function CommandDeckPage() {
                 <Button size="sm" onClick={() => runTA(taMarket, taSymbol)} disabled={taLoading}>
                   {taLoading ? "Analyzing…" : "Run analysis"}
                 </Button>
+                <Button size="sm" variant="secondary" onClick={() => runStrategy(taMarket, taSymbol)} disabled={stratLoading}
+                  title="ICT playbook: 15m structure mapping (crypto) + potential IDM">
+                  {stratLoading ? "Building…" : "Strategy (ICT + IDM)"}
+                </Button>
                 <div style={{ flexGrow: 1 }} />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {["Trend", "Momentum", "Levels", "Risk"].map((a) => <Badge key={a} variant="soft" label={a} />)}
@@ -614,13 +631,42 @@ export default function CommandDeckPage() {
                 </div>
               )}
 
-              {!taResult && !taLoading && (
+              {stratLoading && <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}><Spinner size={16} /><Text tone="muted" size="sm">Building the ICT playbook ({taMarket === "CRYPTO" ? "15m structure" : "daily structure"} + IDM)…</Text></div>}
+              {!stratLoading && taStrategy && (
+                <div style={{ marginTop: 12, background: "#0b0709", border: "1px solid rgba(201,155,255,.3)", borderRadius: 10, padding: "12px 14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ color: "#c99bff", fontSize: 11, fontWeight: 700, letterSpacing: ".08em" }}>ICT STRATEGY PLAYBOOK</span>
+                    {taStrategy.timeframe && <Badge variant="soft" label={taStrategy.timeframe} />}
+                    {taStrategy.smc?.inducement && <Badge variant="soft" color="#8fb3ff" label={`IDM ${taStrategy.smc.inducement.side} ${taStrategy.smc.inducement.price}`} />}
+                    <div style={{ flexGrow: 1 }} />
+                    {taStrategy.provider && <Text tone="disabled" size="xs" mono>agent: {taStrategy.provider}</Text>}
+                  </div>
+                  {taStrategy.available === false
+                    ? <Text tone="muted" size="xs">Unavailable: {taStrategy.error}</Text>
+                    : <div style={{ whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.6, color: "#dccfd3" }}>{String(taStrategy.strategy || "").replace(/^#+\s*/gm, "").replace(/\*\*/g, "")}</div>}
+                  <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>Education/research only — not financial advice, never an execution. Same engine as Ask Saathi chat.</Text>
+                </div>
+              )}
+
+              {!taResult && !taLoading && !taStrategy && !stratLoading && (
                 <Text tone="muted" size="sm" style={{ display: "block", marginTop: 12 }}>
-                  Pick a market and symbol, then Run analysis. The desk computes real indicators from live OHLC and an agent explains them — research only, never a buy/sell call.
+                  Pick a market and symbol, then Run analysis or build a Strategy (ICT structure map + potential IDM; 15-minute for crypto). Research only, never a buy/sell call.
                 </Text>
               )}
             </div>
           </Panel>
+
+          {/* News + Signals */}
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 16 }}>
+            <Panel style={{ padding: 0 }}>
+              <PanelHead title="Market News" right={<Text tone="disabled" size="xs">research surface</Text>} />
+              <MarketNews />
+            </Panel>
+            <Panel style={{ padding: 0 }}>
+              <PanelHead title="Signals" right={<Text tone="disabled" size="xs">watchlist scan</Text>} />
+              <TradingSignals />
+            </Panel>
+          </section>
 
           {/* Paper Trading Agent (simulation) */}
           <Panel style={{ padding: 0, marginTop: 16 }}>
@@ -759,14 +805,17 @@ export default function CommandDeckPage() {
 }
 
 // ── small presentational pieces ──────────────────────────────────────────────
-function PanelHead({ title, right }) {
+function PanelHead({ title, right, expandHref }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,64,64,.12)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span className="retro-live ok" aria-hidden="true" style={{ display: "inline-block" }} />
         <span style={{ fontSize: 11, letterSpacing: ".16em", textTransform: "uppercase", color: "#b7a8ad", fontWeight: 600 }}>{title}</span>
       </div>
-      {right}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {right}
+        {expandHref && <Link href={expandHref} title="Open full screen" style={{ color: "#8f8288", fontSize: 13, textDecoration: "none" }}>⤢</Link>}
+      </div>
     </div>
   );
 }
@@ -852,106 +901,6 @@ function PlanCard({ symbol, tag, text, evidence, muted }) {
       <Text tone="muted" size="xs" style={{ display: "block", marginTop: 5, lineHeight: 1.5 }}>{text}</Text>
       <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 6 }}>evidence: {evidence} · not financial advice</Text>
     </div>
-  );
-}
-
-function Candles({ tech, trade, smc, height = 220 }) {
-  const pts = tech.pts;
-  const W = 560, pad = 10, padR = 62;           // padR: room for right-edge line labels
-  const volH = Math.round(height * 0.18), gap = 6;
-  const cBot = height - volH - gap;             // bottom of candle area / top of volume strip
-  const highs = pts.map((p) => p.h ?? p.c), lows = pts.map((p) => p.l ?? p.c);
-  const smcVals = smc ? [
-    ...(smc.fair_value_gaps || []).flatMap((g) => [g.top, g.bottom]),
-    ...(smc.order_blocks || []).flatMap((o) => [o.top, o.bottom]),
-    smc.structure_break?.price,
-    ...(smc.liquidity || []).map((q) => q.price),
-    smc.premium_discount?.high, smc.premium_discount?.low, smc.premium_discount?.equilibrium,
-  ].filter((v) => v != null) : [];
-  const extra = [tech.support, tech.resistance, trade?.entry, trade?.stop, trade?.target, ...smcVals].filter((v) => v != null);
-  const hi = Math.max(...highs, ...extra), lo = Math.min(...lows, ...extra);
-  const span = hi - lo || 1;
-  const y = (v) => pad + (hi - v) / span * (cBot - pad * 2);
-  const n = pts.length;
-  const plotW = W - padR;
-  const slot = plotW / n;
-  const bw = Math.max(2, slot * 0.6);
-  const volMax = Math.max(1, ...(tech.vols || []));
-  const linePts = (arr) => arr.map((v, i) => v == null ? null : `${(i * slot + slot / 2).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" ");
-  const HLine = ({ v, color, label, dash = "5 4" }) => (v == null ? null : (
-    <g>
-      <line x1="0" y1={y(v)} x2={plotW} y2={y(v)} stroke={color} strokeWidth="1" strokeDasharray={dash} opacity="0.9" />
-      <text x={plotW + 4} y={y(v) + 3} fill={color} fontSize="9" fontFamily="IBM Plex Mono, monospace">{label} {Math.round(v * 100) / 100}</text>
-    </g>
-  ));
-  const Band = ({ top, bottom, rgb, label, num }) => {
-    const yt = y(top), yb = y(bottom);
-    return (
-      <g>
-        <rect x="0" y={Math.min(yt, yb)} width={plotW} height={Math.max(2, Math.abs(yb - yt))} fill={`rgba(${rgb},0.10)`} stroke={`rgba(${rgb},0.4)`} strokeWidth="0.5" strokeDasharray={label === "OB" ? "3 2" : ""} />
-        <text x="3" y={Math.min(yt, yb) + 9} fill={`rgba(${rgb},0.95)`} fontSize="8" fontFamily="IBM Plex Mono, monospace">{label} {num}</text>
-      </g>
-    );
-  };
-  return (
-    <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} preserveAspectRatio="none" style={{ display: "block", background: "#0b0709", borderRadius: 8, border: "1px solid rgba(255,64,64,.1)" }}>
-      {[0.25, 0.5, 0.75].map((g) => (
-        <line key={g} x1="0" y1={pad + g * (cBot - pad * 2)} x2={plotW} y2={pad + g * (cBot - pad * 2)} stroke="rgba(255,64,64,.06)" strokeWidth="1" />
-      ))}
-      {/* ICT/SMC bands with numbers */}
-      {smc && (smc.fair_value_gaps || []).map((g, i) => (
-        <Band key={`fvg${i}`} top={g.top} bottom={g.bottom} rgb={g.dir === "bullish" ? "46,226,122" : "255,77,77"} label="FVG" num={g.bottom} />
-      ))}
-      {smc && (smc.order_blocks || []).map((o, i) => (
-        <Band key={`ob${i}`} top={o.top} bottom={o.bottom} rgb={o.dir === "bullish" ? "79,176,198" : "255,171,61"} label="OB" num={o.bottom} />
-      ))}
-      {/* candles */}
-      {pts.map((p, i) => {
-        const x = i * slot + slot / 2;
-        const up = (p.c ?? 0) >= (p.o ?? p.c ?? 0);
-        const col = up ? "#2ee27a" : "#ff4d4d";
-        const yo = y(p.o ?? p.c), yc = y(p.c);
-        const top = Math.min(yo, yc), h = Math.max(1.5, Math.abs(yc - yo));
-        return (
-          <g key={i}>
-            <line x1={x} y1={y(p.h ?? p.c)} x2={x} y2={y(p.l ?? p.c)} stroke={col} strokeWidth="1" />
-            <rect x={x - bw / 2} y={top} width={bw} height={h} fill={col} />
-          </g>
-        );
-      })}
-      {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
-      {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
-      {/* SMC lines */}
-      {smc?.structure_break && <HLine v={smc.structure_break.price} color="#c99bff" label={smc.structure_break.type} dash="1 2" />}
-      {smc && (smc.liquidity || []).map((q, i) => (
-        <HLine key={`liq${i}`} v={q.price} color="#8fb3ff" label={q.side === "buy" ? "BSL" : "SSL"} dash="1 3" />
-      ))}
-      {smc?.premium_discount && <HLine v={smc.premium_discount.equilibrium} color="#8f8288" label="EQ" dash="1 4" />}
-      {/* desk levels */}
-      <HLine v={tech.resistance} color="#ff6a6a" label="R" />
-      <HLine v={tech.support} color="#2ee27a" label="S" />
-      {trade && <HLine v={trade.entry} color="#f2e8ea" label="Entry" dash="2 3" />}
-      {trade && <HLine v={trade.target} color="#2ee27a" label="Target" dash="6 3" />}
-      {trade && <HLine v={trade.stop} color="#ff4d4d" label="Stop" dash="6 3" />}
-      {/* volume strip */}
-      {(tech.vols || []).map((v, i) => {
-        const x = i * slot + slot / 2;
-        const bh = Math.max(0.5, (v / volMax) * (volH - 2));
-        const up = (pts[i]?.c ?? 0) >= (pts[i]?.o ?? pts[i]?.c ?? 0);
-        return <rect key={`v${i}`} x={x - bw / 2} y={height - bh} width={bw} height={bh} fill={up ? "rgba(46,226,122,0.5)" : "rgba(255,77,77,0.5)"} />;
-      })}
-      {/* volume buy/sell signal markers */}
-      {(tech.volSignals || []).map((sig, i) => {
-        if (!sig) return null;
-        const x = i * slot + slot / 2;
-        if (sig === "BUY") {
-          const yb = y(pts[i].l ?? pts[i].c) + 4;
-          return <g key={`sg${i}`}><polygon points={`${x - 4},${yb + 7} ${x + 4},${yb + 7} ${x},${yb}`} fill="#2ee27a" /></g>;
-        }
-        const yt = y(pts[i].h ?? pts[i].c) - 4;
-        return <g key={`sg${i}`}><polygon points={`${x - 4},${yt - 7} ${x + 4},${yt - 7} ${x},${yt}`} fill="#ff4d4d" /></g>;
-      })}
-    </svg>
   );
 }
 

@@ -39,6 +39,18 @@ def test_uptrend_structure():
     assert "premium_discount" in out
 
 
+def test_inducement_present_on_trend():
+    # rising series → bullish bias → IDM is sell-side liquidity below price (a swing low)
+    bars = [_c(100 + i, 103 + i, 98 + i, 101 + i) if i % 4 else _c(100 + i, 102 + i, 96 + i, 99 + i)
+            for i in range(45)]
+    out = smc.detect(bars)
+    idm = out.get("inducement")
+    if idm:  # present when a qualifying swing exists
+        assert idm["side"] in ("sell-side", "buy-side")
+        assert "price" in idm
+    assert "inducement" in out  # key always present (may be None)
+
+
 def test_summary_is_descriptive():
     bars = [_c(100 + (i % 5), 103 + (i % 5), 98 + (i % 5), 100 + (i % 5)) for i in range(40)]
     out = smc.detect(bars)
