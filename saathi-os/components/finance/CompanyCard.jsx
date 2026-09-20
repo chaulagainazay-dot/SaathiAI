@@ -14,8 +14,10 @@ function api(path) {
 }
 const cr = (v) => (v == null ? "—" : (v / 1e7).toLocaleString("en-IN", { maximumFractionDigits: 0 }) + " Cr");
 
-export default function CompanyCard() {
-  const [symbol, setSymbol] = useState("NABIL");
+export default function CompanyCard({ symbol: symbolProp }) {
+  const [symbolState, setSymbol] = useState("NABIL");
+  const symbol = symbolProp ?? symbolState;
+  const controlled = symbolProp != null;
   const [input, setInput] = useState("");
   const [fund, setFund] = useState(null);
   const [divs, setDivs] = useState(null);
@@ -42,11 +44,15 @@ export default function CompanyCard() {
   return (
     <div style={{ padding: 14 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
-        <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())}
-          onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) { setSymbol(input.trim()); setInput(""); } }}
-          placeholder="Company symbol (NABIL, SCB…)"
-          style={{ fontFamily: "inherit", fontSize: 12, padding: "7px 10px", borderRadius: 8, width: 200, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
-        <Button size="sm" variant="secondary" onClick={() => { if (input.trim()) { setSymbol(input.trim()); setInput(""); } }}>Load</Button>
+        {!controlled && (
+          <>
+            <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) { setSymbol(input.trim()); setInput(""); } }}
+              placeholder="Company symbol (NABIL, SCB…)"
+              style={{ fontFamily: "inherit", fontSize: 12, padding: "7px 10px", borderRadius: 8, width: 200, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+            <Button size="sm" variant="secondary" onClick={() => { if (input.trim()) { setSymbol(input.trim()); setInput(""); } }}>Load</Button>
+          </>
+        )}
         <div style={{ flexGrow: 1 }} />
         <span style={{ fontWeight: 700, fontSize: 15 }}>{symbol}</span>
         {s?.name && <Badge variant="soft" label={s.name} />}

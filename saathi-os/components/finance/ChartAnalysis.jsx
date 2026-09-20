@@ -19,8 +19,10 @@ const pct = (n, dp = 2) => (n == null ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed
 function sma(c, p) { const o = []; let s = 0; for (let i = 0; i < c.length; i++) { s += c[i]; if (i >= p) s -= c[i - p]; o.push(i >= p - 1 ? s / p : null); } return o; }
 function rsi14(c) { if (c.length < 15) return null; let g = 0, l = 0; for (let i = 1; i <= 14; i++) { const d = c[i] - c[i - 1]; if (d >= 0) g += d; else l -= d; } g /= 14; l /= 14; for (let i = 15; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * 13 + (d > 0 ? d : 0)) / 14; l = (l * 13 + (d < 0 ? -d : 0)) / 14; } if (l === 0) return 100; return 100 - 100 / (1 + g / l); }
 
-export default function ChartAnalysis({ expanded = false, onTech }) {
-  const [symbol, setSymbol] = useState("NABIL");
+export default function ChartAnalysis({ expanded = false, onTech, symbol: symbolProp, onSymbolChange }) {
+  const [symbolState, setSymbolState] = useState("NABIL");
+  const symbol = symbolProp ?? symbolState;
+  const setSymbol = (v) => { setSymbolState(v); onSymbolChange?.(v); };
   const [symInput, setSymInput] = useState("");
   const [tfRange, setTfRange] = useState("3M");
   const [chart, setChart] = useState(null);

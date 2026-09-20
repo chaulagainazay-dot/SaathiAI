@@ -13,9 +13,12 @@ function api(path, opts = {}) {
     .then(async (r) => { let b = {}; try { b = await r.json(); } catch {} return { ok: r.ok, status: r.status, body: b }; });
 }
 
-export default function TradeDesk() {
-  const [market, setMarket] = useState("NEPSE");
-  const [symbol, setSymbol] = useState("NABIL");
+export default function TradeDesk({ market: marketProp, symbol: symbolProp }) {
+  const [marketState, setMarket] = useState("NEPSE");
+  const [symbolState, setSymbol] = useState("NABIL");
+  const market = marketProp ?? marketState;
+  const symbol = symbolProp ?? symbolState;
+  const controlled = symbolProp != null;
   const [input, setInput] = useState("");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,16 +39,20 @@ export default function TradeDesk() {
   return (
     <div style={{ padding: 14 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ display: "flex", gap: 4 }}>
-          {["NEPSE", "CRYPTO"].map((m) => (
-            <button key={m} onClick={() => { setMarket(m); setSymbol(m === "NEPSE" ? "NABIL" : "BTC"); }}
-              style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,64,64,.25)", background: m === market ? "#ff2a2a" : "transparent", color: m === market ? "#08060a" : "#b7a8ad", fontWeight: m === market ? 700 : 400 }}>{m}</button>
-          ))}
-        </div>
-        <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())}
-          onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) { setSymbol(input.trim()); setInput(""); } }}
-          placeholder={market === "NEPSE" ? "NABIL, HDL…" : "BTC, ETH, SOL…"}
-          style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 10px", borderRadius: 8, width: 160, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+        {!controlled && (
+          <>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["NEPSE", "CRYPTO"].map((m) => (
+                <button key={m} onClick={() => { setMarket(m); setSymbol(m === "NEPSE" ? "NABIL" : "BTC"); }}
+                  style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,64,64,.25)", background: m === market ? "#ff2a2a" : "transparent", color: m === market ? "#08060a" : "#b7a8ad", fontWeight: m === market ? 700 : 400 }}>{m}</button>
+              ))}
+            </div>
+            <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) { setSymbol(input.trim()); setInput(""); } }}
+              placeholder={market === "NEPSE" ? "NABIL, HDL…" : "BTC, ETH, SOL…"}
+              style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 10px", borderRadius: 8, width: 160, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+          </>
+        )}
         <Button size="sm" variant="secondary" onClick={() => load(market, symbol)} disabled={loading}>{loading ? "…" : "Refresh"}</Button>
         <div style={{ flexGrow: 1 }} />
         {data?.available && <Badge variant="soft" color={data.trend === "UPTREND" ? "#2ee27a" : data.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} label={`${symbol} · ${data.trend}`} />}
