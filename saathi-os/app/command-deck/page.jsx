@@ -43,6 +43,7 @@ const DECK_TILES = [
   { icon: "◔", label: "Price Alerts", desc: "Target crosses · on this device", href: "/command-deck/alerts" },
   { icon: "▤", label: "News", desc: "Market research surface", href: "/command-deck/news" },
   { icon: "◎", label: "Signals", desc: "Watchlist setup scan", href: "/command-deck/signals" },
+  { icon: "👁", label: "Screen Analysis", desc: "Saathi looks at your screen (vision)", href: "/command-deck/vision" },
 ];
 
 function api(path, opts = {}) {

@@ -6264,6 +6264,18 @@ def portfolio_analysis(request: Request):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/vision/analyze")
+def vision_analyze(request: Request, body: dict = Body(...)):
+    """Analyse a screenshot with Gemini Vision (owner-only). Image used once, never stored."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.vision.screen_vision import analyze_image
+        return analyze_image(str(body.get("image_b64", "")), str(body.get("question", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
