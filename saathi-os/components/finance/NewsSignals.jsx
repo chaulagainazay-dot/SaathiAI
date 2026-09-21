@@ -12,10 +12,23 @@ function api(path) {
     .then(async (r) => { let b = {}; try { b = await r.json(); } catch {} return { ok: r.ok, status: r.status, body: b }; });
 }
 
-export function MarketNews() {
+export function MarketNews({ symbol } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { (async () => { const r = await api("/api/v1/research/events?limit=8"); setData(r.ok ? r.body : { error: r.body?.error || `HTTP ${r.status}` }); setLoading(false); })(); }, []);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const path = symbol
+        ? `/api/v1/market/news?symbol=${encodeURIComponent(symbol)}&limit=8`
+        : "/api/v1/research/events?limit=8";
+      const r = await api(path);
+      if (!alive) return;
+      setData(r.ok ? r.body : { error: r.body?.error || `HTTP ${r.status}` });
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, [symbol]);
   const events = data?.events || [];
   return (
     <div style={{ padding: 14 }}>
@@ -27,10 +40,13 @@ export function MarketNews() {
         const head = e.headline || e.title || e.summary || "(event)";
         const src = e.source || e.source_name || e.provider || "";
         const when = e.published || e.created_at || e.observed_at || e.date || "";
+        const meta = [e.symbol, e.event_type, src, typeof when === "string" ? when.slice(0, 16) : ""].filter(Boolean).join(" · ");
         return (
           <div key={e.event_id || e.id || i} style={{ padding: "9px 0", borderBottom: i < events.length - 1 ? "1px solid rgba(255,64,64,.07)" : "none" }}>
-            <div style={{ fontSize: 13, color: "#f2e8ea", lineHeight: 1.4 }}>{head}</div>
-            {(src || when) && <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 3 }}>{[src, typeof when === "string" ? when.slice(0, 16) : ""].filter(Boolean).join(" · ")}</Text>}
+            <div style={{ fontSize: 13, color: "#f2e8ea", lineHeight: 1.4 }}>
+              {e.catalyst && <span title="catalyst" style={{ marginRight: 6 }}>⚠</span>}{head}
+            </div>
+            {meta && <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 3 }}>{meta}</Text>}
           </div>
         );
       })}

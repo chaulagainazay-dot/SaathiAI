@@ -11,13 +11,14 @@ const KEY = "saathi_price_alerts_v1";
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
 const write = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {} };
 
-export default function PriceAlerts() {
+export default function PriceAlerts({ symbol: symbolProp } = {}) {
   const [alerts, setAlerts] = useState([]);
-  const [sym, setSym] = useState("");
+  const [sym, setSym] = useState(symbolProp || "");
   const [target, setTarget] = useState("");
   const [dir, setDir] = useState("above");
 
   useEffect(() => { setAlerts(read()); }, []);
+  useEffect(() => { if (symbolProp) setSym(symbolProp); }, [symbolProp]);
   const save = (a) => { setAlerts(a); write(a); };
 
   const add = () => {

@@ -4,8 +4,16 @@
  * crypto. Self-contained. Research/education only, never advice or execution.
  */
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { API_BASE, afetch } from "@/lib/api";
 import { Button, Badge, Text, Spinner, EmptyState } from "@/components/ui";
+import ChartAnalysis from "@/components/finance/ChartAnalysis";
+import TradeDesk from "@/components/finance/TradeDesk";
+import BrokerDesk from "@/components/finance/BrokerDesk";
+import StockScreener from "@/components/finance/StockScreener";
+import SRScreener from "@/components/finance/SRScreener";
+import PriceAlerts from "@/components/finance/PriceAlerts";
+import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 
 function api(path, opts = {}) {
   return afetch(`${API_BASE}${path}`, { cache: "no-store", headers: { "content-type": "application/json", ...(opts.headers || {}) }, ...opts })
@@ -20,6 +28,7 @@ export default function AIAnalysis() {
   const [loading, setLoading] = useState(false);
   const [strat, setStrat] = useState(null);
   const [sLoading, setSLoading] = useState(false);
+  const [tab, setTab] = useState("chart");
 
   const runTA = useCallback(async () => {
     if (!symbol.trim()) return;
@@ -38,6 +47,15 @@ export default function AIAnalysis() {
   }, [market, symbol]);
 
   const e = res?.evidence;
+  const isNepse = market === "NEPSE";
+  const TABS = [
+    ["chart", "Live Chart"],
+    ["setup", "Trade Setup + Volume"],
+    ["news", "News"],
+    ["signals", "Signals"],
+    ...(isNepse ? [["broker", "Broker Analysis"], ["sr", "S-R Screener"], ["screener", "Stock Screener"], ["alerts", "Price Alerts"]] : []),
+  ];
+  const activeTab = TABS.some(([k]) => k === tab) ? tab : "chart";
   return (
     <div style={{ padding: 14 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -92,6 +110,36 @@ export default function AIAnalysis() {
         </div>
       )}
       {!res && !loading && !strat && !sLoading && <Text tone="muted" size="sm" style={{ display: "block", marginTop: 12 }}>Pick a market + symbol, then Run analysis or build a Strategy (ICT + IDM). Research only.</Text>}
+
+      {/* Unified workspace — every desk wired to the same symbol/market */}
+      <div style={{ marginTop: 18, border: "1px solid rgba(255,64,64,.14)", borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderBottom: "1px solid rgba(255,64,64,.12)", flexWrap: "wrap" }}>
+          <span className="retro-live ok" aria-hidden="true" style={{ display: "inline-block" }} />
+          <span style={{ fontSize: 12, fontWeight: 700 }}>{market} · {symbol}</span>
+          <Text tone="disabled" size="xs">linked desks</Text>
+          <div style={{ flexGrow: 1 }} />
+          <Link href={`/command-deck/chart?symbol=${encodeURIComponent(symbol)}`}
+            style={{ fontSize: 11, color: "#4fb0c6", textDecoration: "none", border: "1px solid rgba(79,176,198,.4)", borderRadius: 6, padding: "4px 8px" }}>↗ Full-screen chart desk</Link>
+        </div>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", padding: "10px 12px", borderBottom: "1px solid rgba(255,64,64,.1)" }}>
+          {TABS.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              style={{ fontFamily: "inherit", fontSize: 11, padding: "5px 9px", borderRadius: 100, cursor: "pointer",
+                border: "1px solid rgba(255,64,64,.2)", background: activeTab === k ? "#ff2a2a" : "transparent",
+                color: activeTab === k ? "#08060a" : "#b7a8ad", fontWeight: activeTab === k ? 700 : 400 }}>{label}</button>
+          ))}
+        </div>
+        <div>
+          {activeTab === "chart" && <div style={{ padding: 14 }}><ChartAnalysis expanded symbol={symbol} onSymbolChange={setSymbol} /></div>}
+          {activeTab === "setup" && <TradeDesk market={market} symbol={symbol} />}
+          {activeTab === "news" && <MarketNews symbol={symbol} />}
+          {activeTab === "signals" && <TradingSignals />}
+          {activeTab === "broker" && <BrokerDesk symbol={symbol} />}
+          {activeTab === "sr" && <SRScreener />}
+          {activeTab === "screener" && <StockScreener />}
+          {activeTab === "alerts" && <PriceAlerts symbol={symbol} />}
+        </div>
+      </div>
     </div>
   );
 }

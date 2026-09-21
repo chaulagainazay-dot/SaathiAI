@@ -6332,6 +6332,34 @@ def vision_analyze(request: Request, body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/news")
+def market_news(request: Request, symbol: str | None = None, limit: int = 12):
+    """Research-event news, optionally filtered to a symbol, with catalyst flags
+    (dividend / promoter lock-in / bonus / rights / AGM). Observation-only."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        import re as _re
+        from saathi import research_surface
+        events = (research_surface.events(limit=80) or {}).get("events", [])
+        cat = _re.compile(r"dividend|lock[- ]?in|promoter|bonus|right\s*share|book\s*close|agm|auction|delist", _re.I)
+        def tag(e):
+            s = (e.get("headline") or "") + " " + str(e.get("event_type") or "")
+            return bool(cat.search(s))
+        if symbol:
+            sym = symbol.strip().upper()
+            rows = [e for e in events if str(e.get("symbol") or "").upper() == sym]
+            rows.sort(key=lambda e: 0 if tag(e) else 1)
+        else:
+            rows = events
+        out = [{"symbol": e.get("symbol"), "headline": e.get("headline") or e.get("title"),
+                "event_type": e.get("event_type"), "date": e.get("event_date_normalized") or e.get("event_date_raw"),
+                "catalyst": tag(e)} for e in rows[:min(int(limit), 40)]]
+        return {"available": True, "symbol": symbol, "count": len(out), "events": out}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/signals")
 def market_signals():
     """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade

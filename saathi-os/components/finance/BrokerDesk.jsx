@@ -13,11 +13,16 @@ function api(path) {
 }
 const cr = (v) => (v == null ? "—" : (v / 1e7).toLocaleString("en-IN", { maximumFractionDigits: 2 }));
 
-export default function BrokerDesk() {
-  const [symbol, setSymbol] = useState("");
-  const [input, setInput] = useState("");
+export default function BrokerDesk({ symbol: symbolProp } = {}) {
+  const [symbol, setSymbol] = useState(symbolProp || "");
+  const [input, setInput] = useState(symbolProp || "");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Follow a controlled symbol from the parent (e.g. AI Analysis workspace).
+  useEffect(() => {
+    if (symbolProp != null) { setSymbol(symbolProp); setInput(symbolProp); }
+  }, [symbolProp]);
 
   const load = useCallback(async (sym) => {
     setLoading(true);
