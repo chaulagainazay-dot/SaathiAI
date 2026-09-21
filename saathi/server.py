@@ -6264,6 +6264,62 @@ def portfolio_analysis(request: Request):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/settings/keys")
+def settings_keys_status(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.settings import keys
+        return keys.status()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/settings/keys")
+def settings_keys_set(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.settings import keys
+        return keys.set_key(str(body.get("name", "")), str(body.get("value", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/fund/meeting")
+def fund_meeting(request: Request, body: dict = Body(...)):
+    """Convene the AI hedge-fund committee on a symbol → transcript + CEO decision."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.run_meeting(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/fund/meetings")
+def fund_meetings(request: Request, limit: int = 20):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.list_meetings(min(int(limit), 50))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/fund/meeting/{sid}")
+def fund_meeting_get(request: Request, sid: str):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.get_meeting(sid)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.post("/api/v1/vision/analyze")
 def vision_analyze(request: Request, body: dict = Body(...)):
     """Analyse a screenshot with Gemini Vision (owner-only). Image used once, never stored."""

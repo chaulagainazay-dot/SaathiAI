@@ -30,6 +30,7 @@ const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
 
 const DECK_TILES = [
+  { icon: "🏛", label: "AI Hedge Fund", desc: "Agent committee → CEO decision (live discussion)", href: "/command-deck/fund" },
   { icon: "▤", label: "Portfolio", desc: "Add · track · analyse · recommend · research", href: "/command-deck/portfolio" },
   { icon: "◈", label: "Chart Analysis", desc: "Candles · ICT/SMC · volume · full workspace", href: "/command-deck/chart" },
   { icon: "◧", label: "Financial Browser", desc: "Embedded provider browser · read-only", href: "/command-deck/browser" },
@@ -44,6 +45,7 @@ const DECK_TILES = [
   { icon: "▤", label: "News", desc: "Market research surface", href: "/command-deck/news" },
   { icon: "◎", label: "Signals", desc: "Watchlist setup scan", href: "/command-deck/signals" },
   { icon: "👁", label: "Screen Analysis", desc: "Saathi looks at your screen (vision)", href: "/command-deck/vision" },
+  { icon: "🔑", label: "API Keys", desc: "Paste a key — it starts working instantly", href: "/command-deck/settings" },
 ];
 
 function api(path, opts = {}) {

@@ -126,3 +126,11 @@ FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 # awesome-llm-apps: 100+ production AI agent & RAG patterns (cloned locally)
 AWESOME_LLM_APPS_PATH = os.getenv("AWESOME_LLM_APPS_PATH",
     str(Path.home() / "awesome-llm-apps"))
+
+# --- Owner API-key store (paste-a-key UI) ---
+# Load persisted keys (~/.saathi/keys.env) into the live environment so providers pick them up.
+try:
+    from saathi.platform.settings.keys import load_keys as _load_owner_keys
+    _load_owner_keys()
+except Exception:
+    pass
