@@ -16,6 +16,8 @@ class Provider(str, Enum):
     TMS = "TMS"
     BINANCE = "BINANCE"
     PORTFOLIO_TRACKER = "PORTFOLIO_TRACKER"
+    MEROSHARE = "MEROSHARE"
+    COINMARKETCAP = "COINMARKETCAP"
 
 
 class Actor(str, Enum):
@@ -141,6 +143,18 @@ POLICIES: dict[Provider, FinancialBrowserPolicy] = {
         allowed_paths=("/",),
         readable_regions=(),                          # holdings read UNPROVEN → none yet
         owner_only_regions=("login", "member", "tms", "order", "purchase", "settings"),
+        default_interaction_mode=InteractionMode.OWNER_CONTROL),
+    Provider.MEROSHARE: FinancialBrowserPolicy(
+        provider=Provider.MEROSHARE, allowed_domains=("meroshare.cdsc.com.np", "cdsc.com.np"),
+        allowed_paths=("/",),
+        readable_regions=(),                          # owner-authenticated demat portfolio
+        owner_only_regions=("login", "dashboard", "myshare", "portfolio", "settings", "profile"),
+        default_interaction_mode=InteractionMode.OWNER_CONTROL),
+    Provider.COINMARKETCAP: FinancialBrowserPolicy(
+        provider=Provider.COINMARKETCAP, allowed_domains=("coinmarketcap.com",),
+        allowed_paths=("/",),
+        readable_regions=(),
+        owner_only_regions=("login", "account", "watchlist", "portfolio", "settings"),
         default_interaction_mode=InteractionMode.OWNER_CONTROL),
 }
 

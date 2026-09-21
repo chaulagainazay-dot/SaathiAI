@@ -20,6 +20,7 @@ import FinancialBrowserPanel from "@/components/finance/FinancialBrowserPanel";
 import { Candles } from "@/components/finance/ChartAnalysis";
 import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 import TradeDesk from "@/components/finance/TradeDesk";
+import CommandOverview from "@/components/finance/CommandOverview";
 import StockScreener from "@/components/finance/StockScreener";
 import BrokerDesk from "@/components/finance/BrokerDesk";
 import CompanyCard from "@/components/finance/CompanyCard";
@@ -354,6 +355,9 @@ export default function CommandDeckPage() {
             <Kpi label={`${symbol} last`} value={tech.last != null ? tech.last.toFixed(2) : "—"} sub={tech.day != null ? pct(tech.day) : ""} subTone={tech.day >= 0 ? "up" : "down"} />
             <Kpi label="AI agents" value="Research · TA · Risk · Plan" small />
           </section>
+
+          {/* Unified overview — all modules at a glance */}
+          <CommandOverview />
 
         </>
       )}

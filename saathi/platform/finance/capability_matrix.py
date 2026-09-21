@@ -49,6 +49,26 @@ CAPABILITY_MATRIX: dict[str, dict] = {
         "embed": EmbedSupport.UNKNOWN.value,                # per-broker; not audited
         "note": "owner-only login (password/OTP/CAPTCHA=OWNER_PRIVATE_INPUT); no autonomous login",
     },
+    Provider.MEROSHARE.value: {
+        "public_market_data": C.UNKNOWN.value,
+        "read_only_api": C.UNSUPPORTED.value,
+        "read_only_mcp": C.UNSUPPORTED.value,
+        "account_data": C.OWNER_BROWSER_SESSION.value,      # demat/portfolio via owner login only
+        "agent_read": C.UNKNOWN.value,
+        "agent_actions": C.PROHIBITED_AGENT_ACTION.value,
+        "embed": EmbedSupport.UNKNOWN.value,
+        "note": "owner-only login (password/PIN=OWNER_PRIVATE_INPUT); no autonomous login",
+    },
+    Provider.COINMARKETCAP.value: {
+        "public_market_data": C.PUBLIC_MARKET_DATA.value,   # public crypto market pages
+        "read_only_api": C.UNKNOWN.value,
+        "read_only_mcp": C.UNSUPPORTED.value,
+        "account_data": C.OWNER_BROWSER_SESSION.value,      # watchlist/portfolio via owner login
+        "agent_read": C.UNKNOWN.value,
+        "agent_actions": C.PROHIBITED_AGENT_ACTION.value,
+        "embed": EmbedSupport.UNKNOWN.value,
+        "note": "public market pages; owner login for watchlist/portfolio (OWNER_PRIVATE_INPUT)",
+    },
 }
 
 # Component classification (Phase 47): KEEP/ADAPT/INTEGRATE/COMBINE/DEFER/REJECT
