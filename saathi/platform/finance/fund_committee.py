@@ -13,6 +13,7 @@ owner acts on themselves. Transcript persisted so the owner can watch the discus
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import threading
 import time
@@ -69,7 +70,7 @@ def _gather(market: str, symbol: str) -> dict:
             ev["fund"] = {}
     try:
         from saathi import research_surface
-        ev["news"] = (research_surface.events(limit=4) or {}).get("events", [])
+        ev["news"] = (research_surface.events(limit=80) or {}).get("events", [])
     except Exception:
         ev["news"] = []
     try:
@@ -126,8 +127,21 @@ def _agents(symbol: str, market: str, ev: dict) -> list[dict]:
         add("Research Analyst", "research", f"{symbol} is crypto — driven by flow/structure, not earnings; leaning on technical + volume + structure.")
 
     news = ev.get("news") or []
-    if news:
-        add("News Desk", "news", "Recent research: " + "; ".join((n.get("headline") or n.get("title") or "")[:70] for n in news[:3]))
+    _CAT = re.compile(r"dividend|lock[- ]?in|promoter|bonus|right\s*share|book\s*close|agm|auction|delist", re.I)
+    sym_news = [n for n in news if str(n.get("symbol") or "").upper() == symbol]
+    if sym_news:
+        catalysts = [n for n in sym_news if _CAT.search((n.get("headline") or "") + " " + str(n.get("event_type") or ""))]
+        picked = (catalysts or sym_news)[:4]
+        head = f"{symbol} news/catalysts: " + " | ".join((n.get("headline") or n.get("title") or "")[:80] for n in picked)
+        if any(re.search(r"lock[- ]?in|promoter", (n.get("headline") or "") + str(n.get("event_type") or ""), re.I) for n in sym_news):
+            head += "  ⚠ promoter lock-in/unlock event present — watch for supply."
+        add("News Desk", "news", head)
+    else:
+        mkt_cat = [n for n in news if _CAT.search((n.get("headline") or "") + " " + str(n.get("event_type") or ""))][:3]
+        if mkt_cat:
+            add("News Desk", "news", f"No {symbol}-specific filings; market catalysts: " + " | ".join((n.get("headline") or "")[:70] for n in mkt_cat))
+        else:
+            add("News Desk", "news", f"No notable dividend/promoter/bonus/rights filings for {symbol} right now.")
 
     setup = ev.get("setup") or {}
     if setup.get("setup"):

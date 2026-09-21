@@ -4,6 +4,7 @@
  * to a live group chat, ending in the CEO's decision (SWING/LONG/AVOID/WATCH). Research only.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { API_BASE, afetch } from "@/lib/api";
 import { Button, Badge, Text, Spinner, EmptyState } from "@/components/ui";
 
@@ -26,11 +27,16 @@ export default function FundCommittee() {
   const [visible, setVisible] = useState(0);      // staggered reveal count
   const [busy, setBusy] = useState(false);
   const [recent, setRecent] = useState([]);
+  const [holdings, setHoldings] = useState([]);
   const timer = useRef(null);
   const scrollRef = useRef(null);
 
   const loadRecent = useCallback(async () => { const r = await api("/api/v1/fund/meetings?limit=8"); if (r.ok) setRecent(r.body.meetings || []); }, []);
-  useEffect(() => { loadRecent(); }, [loadRecent]);
+  const loadHoldings = useCallback(async () => {
+    const r = await api("/api/v1/finance/portfolio/analysis");
+    if (r.ok && r.body?.positions) setHoldings(r.body.positions.map((p) => ({ symbol: p.symbol, market: p.market })));
+  }, []);
+  useEffect(() => { loadRecent(); loadHoldings(); }, [loadRecent, loadHoldings]);
   useEffect(() => () => timer.current && clearInterval(timer.current), []);
 
   const reveal = (msgs) => {
@@ -82,6 +88,16 @@ export default function FundCommittee() {
         <Button size="sm" onClick={convene} disabled={busy}>{busy ? "Committee meeting…" : "Convene committee"}</Button>
       </div>
 
+      {holdings.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+          <Text tone="disabled" size="xs">Your portfolio:</Text>
+          {holdings.map((h) => (
+            <button key={h.symbol} onClick={() => { setMarket(h.market || "NEPSE"); setSymbol(h.symbol); }}
+              style={{ fontFamily: "inherit", fontSize: 11, padding: "3px 9px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,64,64,.2)", background: h.symbol === symbol ? "#ff2a2a" : "transparent", color: h.symbol === symbol ? "#08060a" : "#b7a8ad" }}>{h.symbol}</button>
+          ))}
+        </div>
+      )}
+
       {busy && !result && <div style={{ display: "flex", gap: 8, alignItems: "center" }}><Spinner size={14} /><Text tone="muted" size="sm">Agents reading live data + meeting…</Text></div>}
       {result?.error && <Text tone="muted" size="sm">{result.error}</Text>}
       {!result && !busy && <EmptyState title="Convene the committee" description="The Research, Technical, Volume, Structure, Setup, Portfolio and Risk agents meet on live data; the CEO issues a decision. Research only." />}
@@ -117,6 +133,10 @@ export default function FundCommittee() {
                 <div style={{ fontSize: 18, fontWeight: 700, marginTop: 3, color: DECISION_COLOR[dec.decision] || "#f2e8ea" }}>{dec.decision.replace(/_/g, " ")}</div>
                 <Text tone="muted" size="xs" style={{ display: "block", marginTop: 2 }}>horizon: {dec.horizon}</Text>
                 <Text tone="muted" size="xs" style={{ display: "block", marginTop: 6, lineHeight: 1.5 }}>{dec.reason}</Text>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <Link href={`/command-deck/chart?symbol=${encodeURIComponent(result.symbol)}`} style={{ fontSize: 11, color: "#4fb0c6", textDecoration: "none", border: "1px solid rgba(79,176,198,.4)", borderRadius: 6, padding: "4px 8px" }}>📈 Chart</Link>
+                  <Link href="/command-deck/portfolio" style={{ fontSize: 11, color: "#ff5757", textDecoration: "none", border: "1px solid rgba(255,42,42,.3)", borderRadius: 6, padding: "4px 8px" }}>▤ Portfolio</Link>
+                </div>
                 <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 8 }}>Research verdict · not advice, not an order.</Text>
               </div>
             )}

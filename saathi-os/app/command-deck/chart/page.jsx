@@ -20,7 +20,13 @@ const TABS = [
 ];
 
 export default function ChartWorkspacePage() {
-  const [symbol, setSymbol] = useState("NABIL");
+  const [symbol, setSymbol] = useState(() => {
+    if (typeof window !== "undefined") {
+      const u = new URLSearchParams(window.location.search).get("symbol");
+      if (u) return u.toUpperCase();
+    }
+    return "NABIL";
+  });
   const [tab, setTab] = useState("setup");
 
   return (
