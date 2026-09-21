@@ -6162,6 +6162,31 @@ def market_strategy(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/strategies")
+def market_strategies_catalog():
+    """The owner's pro-trader strategy playbook (ported from crypto-signal-bot):
+    catalog of named rule sets. Research/education only, never advice."""
+    try:
+        from saathi.platform.market_data import strategy_playbook
+        return strategy_playbook.catalog()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/strategies/scan")
+def market_strategies_scan(body: dict = Body(...)):
+    """Scan one symbol (NEPSE or crypto) against every machine-scannable playbook
+    strategy; return matches with score, reasons and structural entry/stop/target.
+    Deterministic over real OHLC — research only, never advice or an order."""
+    try:
+        from saathi.platform.market_data import strategy_playbook
+        return strategy_playbook.scan(str(body.get("market", "NEPSE")),
+                                      str(body.get("symbol", "")),
+                                      str(body.get("timeframe", "1d")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.post("/api/v1/market/analysis/desk")
 def market_trade_desk(body: dict = Body(...)):
     """Trade Desk bundle: trade setup (entry/SL/target/RR + loss%/profit%), volume strength

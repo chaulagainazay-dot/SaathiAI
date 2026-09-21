@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE, afetch } from "@/lib/api";
 import { Button, Badge, Text, Spinner, EmptyState } from "@/components/ui";
+import StrategyPlaybook from "@/components/finance/StrategyPlaybook";
 
 function api(path, opts = {}) {
   return afetch(`${API_BASE}${path}`, { cache: "no-store", headers: { "content-type": "application/json", ...(opts.headers || {}) }, ...opts })
@@ -115,6 +116,13 @@ export default function TradeDesk({ market: marketProp, symbol: symbolProp }) {
             ))}
             <Text tone="disabled" size="xs" style={{ display: "block", marginTop: 6 }}>Zones from swing extrema · price often reacts here.</Text>
           </div>
+        </div>
+      )}
+
+      {/* Strategy playbook — live matches for this symbol */}
+      {!loading && data?.available && (
+        <div style={{ marginTop: 14, borderTop: "1px solid rgba(255,64,64,.12)", paddingTop: 6 }}>
+          <StrategyPlaybook market={market} symbol={symbol} compact />
         </div>
       )}
     </div>

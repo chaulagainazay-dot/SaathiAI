@@ -13,6 +13,7 @@ import BrokerDesk from "@/components/finance/BrokerDesk";
 import StockScreener from "@/components/finance/StockScreener";
 import SRScreener from "@/components/finance/SRScreener";
 import PriceAlerts from "@/components/finance/PriceAlerts";
+import StrategyPlaybook from "@/components/finance/StrategyPlaybook";
 import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 
 function api(path, opts = {}) {
@@ -51,6 +52,7 @@ export default function AIAnalysis() {
   const TABS = [
     ["chart", "Live Chart"],
     ["setup", "Trade Setup + Volume"],
+    ["strategies", "Strategy Playbook"],
     ["news", "News"],
     ["signals", "Signals"],
     ...(isNepse ? [["broker", "Broker Analysis"], ["sr", "S-R Screener"], ["screener", "Stock Screener"], ["alerts", "Price Alerts"]] : []),
@@ -132,6 +134,7 @@ export default function AIAnalysis() {
         <div>
           {activeTab === "chart" && <div style={{ padding: 14 }}><ChartAnalysis expanded symbol={symbol} onSymbolChange={setSymbol} /></div>}
           {activeTab === "setup" && <TradeDesk market={market} symbol={symbol} />}
+          {activeTab === "strategies" && <StrategyPlaybook market={market} symbol={symbol} />}
           {activeTab === "news" && <MarketNews symbol={symbol} />}
           {activeTab === "signals" && <TradingSignals />}
           {activeTab === "broker" && <BrokerDesk symbol={symbol} />}

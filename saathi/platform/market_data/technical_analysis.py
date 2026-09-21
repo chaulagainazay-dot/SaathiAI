@@ -97,11 +97,102 @@ def _atr(highs: list[float], lows: list[float], closes: list[float], period: int
     return sum(trs[-period:]) / period
 
 
+def _ema_series(values: list[float], period: int) -> list[float]:
+    """Exponential moving average series (Wilder-style seed = SMA of first `period`)."""
+    if len(values) < period or period < 1:
+        return []
+    k = 2.0 / (period + 1.0)
+    seed = sum(values[:period]) / period
+    out = [seed]
+    for v in values[period:]:
+        out.append(v * k + out[-1] * (1.0 - k))
+    return out
+
+
+def _ema(values: list[float], period: int) -> float | None:
+    s = _ema_series(values, period)
+    return s[-1] if s else None
+
+
+def _macd_hist(closes: list[float], fast: int = 12, slow: int = 26, signal: int = 9) -> float | None:
+    """MACD histogram = (EMA_fast - EMA_slow) - signal EMA of that line. Last value only."""
+    if len(closes) < slow + signal:
+        return None
+    ef = _ema_series(closes, fast)
+    es = _ema_series(closes, slow)
+    n = min(len(ef), len(es))
+    if n == 0:
+        return None
+    macd_line = [ef[-n + i] - es[-n + i] for i in range(n)]
+    sig = _ema_series(macd_line, signal)
+    if not sig:
+        return None
+    return macd_line[-1] - sig[-1]
+
+
+def _adx(highs: list[float], lows: list[float], closes: list[float], period: int = 14) -> float | None:
+    """Average Directional Index (Wilder). Returns last ADX value."""
+    n = min(len(highs), len(lows), len(closes))
+    if n < period * 2 + 1:
+        return None
+    plus_dm, minus_dm, trs = [], [], []
+    for i in range(1, n):
+        up = highs[i] - highs[i - 1]
+        dn = lows[i - 1] - lows[i]
+        plus_dm.append(up if (up > dn and up > 0) else 0.0)
+        minus_dm.append(dn if (dn > up and dn > 0) else 0.0)
+        trs.append(max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1])))
+    if len(trs) < period:
+        return None
+
+    def _wilder_smooth(xs: list[float]) -> list[float]:
+        sm = [sum(xs[:period])]
+        for x in xs[period:]:
+            sm.append(sm[-1] - sm[-1] / period + x)
+        return sm
+
+    atr_s = _wilder_smooth(trs)
+    pdm_s = _wilder_smooth(plus_dm)
+    mdm_s = _wilder_smooth(minus_dm)
+    dxs = []
+    for i in range(len(atr_s)):
+        atr = atr_s[i]
+        if atr == 0:
+            continue
+        pdi = 100.0 * pdm_s[i] / atr
+        mdi = 100.0 * mdm_s[i] / atr
+        denom = pdi + mdi
+        if denom == 0:
+            continue
+        dxs.append(100.0 * abs(pdi - mdi) / denom)
+    if len(dxs) < period:
+        return None
+    return sum(dxs[-period:]) / period
+
+
+def _vwap(highs: list[float], lows: list[float], closes: list[float], vols: list[float], window: int = 20) -> float | None:
+    """Rolling volume-weighted average price over the last `window` bars."""
+    n = min(len(highs), len(lows), len(closes), len(vols))
+    if n < 3:
+        return None
+    w = min(window, n)
+    num = 0.0
+    den = 0.0
+    for i in range(n - w, n):
+        tp = (highs[i] + lows[i] + closes[i]) / 3.0
+        num += tp * vols[i]
+        den += vols[i]
+    if den <= 0:
+        return None
+    return num / den
+
+
 def compute_signals(ohlc: list[dict]) -> dict[str, Any] | None:
     """ohlc: list of {open,high,low,close} (strings or numbers). Returns deterministic evidence."""
     closes = _f([p.get("close") for p in ohlc])
     highs = _f([p.get("high") or p.get("close") for p in ohlc])
     lows = _f([p.get("low") or p.get("close") for p in ohlc])
+    vols = _f([p.get("volume") or p.get("vol") or 0 for p in ohlc])
     if len(closes) < 5:
         return None
     last = closes[-1]
@@ -128,6 +219,9 @@ def compute_signals(ohlc: list[dict]) -> dict[str, Any] | None:
     return {
         "n_points": len(closes), "last": r(last), "change_pct": r(change_pct),
         "sma20": r(s20), "sma50": r(s50), "rsi14": r(rsi, 1),
+        "ema21": r(_ema(closes, 21)), "ema50": r(_ema(closes, 50)), "ema200": r(_ema(closes, 200)),
+        "macd_hist": r(_macd_hist(closes), 4), "adx": r(_adx(highs, lows, closes), 1),
+        "vwap": r(_vwap(highs, lows, closes, vols)),
         "trend": trend, "support": r(sup), "resistance": r(res),
         "swing_low": r(swing_low), "swing_high": r(swing_high),
         "range_low": r(range_low), "range_high": r(range_high),
@@ -148,7 +242,7 @@ def _evidence_text(market: str, symbol: str, sig: dict) -> str:
 def _fetch_nepse_ohlc(symbol: str) -> tuple[list[dict] | None, str]:
     try:
         from saathi.platform.market_data.tracker.chart import build_chart_model
-        m = build_chart_model(symbol, "3M", include_fundamentals=False, include_dividends=False)
+        m = build_chart_model(symbol, "1Y", include_fundamentals=False, include_dividends=False)
         if not m.get("available"):
             return None, m.get("status") or "TRACKER_UNAVAILABLE"
         return m.get("ohlc") or [], "NEPSE_PORTFOLIO_TRACKER · third-party historical"
@@ -166,8 +260,8 @@ def _crypto_pair(symbol: str) -> str:
     return s + "USDT"
 
 
-_TF_INTERVAL = {"15m": ("15m", "96"), "1h": ("1h", "120"), "4h": ("4h", "120"),
-                "1d": ("1d", "60"), "1w": ("1w", "60")}
+_TF_INTERVAL = {"15m": ("15m", "300"), "1h": ("1h", "300"), "4h": ("4h", "300"),
+                "1d": ("1d", "300"), "1w": ("1w", "120")}
 
 
 def _fetch_crypto_ohlc(symbol: str, timeframe: str = "1d") -> tuple[list[dict] | None, str]:
@@ -184,7 +278,7 @@ def _fetch_crypto_ohlc(symbol: str, timeframe: str = "1d") -> tuple[list[dict] |
             return None, f"UNKNOWN_CRYPTO_PAIR:{pair}"
         r.raise_for_status()
         rows = r.json()  # [[openTime, open, high, low, close, volume, ...], ...]
-        ohlc = [{"open": k[1], "high": k[2], "low": k[3], "close": k[4]} for k in rows]
+        ohlc = [{"open": k[1], "high": k[2], "low": k[3], "close": k[4], "volume": k[5]} for k in rows]
         if len(ohlc) < 5:
             return None, "CRYPTO_SERIES_TOO_SHORT"
         return ohlc, f"Binance public market data · {pair} {interval} (third-party)"
