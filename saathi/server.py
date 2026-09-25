@@ -6187,6 +6187,20 @@ def market_strategies_scan(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.post("/api/v1/market/predict/swarm")
+def market_predict_swarm(body: dict = Body(...)):
+    """Swarm crowd-simulation prediction (MiroFish idea, ported deterministic, no external
+    deps): a crowd of investor-persona archetypes read real evidence and herd over rounds
+    into an emergent direction. Research/education only — never advice or an order."""
+    try:
+        from saathi.platform.finance import crowd_sim
+        return crowd_sim.simulate(str(body.get("market", "NEPSE")),
+                                  str(body.get("symbol", "")),
+                                  int(body.get("rounds", 6)))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.post("/api/v1/market/analysis/desk")
 def market_trade_desk(body: dict = Body(...)):
     """Trade Desk bundle: trade setup (entry/SL/target/RR + loss%/profit%), volume strength

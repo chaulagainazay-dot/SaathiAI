@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import FundCommittee from "@/components/finance/FundCommittee";
+import SwarmPrediction from "@/components/finance/SwarmPrediction";
 import { Panel, Heading, Eyebrow, Text } from "@/components/ui";
 
 export default function FundPage() {
@@ -14,6 +15,14 @@ export default function FundPage() {
         Convene the committee on any symbol — Research, Technical, Volume, Structure (ICT), Setup, Portfolio and Risk agents meet on live data and the CEO issues a decision (swing / long hold / avoid / watch). Watch the discussion live. Research only, not advice.
       </Text>
       <Panel style={{ padding: 0 }}><FundCommittee /></Panel>
+
+      <div style={{ margin: "22px 0 8px" }}>
+        <Heading level={2} size="md">Swarm Prediction</Heading>
+        <Text tone="muted" size="sm" style={{ display: "block", marginTop: 4 }}>
+          A simulated investor crowd (persona archetypes) reads the same real evidence and herds over rounds into an emergent direction — the committee's decision, stress-tested against a model market crowd. Research only, not advice.
+        </Text>
+      </div>
+      <Panel style={{ padding: 0 }}><SwarmPrediction /></Panel>
     </div>
   );
 }

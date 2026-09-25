@@ -20,6 +20,7 @@ import SRScreener from "@/components/finance/SRScreener";
 import CompanyCard from "@/components/finance/CompanyCard";
 import PriceAlerts from "@/components/finance/PriceAlerts";
 import PaperTradingAgent from "@/components/finance/PaperTradingAgent";
+import SwarmPrediction from "@/components/finance/SwarmPrediction";
 import ScreenVision from "@/components/finance/ScreenVision";
 import { MarketNews, TradingSignals } from "@/components/finance/NewsSignals";
 
@@ -33,6 +34,7 @@ const pct = (n) => (n == null ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`);
 // tab key → [label, nepseOnly]
 const TABS = [
   ["analysis", "AI Analysis", false],
+  ["swarm", "Swarm Predict", false],
   ["strategy", "Strategy Playbook", false],
   ["setup", "Trade Setup + Volume", false],
   ["signals", "Signals", false],
@@ -127,6 +129,7 @@ export default function TradingAnalysisRoof() {
           </div>
           <div style={{ maxHeight: "78vh", overflowY: "auto" }}>
             {activeTab === "analysis" && <AIAnalysis market={market} symbol={symbol} auto />}
+            {activeTab === "swarm" && <SwarmPrediction market={market} symbol={symbol} auto />}
             {activeTab === "strategy" && <StrategyPlaybook market={market} symbol={symbol} />}
             {activeTab === "setup" && <TradeDesk market={market} symbol={symbol} />}
             {activeTab === "signals" && <TradingSignals />}
