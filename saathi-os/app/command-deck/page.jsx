@@ -30,21 +30,11 @@ const CHART_SYMBOLS = ["NABIL", "HDL", "UPPER", "GBIME", "NRIC"];
 const NEPSE_POLL_MS = 30000;
 
 const DECK_TILES = [
-  { icon: "🏛", label: "AI Hedge Fund", desc: "Agent committee → CEO decision (live discussion)", href: "/command-deck/fund" },
+  { icon: "◈", label: "Trading Analysis", desc: "One roof — chart · AI analysis · strategy · signals · screener · broker · company · alerts · news · screen analysis", href: "/command-deck/chart" },
   { icon: "▤", label: "Portfolio", desc: "Add · track · analyse · recommend · research", href: "/command-deck/portfolio" },
-  { icon: "◈", label: "Chart Analysis", desc: "Candles · ICT/SMC · volume · full workspace", href: "/command-deck/chart" },
-  { icon: "◧", label: "Financial Browser", desc: "Embedded provider browser · read-only", href: "/command-deck/browser" },
+  { icon: "🏛", label: "AI Hedge Fund", desc: "Agent committee → CEO decision (live discussion)", href: "/command-deck/fund" },
   { icon: "🛡", label: "Trading Guardian", desc: "No trade authority · paper agent", href: "/command-deck/guardian" },
-  { icon: "▦", label: "Stock Screener", desc: "Full market · fundamental + technical", href: "/command-deck/screener" },
-  { icon: "◨", label: "Broker Analysis", desc: "Accumulation vs distribution · floorsheet", href: "/command-deck/brokers" },
-  { icon: "◮", label: "Trade Desk", desc: "Setup · volume strength · S/R zones", href: "/command-deck/trade-desk" },
-  { icon: "◪", label: "NEPSE Tracker", desc: "Index · breadth · movers (live)", href: "/command-deck/nepse" },
-  { icon: "✦", label: "AI Analysis", desc: "TA desk + ICT/IDM strategy", href: "/command-deck/ai" },
-  { icon: "▣", label: "Company Financials", desc: "EPS · P/E · P/B · 52W · any symbol", href: "/command-deck/company" },
-  { icon: "◔", label: "Price Alerts", desc: "Target crosses · on this device", href: "/command-deck/alerts" },
-  { icon: "▤", label: "News", desc: "Market research surface", href: "/command-deck/news" },
-  { icon: "◎", label: "Signals", desc: "Watchlist setup scan", href: "/command-deck/signals" },
-  { icon: "👁", label: "Screen Analysis", desc: "Saathi looks at your screen (vision)", href: "/command-deck/vision" },
+  { icon: "◧", label: "Financial Browser", desc: "Embedded provider browser · read-only", href: "/command-deck/browser" },
   { icon: "🔑", label: "API Keys", desc: "Paste a key — it starts working instantly", href: "/command-deck/settings" },
 ];
 
