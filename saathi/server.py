@@ -6335,6 +6335,17 @@ def portfolio_remove(request: Request, body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/finance/portfolio/sector-rotation")
+def portfolio_sector_rotation(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import sector_rotation
+        return sector_rotation.rotation()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/finance/portfolio/analysis")
 def portfolio_analysis(request: Request):
     if not _fbr_authed(request):
