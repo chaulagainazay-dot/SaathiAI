@@ -34,7 +34,8 @@ export function MarketNews({ symbol } = {}) {
     <div style={{ padding: 14 }}>
       {loading && <div style={{ display: "flex", justifyContent: "center", padding: 24 }}><Spinner size={16} /></div>}
       {!loading && events.length === 0 && (
-        <EmptyState title="No research events" description={data?.error ? `Feed: ${data.error}` : "No official market research events right now."} />
+        <EmptyState title={symbol ? `No news for ${symbol}` : "No research events"}
+          description={data?.error ? `Feed: ${data.error}` : (data?.note || "No official market research events right now.")} />
       )}
       {!loading && events.map((e, i) => {
         const head = e.headline || e.title || e.summary || "(event)";
