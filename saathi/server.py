@@ -6230,6 +6230,23 @@ def market_index_chart(index: str = "NEPSE", range: str = "1Y"):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/crypto/chart")
+def market_crypto_chart(symbol: str, interval: str = "1h"):
+    """Crypto intraday/daily OHLC for charting (1m/5m/15m/1h/4h/1d/1w) via Binance public
+    market data. Shaped like the stock chart. Observation-only."""
+    try:
+        from saathi.platform.market_data import technical_analysis as ta
+        ohlc, source = ta._fetch_crypto_ohlc(symbol, (interval or "1h").lower())
+        if not ohlc:
+            return {"available": False, "symbol": symbol, "interval": interval, "error": source}
+        return {"available": True, "symbol": symbol.upper(), "interval": interval, "source": source,
+                "ohlc": [{"business_date": str(i), "open": o.get("open"), "high": o.get("high"),
+                          "low": o.get("low"), "close": o.get("close")} for i, o in enumerate(ohlc)],
+                "volume": [{"volume": o.get("volume")} for o in ohlc]}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/index/list")
 def market_index_list():
     try:

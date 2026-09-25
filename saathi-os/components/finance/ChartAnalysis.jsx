@@ -19,41 +19,61 @@ const pct = (n, dp = 2) => (n == null ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed
 function sma(c, p) { const o = []; let s = 0; for (let i = 0; i < c.length; i++) { s += c[i]; if (i >= p) s -= c[i - p]; o.push(i >= p - 1 ? s / p : null); } return o; }
 function rsi14(c) { if (c.length < 15) return null; let g = 0, l = 0; for (let i = 1; i <= 14; i++) { const d = c[i] - c[i - 1]; if (d >= 0) g += d; else l -= d; } g /= 14; l /= 14; for (let i = 15; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * 13 + (d > 0 ? d : 0)) / 14; l = (l * 13 + (d < 0 ? -d : 0)) / 14; } if (l === 0) return 100; return 100 - 100 / (1 + g / l); }
 
+const CRYPTO_TF = ["1m", "5m", "15m", "1h", "4h", "1D", "1W"];
+const RANGE_TF = ["1D", "1M", "3M", "1Y"];
+const INTRADAY = new Set(["1m", "5m", "15m", "1h", "4h", "1D"]);
+
 export default function ChartAnalysis({ expanded = false, onTech, symbol: symbolProp, onSymbolChange, market = "NEPSE" }) {
   const isIndex = market === "INDEX";
+  const isCrypto = market === "CRYPTO";
+  const intervals = isCrypto ? CRYPTO_TF : RANGE_TF;
   const [symbolState, setSymbolState] = useState("NABIL");
   const symbol = symbolProp ?? symbolState;
   const setSymbol = (v) => { setSymbolState(v); onSymbolChange?.(v); };
   const [symInput, setSymInput] = useState("");
-  const [tfRange, setTfRange] = useState("3M");
+  const [tfRange, setTfRange] = useState(isCrypto ? "1h" : "3M");
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [smcOn, setSmcOn] = useState(true);
   const [vpOn, setVpOn] = useState(true);
+  const [agentOn, setAgentOn] = useState(false);   // AI agent live auto-draw
   const [smcData, setSmcData] = useState(null);
   const [deskData, setDeskData] = useState(null);
   const [full, setFull] = useState(false);
 
-  const loadChart = useCallback(async (sym, range) => {
+  // keep timeframe valid when market changes
+  useEffect(() => { if (!intervals.includes(tfRange)) setTfRange(isCrypto ? "1h" : "3M"); }, [market]); // eslint-disable-line
+
+  const loadChart = useCallback(async (sym, tf) => {
     setLoading(true);
-    const url = isIndex
-      ? `/api/v1/market/index/chart?index=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`
-      : `/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`;
+    const url = isCrypto
+      ? `/api/v1/market/crypto/chart?symbol=${encodeURIComponent(sym)}&interval=${encodeURIComponent(tf.toLowerCase())}`
+      : isIndex
+        ? `/api/v1/market/index/chart?index=${encodeURIComponent(sym)}&range=${encodeURIComponent(tf)}`
+        : `/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=${encodeURIComponent(tf)}`;
     const r = await api(url);
     setChart(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
     setLoading(false);
-  }, [isIndex]);
+  }, [isCrypto, isIndex]);
   const loadSMC = useCallback(async (sym) => {
-    const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
+    const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market, symbol: sym }) });
     setSmcData(r.ok ? r.body : null);
-  }, []);
+  }, [market]);
   const loadDesk = useCallback(async (sym) => {
-    const r = await api("/api/v1/market/analysis/desk", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
+    const r = await api("/api/v1/market/analysis/desk", { method: "POST", body: JSON.stringify({ market, symbol: sym }) });
     setDeskData(r.ok ? r.body : null);
-  }, []);
+  }, [market]);
   useEffect(() => { loadChart(symbol, tfRange); }, [symbol, tfRange, loadChart]);
-  useEffect(() => { if (smcOn && !isIndex) loadSMC(symbol); }, [smcOn, symbol, loadSMC, isIndex]);
-  useEffect(() => { if (!isIndex) loadDesk(symbol); }, [symbol, loadDesk, isIndex]);
+  useEffect(() => { if (smcOn && (market === "NEPSE" || agentOn)) loadSMC(symbol); }, [smcOn, symbol, loadSMC, market, agentOn]);
+  useEffect(() => { if (market === "NEPSE" || agentOn) loadDesk(symbol); }, [symbol, loadDesk, market, agentOn]);
+
+  // Live refresh while the agent is drawing (faster on intraday timeframes).
+  useEffect(() => {
+    if (!agentOn) return;
+    const ms = INTRADAY.has(tfRange) ? 15000 : 45000;
+    const id = setInterval(() => { loadChart(symbol, tfRange); loadSMC(symbol); loadDesk(symbol); }, ms);
+    return () => clearInterval(id);
+  }, [agentOn, symbol, tfRange, loadChart, loadSMC, loadDesk]);
 
   const deskTrade = deskData?.trade_setup?.setup ? { entry: deskData.trade_setup.entry, stop: deskData.trade_setup.stop, target: deskData.trade_setup.target } : null;
   const deskZones = deskData?.sr_zones || null;
@@ -81,22 +101,49 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
 
   useEffect(() => { if (tech.available && onTech) onTech({ symbol, last: tech.last, day: tech.day, rsi: tech.rsi, trend: tech.trend, support: tech.support, resistance: tech.resistance }); }, [tech, symbol, onTech]);
 
+  // Agent-drawn diagonal trendlines: fit lines through the last two swing highs / lows.
+  const agentLines = useMemo(() => {
+    if (!agentOn || !tech.available) return null;
+    const pts = tech.pts, n = pts.length, k = 2;
+    if (n < 8) return null;
+    const hi = [], lo = [];
+    for (let i = k; i < n - k; i++) {
+      const h = pts[i].h ?? pts[i].c, l = pts[i].l ?? pts[i].c;
+      let isH = true, isL = true;
+      for (let j = i - k; j <= i + k; j++) { if (j === i) continue; if ((pts[j].h ?? pts[j].c) >= h) isH = false; if ((pts[j].l ?? pts[j].c) <= l) isL = false; }
+      if (isH) hi.push({ i, p: h }); if (isL) lo.push({ i, p: l });
+    }
+    const line = (sw, color, label) => { if (sw.length < 2) return null; const a = sw[sw.length - 2], b = sw[sw.length - 1]; return { i1: a.i, p1: a.p, i2: b.i, p2: b.p, color, label }; };
+    return [line(hi, "#ff6a6a", "Res"), line(lo, "#2ee27a", "Sup")].filter(Boolean);
+  }, [agentOn, tech]);
+
   const controls = (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
-      <input value={symInput} onChange={(e) => setSymInput(e.target.value.toUpperCase())}
-        onKeyDown={(e) => { if (e.key === "Enter" && symInput.trim()) { setSymbol(symInput.trim()); setSymInput(""); } }}
-        placeholder="Search stock (NABIL, NTC, SCB)…"
-        style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 10px", borderRadius: 8, width: 210, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
-      <div style={{ display: "flex", gap: 4 }}>
-        {CHART_SYMBOLS.map((s) => (
-          <button key={s} onClick={() => setSymbol(s)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 8px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,64,64,.2)", background: s === symbol ? "#ff2a2a" : "transparent", color: s === symbol ? "#08060a" : "#8f8288", fontWeight: s === symbol ? 700 : 400 }}>{s}</button>
-        ))}
-      </div>
+      {market === "NEPSE" && (
+        <>
+          <input value={symInput} onChange={(e) => setSymInput(e.target.value.toUpperCase())}
+            onKeyDown={(e) => { if (e.key === "Enter" && symInput.trim()) { setSymbol(symInput.trim()); setSymInput(""); } }}
+            placeholder="Search stock (NABIL, NTC, SCB)…"
+            style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 10px", borderRadius: 8, width: 180, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+          <div style={{ display: "flex", gap: 4 }}>
+            {CHART_SYMBOLS.map((s) => (
+              <button key={s} onClick={() => setSymbol(s)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 8px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,64,64,.2)", background: s === symbol ? "#ff2a2a" : "transparent", color: s === symbol ? "#08060a" : "#8f8288", fontWeight: s === symbol ? 700 : 400 }}>{s}</button>
+            ))}
+          </div>
+        </>
+      )}
+      {/* AI agent live auto-draw */}
+      <button onClick={() => { setAgentOn((v) => !v); setSmcOn(true); }}
+        title="AI agent auto-draws trendlines + ICT/SMC + entry/stop/target and refreshes live"
+        style={{ fontFamily: "inherit", fontSize: 11, padding: "5px 11px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,42,42,.55)", background: agentOn ? "#ff2a2a" : "transparent", color: agentOn ? "#08060a" : "#ff5757", fontWeight: 700 }}>
+        {agentOn ? "⚡ Agent drawing" : "⚡ Agent Draw"}
+      </button>
+      {agentOn && <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, color: "#2ee27a" }}><span className="retro-live ok" style={{ display: "inline-block" }} /> LIVE {tfRange}</span>}
       <div style={{ flexGrow: 1 }} />
       <button onClick={() => setSmcOn((v) => !v)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(79,176,198,.5)", background: smcOn ? "#4fb0c6" : "transparent", color: smcOn ? "#08060a" : "#4fb0c6", fontWeight: 700 }}>SMC/ICT</button>
       <button onClick={() => setVpOn((v) => !v)} title="Volume profile (volume by price)" style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 100, cursor: "pointer", border: "1px solid rgba(255,171,61,.5)", background: vpOn ? "#ffab3d" : "transparent", color: vpOn ? "#08060a" : "#ffab3d", fontWeight: 700 }}>VP</button>
       <div style={{ display: "flex", gap: 4 }}>
-        {["1M", "3M", "6M", "1Y"].map((tf) => (
+        {intervals.map((tf) => (
           <button key={tf} onClick={() => setTfRange(tf)} style={{ fontFamily: "inherit", fontSize: 11, padding: "4px 9px", borderRadius: 6, cursor: "pointer", border: "1px solid rgba(255,64,64,.2)", background: tf === tfRange ? "#140e15" : "transparent", color: tf === tfRange ? "#ff5757" : "#8f8288", fontWeight: tf === tfRange ? 700 : 400 }}>{tf}</button>
         ))}
       </div>
@@ -115,7 +162,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
             <div style={{ color: tech.day >= 0 ? "#2ee27a" : "#ff4d4d", fontSize: 13, fontWeight: 600 }}>{pct(tech.day)}</div>
             <Badge variant="soft" label={`${symbol} · ${tfRange}`} />
           </div>
-          <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} volumeProfile={vpOn} height={expanded ? 480 : 220} />
+          <Candles tech={tech} smc={(smcOn || agentOn) ? smcData?.smc : null} zones={deskZones} trade={deskTrade} trendlines={agentLines} volumeProfile={vpOn} height={expanded ? 480 : 220} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <Badge variant="soft" label={`Trend ${tech.trend}`} color={tech.trend === "UPTREND" ? "#2ee27a" : tech.trend === "DOWNTREND" ? "#ff4d4d" : "var(--status-neutral)"} />
             {tech.rsi != null && <Badge variant="soft" label={`RSI ${tech.rsi.toFixed(0)}`} color={tech.rsi > 70 ? "#ff4d4d" : tech.rsi < 30 ? "#2ee27a" : "#ffab3d"} />}
@@ -158,7 +205,7 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
               <div style={{ flexGrow: 1 }} />
               <button onClick={() => setFull(false)} style={{ fontFamily: "inherit", fontSize: 12, padding: "5px 12px", borderRadius: 6, cursor: "pointer", border: "1px solid rgba(255,42,42,.4)", background: "transparent", color: "#ff5757" }}>Close ✕</button>
             </div>
-            {tech.available ? <Candles tech={tech} smc={smcOn ? smcData?.smc : null} zones={deskZones} trade={deskTrade} volumeProfile={vpOn} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
+            {tech.available ? <Candles tech={tech} smc={(smcOn || agentOn) ? smcData?.smc : null} zones={deskZones} trade={deskTrade} trendlines={agentLines} volumeProfile={vpOn} height={520} /> : <div style={{ padding: 60, textAlign: "center", color: "#8f8288" }}>Chart unavailable.</div>}
           </div>
         </div>
       )}
@@ -183,7 +230,7 @@ function _volumeProfile(pts, vols, hi, lo, n = 20) {
   return { buckets, maxVol, pocPrice, n };
 }
 
-export function Candles({ tech, trade, smc, zones, volumeProfile = true, height = 220 }) {
+export function Candles({ tech, trade, smc, zones, trendlines, volumeProfile = true, height = 220 }) {
   const pts = tech.pts;
   const W = 560, pad = 10, padR = 62;
   const volH = Math.round(height * 0.18), gap = 6;
@@ -249,6 +296,17 @@ export function Candles({ tech, trade, smc, zones, volumeProfile = true, height 
       })}
       {tech.s50 && <polyline fill="none" stroke="#4fb0c6" strokeWidth="1.2" opacity="0.7" points={linePts(tech.s50)} />}
       {tech.s20 && <polyline fill="none" stroke="#ffab3d" strokeWidth="1.2" opacity="0.85" points={linePts(tech.s20)} />}
+      {(trendlines || []).map((tl, i) => {
+        const x1 = tl.i1 * slot + slot / 2, x2 = (n - 1) * slot + slot / 2;
+        const slope = (tl.p2 - tl.p1) / ((tl.i2 - tl.i1) || 1);
+        const pEnd = tl.p2 + slope * ((n - 1) - tl.i2);
+        return (
+          <g key={`tl${i}`}>
+            <line x1={x1} y1={y(tl.p1)} x2={x2} y2={y(pEnd)} stroke={tl.color} strokeWidth="1.4" strokeDasharray="5 3" opacity="0.9" />
+            <text x={x2 - 2} y={y(pEnd) - 3} fill={tl.color} fontSize="8" textAnchor="end" fontFamily="IBM Plex Mono, monospace">{tl.label} TL</text>
+          </g>
+        );
+      })}
       {smc?.structure_break && <HLine v={smc.structure_break.price} color="#c99bff" label={smc.structure_break.type} dash="1 2" />}
       {smc?.inducement && <HLine v={smc.inducement.price} color="#8fb3ff" label="IDM" dash="2 2" />}
       {smc && (smc.liquidity || []).map((q, i) => <HLine key={`l${i}`} v={q.price} color="#8fb3ff" label={q.side === "buy" ? "BSL" : "SSL"} dash="1 3" />)}
