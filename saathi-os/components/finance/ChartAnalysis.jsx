@@ -19,7 +19,8 @@ const pct = (n, dp = 2) => (n == null ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed
 function sma(c, p) { const o = []; let s = 0; for (let i = 0; i < c.length; i++) { s += c[i]; if (i >= p) s -= c[i - p]; o.push(i >= p - 1 ? s / p : null); } return o; }
 function rsi14(c) { if (c.length < 15) return null; let g = 0, l = 0; for (let i = 1; i <= 14; i++) { const d = c[i] - c[i - 1]; if (d >= 0) g += d; else l -= d; } g /= 14; l /= 14; for (let i = 15; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * 13 + (d > 0 ? d : 0)) / 14; l = (l * 13 + (d < 0 ? -d : 0)) / 14; } if (l === 0) return 100; return 100 - 100 / (1 + g / l); }
 
-export default function ChartAnalysis({ expanded = false, onTech, symbol: symbolProp, onSymbolChange }) {
+export default function ChartAnalysis({ expanded = false, onTech, symbol: symbolProp, onSymbolChange, market = "NEPSE" }) {
+  const isIndex = market === "INDEX";
   const [symbolState, setSymbolState] = useState("NABIL");
   const symbol = symbolProp ?? symbolState;
   const setSymbol = (v) => { setSymbolState(v); onSymbolChange?.(v); };
@@ -35,10 +36,13 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
 
   const loadChart = useCallback(async (sym, range) => {
     setLoading(true);
-    const r = await api(`/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`);
+    const url = isIndex
+      ? `/api/v1/market/index/chart?index=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`
+      : `/api/v1/market/tracker/chart?symbol=${encodeURIComponent(sym)}&range=${encodeURIComponent(range)}`;
+    const r = await api(url);
     setChart(r.ok ? r.body : { available: false, error: r.body?.error || `HTTP ${r.status}` });
     setLoading(false);
-  }, []);
+  }, [isIndex]);
   const loadSMC = useCallback(async (sym) => {
     const r = await api("/api/v1/market/analysis/smc", { method: "POST", body: JSON.stringify({ market: "NEPSE", symbol: sym }) });
     setSmcData(r.ok ? r.body : null);
@@ -48,8 +52,8 @@ export default function ChartAnalysis({ expanded = false, onTech, symbol: symbol
     setDeskData(r.ok ? r.body : null);
   }, []);
   useEffect(() => { loadChart(symbol, tfRange); }, [symbol, tfRange, loadChart]);
-  useEffect(() => { if (smcOn) loadSMC(symbol); }, [smcOn, symbol, loadSMC]);
-  useEffect(() => { loadDesk(symbol); }, [symbol, loadDesk]);
+  useEffect(() => { if (smcOn && !isIndex) loadSMC(symbol); }, [smcOn, symbol, loadSMC, isIndex]);
+  useEffect(() => { if (!isIndex) loadDesk(symbol); }, [symbol, loadDesk, isIndex]);
 
   const deskTrade = deskData?.trade_setup?.setup ? { entry: deskData.trade_setup.entry, stop: deskData.trade_setup.stop, target: deskData.trade_setup.target } : null;
   const deskZones = deskData?.sr_zones || null;

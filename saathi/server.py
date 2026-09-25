@@ -6220,6 +6220,25 @@ def market_tracker_data(dataset: str, limit: int = 0, status: str = "all"):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/index/chart")
+def market_index_chart(index: str = "NEPSE", range: str = "1Y"):
+    """NEPSE index / sub-index OHLC for charting (business_date + OHLC). Observation-only."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.index_history(index, range)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/index/list")
+def market_index_list():
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.index_list()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.get("/api/v1/market/tracker/symbol/{symbol}")
 def market_tracker_symbol(symbol: str):
     """All corporate data for one symbol: promoter lock-in/unlock, dividends, news, IPO/right."""

@@ -319,6 +319,44 @@ def _fallback_text(sig: dict) -> str:
     )
 
 
+# NEPSE index + sub-indices (tracker index_id). "NEPSE" is the whole-market index.
+INDEX_IDS = {
+    "NEPSE": 58, "SENSITIVE": 57, "FLOAT": 62, "SENSITIVE_FLOAT": 63,
+    "BANKING": 51, "HOTELS": 52, "HOTELS_AND_TOURISM": 52, "OTHERS": 53,
+    "HYDROPOWER": 54, "HYDRO": 54, "DEVELOPMENT_BANK": 55, "DEVBANK": 55,
+    "MANUFACTURING": 56, "NON_LIFE_INSURANCE": 59, "FINANCE": 60, "TRADING": 61,
+    "MICROFINANCE": 64, "LIFE_INSURANCE": 65, "MUTUAL_FUND": 66, "INVESTMENT": 67,
+}
+
+
+def _fetch_index_ohlc(symbol: str, range_: str = "1Y") -> tuple[list[dict] | None, str]:
+    """NEPSE index / sub-index daily OHLC from the tracker index-history feed."""
+    key = (symbol or "NEPSE").upper().replace(" ", "_").replace("&", "AND")
+    idx_id = INDEX_IDS.get(key)
+    if idx_id is None:
+        return None, f"UNKNOWN_INDEX:{symbol} (try NEPSE, SENSITIVE, BANKING, HYDROPOWER…)"
+    try:
+        import httpx
+        r = httpx.get("https://nepseportfoliotracker.app/api/market/indices/history",
+                      params={"index_id": idx_id, "range": range_},
+                      headers={"user-agent": "SaathiOS NEPSE observer; research-only"}, timeout=25)
+        if r.status_code != 200:
+            return None, f"INDEX_HTTP_{r.status_code}"
+        body = r.json()
+        rows = body.get("data") if isinstance(body, dict) else body
+        if isinstance(rows, dict):
+            rows = rows.get("data") or rows.get("history") or []
+        ohlc = [{"open": x.get("open_index"), "high": x.get("high_index"),
+                 "low": x.get("low_index"), "close": x.get("closing_index"),
+                 "volume": x.get("turnover_volume")} for x in (rows or [])]
+        ohlc = [o for o in ohlc if o.get("close") is not None]
+        if len(ohlc) < 5:
+            return None, "INDEX_SERIES_TOO_SHORT"
+        return ohlc, f"NEPSE index feed · {key} (nepseportfoliotracker.app)"
+    except Exception as e:  # noqa: BLE001
+        return None, f"INDEX_FEED_UNAVAILABLE:{str(e)[:80]}"
+
+
 def _gather(market: str, symbol: str, timeframe: str = "1d") -> tuple[str, str, list[dict] | None, str]:
     """Return (market, symbol, ohlc, source_or_error). Pure fetch, no compute/agent.
     timeframe applies to crypto (Binance intraday); NEPSE is daily only."""
@@ -326,7 +364,9 @@ def _gather(market: str, symbol: str, timeframe: str = "1d") -> tuple[str, str, 
     symbol = (symbol or "").strip().upper()
     if not symbol:
         return market, symbol, None, "NO_SYMBOL"
-    if market == "NEPSE":
+    if market == "INDEX":
+        ohlc, source = _fetch_index_ohlc(symbol)
+    elif market == "NEPSE":
         ohlc, source = _fetch_nepse_ohlc(symbol)
     elif market in ("CRYPTO", "BINANCE"):
         market = "CRYPTO"

@@ -138,6 +138,35 @@ def market_summary() -> dict[str, Any]:
     return {**_wrap(d, err), "summary": d}
 
 
+_INDEX_IDS = {
+    "NEPSE": 58, "SENSITIVE": 57, "FLOAT": 62, "SENSITIVE_FLOAT": 63, "BANKING": 51,
+    "HOTELS": 52, "OTHERS": 53, "HYDROPOWER": 54, "DEVELOPMENT_BANK": 55, "MANUFACTURING": 56,
+    "NON_LIFE_INSURANCE": 59, "FINANCE": 60, "TRADING": 61, "MICROFINANCE": 64,
+    "LIFE_INSURANCE": 65, "MUTUAL_FUND": 66, "INVESTMENT": 67,
+}
+
+
+def index_list() -> dict[str, Any]:
+    return {"available": True, "indices": sorted(_INDEX_IDS), **AUTHORITY}
+
+
+def index_history(index: str = "NEPSE", range_: str = "1Y") -> dict[str, Any]:
+    """Index / sub-index daily OHLC, shaped like the stock chart (business_date + OHLC)."""
+    key = (index or "NEPSE").upper().replace(" ", "_").replace("&", "AND")
+    idx_id = _INDEX_IDS.get(key)
+    if idx_id is None:
+        return {"available": False, "error": f"unknown index '{index}'", "indices": sorted(_INDEX_IDS), **AUTHORITY}
+    d, err = _get("/market/indices/history", {"index_id": idx_id, "range": range_}, cache_key=f"idxhist:{key}:{range_}")
+    if err:
+        return {"available": False, "error": err, **AUTHORITY}
+    rows = _rows(d)
+    ohlc = [{"business_date": x.get("business_date"), "open": x.get("open_index"),
+             "high": x.get("high_index"), "low": x.get("low_index"),
+             "close": x.get("closing_index"), "volume": x.get("turnover_volume")}
+            for x in rows if x.get("closing_index") is not None]
+    return {"available": True, "index": key, "range": range_, "count": len(ohlc), "ohlc": ohlc, **AUTHORITY}
+
+
 def promoter_lockins(status: str = "all", max_rows: int = 400) -> dict[str, Any]:
     """Paginated promoter share lock-in / unlock schedule (site caps 100/page)."""
     all_rows: list[dict] = []

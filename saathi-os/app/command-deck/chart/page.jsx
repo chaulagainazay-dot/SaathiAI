@@ -30,6 +30,8 @@ function api(path) {
 }
 const numOr = (v, d = null) => { const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(/,/g, "")); return Number.isFinite(n) ? n : d; };
 const pct = (n) => (n == null ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`);
+const INDICES = ["NEPSE", "SENSITIVE", "FLOAT", "BANKING", "HYDROPOWER", "MICROFINANCE", "LIFE_INSURANCE", "NON_LIFE_INSURANCE", "DEVELOPMENT_BANK", "FINANCE", "MANUFACTURING", "HOTELS", "TRADING", "INVESTMENT", "MUTUAL_FUND", "OTHERS"];
+const INDEX_TABS = new Set(["analysis", "strategy", "swarm", "signals", "news"]);
 
 // tab key → [label, nepseOnly]
 const TABS = [
@@ -69,7 +71,10 @@ export default function TradingAnalysisRoof() {
 
   const apply = useCallback((s) => { const v = (s ?? input).trim().toUpperCase(); if (v) { setSymbol(v); setInput(""); } }, [input]);
 
-  const tabs = useMemo(() => TABS.filter(([, , nepseOnly]) => market === "NEPSE" || !nepseOnly), [market]);
+  const tabs = useMemo(() => {
+    if (market === "INDEX") return TABS.filter(([k]) => INDEX_TABS.has(k));
+    return TABS.filter(([, , nepseOnly]) => market === "NEPSE" || !nepseOnly);
+  }, [market]);
   const activeTab = tabs.some(([k]) => k === tab) ? tab : "analysis";
 
   const idx = numOr(pulse?.nepse_index);
@@ -87,14 +92,21 @@ export default function TradingAnalysisRoof() {
       {/* Control bar: market + symbol search + NEPSE pulse */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "12px 0 6px" }}>
         <div style={{ display: "flex", gap: 4 }}>
-          {["NEPSE", "CRYPTO"].map((m) => (
-            <button key={m} onClick={() => { setMarket(m); apply(m === "NEPSE" ? "NABIL" : "BTC"); }}
-              style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,64,64,.25)", background: m === market ? "#ff2a2a" : "transparent", color: m === market ? "#08060a" : "#b7a8ad", fontWeight: m === market ? 700 : 400 }}>{m}</button>
+          {["NEPSE", "CRYPTO", "INDEX"].map((m) => (
+            <button key={m} onClick={() => { setMarket(m); apply(m === "NEPSE" ? "NABIL" : m === "CRYPTO" ? "BTC" : "NEPSE"); if (m === "INDEX") setTab("analysis"); }}
+              style={{ fontFamily: "inherit", fontSize: 12, padding: "6px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,64,64,.25)", background: m === market ? "#ff2a2a" : "transparent", color: m === market ? "#08060a" : "#b7a8ad", fontWeight: m === market ? 700 : 400 }}>{m === "INDEX" ? "INDEX (whole market)" : m}</button>
           ))}
         </div>
-        <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === "Enter") apply(); }}
-          placeholder={`Search ${market === "NEPSE" ? "NABIL, HDL…" : "BTC, ETH…"} — current: ${symbol}`}
-          style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 12px", borderRadius: 8, width: 260, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+        {market === "INDEX" ? (
+          <select value={symbol} onChange={(e) => setSymbol(e.target.value)}
+            style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 10px", borderRadius: 8, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }}>
+            {INDICES.map((i) => <option key={i} value={i}>{i.replace(/_/g, " ")}{i === "NEPSE" ? " (whole market)" : " index"}</option>)}
+          </select>
+        ) : (
+          <input value={input} onChange={(e) => setInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === "Enter") apply(); }}
+            placeholder={`Search ${market === "NEPSE" ? "NABIL, HDL…" : "BTC, ETH…"} — current: ${symbol}`}
+            style={{ fontFamily: "inherit", fontSize: 13, padding: "7px 12px", borderRadius: 8, width: 260, background: "#08060a", color: "#f2e8ea", border: "1px solid rgba(255,64,64,.25)", outline: "none" }} />
+        )}
         <span style={{ fontSize: 12, fontWeight: 700, color: "#f2e8ea" }}>{market} · {symbol}</span>
         <div style={{ flexGrow: 1 }} />
         {market === "NEPSE" && (
@@ -110,7 +122,7 @@ export default function TradingAnalysisRoof() {
       {/* Two-pane roof: chart + one tabbed desk */}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.5fr) minmax(0,1fr)", gap: 16, alignItems: "start", marginTop: 8 }}>
         <Panel style={{ padding: 16 }}>
-          <ChartAnalysis expanded symbol={symbol} onSymbolChange={setSymbol} />
+          <ChartAnalysis expanded market={market} symbol={symbol} onSymbolChange={setSymbol} />
         </Panel>
 
         <Panel style={{ padding: 0, position: "sticky", top: 12 }}>
