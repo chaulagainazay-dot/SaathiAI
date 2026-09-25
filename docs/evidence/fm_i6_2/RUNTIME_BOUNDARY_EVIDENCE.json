@@ -1,0 +1,92 @@
+{
+  "evidence": "fm_i6_2.runtime_boundary.v1",
+  "milestone": "FM-I6.2",
+  "phase": "A_B_pre_remediation",
+  "captured_at": "2026-08-07T08:14:41+05:45",
+  "baseline_sha": "8540e686f4a56d54b9dca8ec3d36004468fd0392",
+  "branch": "hardening/fm-i6.2-ollama-live-certification",
+  "production_certified": false,
+  "autonomous_host_mutation": false,
+  "host": {
+    "hostname": "Macs-MacBook-Pro.local",
+    "arch": "arm64",
+    "macos": "26.5.1",
+    "build": "25F80"
+  },
+  "runtime": {
+    "version_cli": "0.32.5",
+    "version_api": "0.32.5",
+    "app_version": "0.32.5",
+    "loaded_models": [],
+    "processes": [
+      {
+        "pid": 979,
+        "ppid": 1,
+        "user": "macbookpro",
+        "classification": "CLI_MANAGED_LAUNCH_AGENT",
+        "command": "/usr/local/bin/ollama serve",
+        "bind": "127.0.0.1:11434",
+        "launch_source": "gui/501/com.ajay.ollama",
+        "plist": "~/Library/LaunchAgents/com.ajay.ollama.plist",
+        "recommendation": "RETAIN"
+      },
+      {
+        "pid": 975,
+        "classification": "OLLAMA_APP_SMAPPSERVICE",
+        "command": "Squirrel background (com.ollama.ollama)",
+        "launch_source": "submitted by smd; parent com.electron.ollama",
+        "recommendation": "CLOSE_WITH_APP"
+      },
+      {
+        "pid": 987,
+        "ppid": 975,
+        "classification": "OLLAMA_APP_GUI",
+        "command": "/Applications/Ollama.app/Contents/MacOS/Ollama hidden",
+        "recommendation": "CLOSE"
+      },
+      {
+        "pid": 1010,
+        "ppid": 987,
+        "classification": "OLLAMA_APP_MANAGED_SERVER",
+        "command": "/Applications/Ollama.app/Contents/Resources/ollama serve",
+        "bind": "*:11434",
+        "recommendation": "CLOSE"
+      }
+    ]
+  },
+  "bindings": {
+    "listeners": [
+      "127.0.0.1:11434 pid=979",
+      "*:11434 pid=1010"
+    ],
+    "classification": "TRUE_WILDCARD_EXPOSURE_VIA_APP_SERVER",
+    "connect_probes": {
+      "127.0.0.1:11434": 0,
+      "192.168.1.89:11434": 0,
+      "global_ipv6_samples:11434": 0
+    }
+  },
+  "firewall": {
+    "global_state": "disabled",
+    "state_code": 0
+  },
+  "model_pin": {
+    "name": "qwen2.5:1.5b",
+    "required_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "observed_digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+    "match": true
+  },
+  "memory": {
+    "free_percent_approx": 19.74,
+    "available_mib_approx": 1616.8,
+    "swap_used_mib_approx": 3784.38,
+    "swap_total_mib": 4096.0,
+    "live_gate_ok": false
+  },
+  "preferred_final_state": {
+    "single_server": "com.ajay.ollama LaunchAgent",
+    "bind": "127.0.0.1:11434",
+    "app_closed": true,
+    "firewall_enabled": true
+  }
+}

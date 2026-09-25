@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "audit_scope": "SaathiOS voice implementation at mission start",
+  "repository": "/Users/macbookpro/SaathiAI-full-e2e",
+  "branch": "improve/saathios-private-alpha-product-excellence",
+  "starting_sha": "1d25a95c6b528f08ea5c9aa98951ae2ce7d60eb4",
+  "root_cause": {
+    "verdict": "SETUP_SURFACE_NEVER_IMPLEMENTED_AND_NAVIGATION_LINK_MISSING",
+    "details": [
+      "The global VoiceOutputProvider, VoiceRuntimeProvider, and their docks were mounted in Shell, but no /settings/voice route existed.",
+      "The general Settings page, command palette, profile/mobile surface, onboarding, and chat voice help contained no Voice Settings destination.",
+      "Chat had a separate VoiceControl reachable only after opening the chat voice panel.",
+      "The legacy /voice route is an enrollment page, not a general preference or diagnostics page.",
+      "No role gate or voice feature flag was the primary cause, and the served private-alpha browser reported both speech synthesis and recognition APIs."
+    ]
+  },
+  "storage": {
+    "preference_key": "saathi_voice_output_v1",
+    "scope": "browser profile, not server user record",
+    "safe_fields": [
+      "enabled",
+      "profileId",
+      "speakingRate",
+      "volume",
+      "browserVoiceURI",
+      "locale",
+      "inputEnabled",
+      "interruptionMode"
+    ],
+    "forbidden_fields_confirmed_absent": [
+      "audio",
+      "raw microphone data",
+      "transcript",
+      "session token",
+      "credential"
+    ],
+    "corruption_behavior": "JSON parse failure and malformed fields fall back to bounded defaults."
+  },
+  "implementations": [
+    {
+      "id": "global_voice_output",
+      "classification": "IMPLEMENTED_AND_EXPOSED",
+      "files": [
+        "saathi-os/components/voice/VoiceOutputProvider.jsx",
+        "saathi-os/components/voice/VoiceOutputDock.jsx",
+        "saathi-os/lib/voice-output.js"
+      ],
+      "architecture": "Authenticated local platform SpeechService creates bounded audio artifacts; the enabled macOS system provider invokes /usr/bin/say. Browser playback remains explicit.",
+      "network": "Loopback Saathi platform API only. No external speech provider is configured by this mission.",
+      "persistence": "Speech operations and temporary server artifacts follow existing SpeechService lifecycle; client preferences persist in browser storage."
+    },
+    {
+      "id": "settings_browser_voice_test",
+      "classification": "IMPLEMENTED_AND_EXPOSED",
+      "files": [
+        "saathi-os/app/settings/voice/page.jsx",
+        "saathi-os/lib/voice-settings.js"
+      ],
+      "architecture": "Browser speechSynthesis with runtime-discovered voices filtered to localService=true.",
+      "network": "No Saathi API request and no external provider request is made by the settings playback test.",
+      "persistence": "Only bounded non-sensitive preferences persist. Phrase text and playback state remain in page memory."
+    },
+    {
+      "id": "global_voice_runtime",
+      "classification": "BROWSER_DEPENDENT",
+      "files": [
+        "saathi-os/components/voice/VoiceRuntimeProvider.jsx",
+        "saathi-os/components/voice/VoiceRuntimeDock.jsx",
+        "saathi-os/lib/voice-runtime.js"
+      ],
+      "architecture": "Explicit getUserMedia plus browser SpeechRecognition, then transcript submission to the loopback platform voice-runtime API.",
+      "network": "Transcribed text is sent to the local Saathi platform. Browser SpeechRecognition processing locality is controlled by the browser and is not claimed local.",
+      "persistence": "Existing voice-runtime sessions and transcripts may be persisted by the local platform. MediaStream tracks are released on stop, route change, context/logout, error, and provider cleanup."
+    },
+    {
+      "id": "settings_microphone_test",
+      "classification": "BROWSER_DEPENDENT",
+      "files": [
+        "saathi-os/app/settings/voice/page.jsx"
+      ],
+      "architecture": "User-initiated getUserMedia and browser SpeechRecognition with an in-memory transcript preview and editable text fallback.",
+      "network": "SaathiOS does not upload settings-test audio or transcript. Browser recognition service locality cannot be guaranteed by SaathiOS.",
+      "persistence": "No audio or transcript persistence. Acquired tracks are stopped after permission probing, stop, recognition end/error, navigation, or context/logout."
+    },
+    {
+      "id": "chat_voice_control",
+      "classification": "CHAT_ONLY",
+      "files": [
+        "saathi-os/components/chat/VoiceControl.jsx",
+        "saathi-os/components/chat/ChatWorkspace.jsx"
+      ],
+      "architecture": "Browser SpeechRecognition and speechSynthesis with transcript turns submitted to the existing local Voice OS/ChatEngine bridge.",
+      "network": "Loopback chat/voice API plus browser-dependent recognition behavior.",
+      "persistence": "Local voice sessions/transcript turns may persist in the existing chat path. This is separate from the settings test.",
+      "interruption": "Recognition-result interruption only; not full acoustic barge-in."
+    },
+    {
+      "id": "legacy_voice_enrollment",
+      "classification": "PARTIALLY_IMPLEMENTED",
+      "files": [
+        "saathi-os/app/voice/page.jsx"
+      ],
+      "architecture": "MediaRecorder-based five-second enrollment submitted to the existing local enrollment API.",
+      "network": "Loopback API only in the inspected implementation.",
+      "persistence": "Enrollment is designed to persist a voice profile; it is not used as the new preference surface and is not newly promoted in navigation."
+    },
+    {
+      "id": "browser_nepali_tts",
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "architecture": "Runtime capability negotiation only.",
+      "reason": "The certified browser reported no local ne-* system voice. Nepali phrase text is visible, but playback is refused rather than mislabeled supported."
+    },
+    {
+      "id": "full_acoustic_barge_in",
+      "classification": "NOT_IMPLEMENTED",
+      "reason": "Output is stopped by explicit controls or microphone-start/recognition events; no continuous acoustic barge-in detector exists."
+    },
+    {
+      "id": "external_voice_provider",
+      "classification": "INTENTIONALLY_UNAVAILABLE",
+      "reason": "No external provider, paid API, provider credential, or cloud speech connection was enabled."
+    }
+  ],
+  "api_surfaces": [
+    "GET /api/v1/platform/voice/health",
+    "GET /api/v1/platform/voice/providers",
+    "GET /api/v1/platform/voice/profiles",
+    "POST /api/v1/platform/voice/speech",
+    "GET /api/v1/platform/voice/speech/{operation_id}",
+    "POST /api/v1/platform/voice/speech/{operation_id}/cancel",
+    "GET /api/v1/platform/voice/speech/{operation_id}/audio",
+    "platform voice-runtime session/listen/transcript/interrupt/stop routes",
+    "legacy /api/v1/voice/sessions routes"
+  ],
+  "tests_and_evidence": [
+    "saathi-os/lib/voice-output.test.js",
+    "saathi-os/lib/voice-settings.test.js",
+    "saathi-os/lib/e2e-voice-route-cleanup.test.js",
+    "saathi-os/lib/e2e-voice-interruption.test.js",
+    "tests/test_m74_voice_*",
+    "tests/test_m77_voice_*",
+    "tests/test_m79_voice_runtime_*",
+    "tests/test_voice_os.py",
+    "docs/e2e-functional-audit/VOICE_ARCHITECTURE.md"
+  ]
+}

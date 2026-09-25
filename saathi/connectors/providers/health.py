@@ -8,7 +8,7 @@ all layers but never collapses them.
 from __future__ import annotations
 
 import threading
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Optional
 
 from saathi.connectors.providers.models import (
@@ -54,6 +54,31 @@ class ProviderHealthTracker:
     def get(self, provider_id: str) -> ProviderHealthRecord:
         with self._lock:
             return self._rec(provider_id)
+
+    def peek(self, provider_id: str) -> Optional[ProviderHealthRecord]:
+        """Read a provider's record WITHOUT creating one. Returns None if unseen.
+
+        `get` defaults a missing provider into existence, which is correct for an
+        observation path — the first call is about to record something. It is wrong
+        for a health READ: asking "how is provider X?" must never be what causes
+        provider X to exist, or a monitoring pass would grow the registry with
+        every provider it merely asked about.
+
+        Returns a copy, so a reader cannot mutate tracked state by holding the
+        record it was given.
+        """
+        with self._lock:
+            rec = self._records.get(provider_id)
+            return None if rec is None else replace(rec)
+
+    def peek_all(self) -> dict[str, ProviderHealthRecord]:
+        """Every KNOWN provider record, copied. Creates nothing."""
+        with self._lock:
+            return {k: replace(v) for k, v in self._records.items()}
+
+    def known_provider_ids(self) -> tuple[str, ...]:
+        with self._lock:
+            return tuple(sorted(self._records))
 
     def observe_success(self, provider_id: str) -> ProviderHealthState:
         with self._lock:

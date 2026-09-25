@@ -1,0 +1,126 @@
+{
+  "mission": "V-NEXT-2B.4",
+  "gates": {
+    "en_intent_min": 0.7,
+    "ne_intent_min": 0.6,
+    "mix_intent_min": 0.6,
+    "ne_first_span_min": 0.5,
+    "ne_cer_max": 0.45,
+    "numeric_fidelity_min": 0.7
+  },
+  "whisper_cs_small": {
+    "candidate": "bijay-small-ne-en-v3.1 (historical 2B.3)",
+    "source": "/Users/macbookpro/SaathiAI-voice-next-2b3/tools/voice-stt-bench/results/v-next-2b3/bijay-small-ne-en-v3.1-ct2_auto.json",
+    "cold_load_s": 0.19496891600000055,
+    "peak_rss_mib": 1433.46875,
+    "latency": {
+      "p50": 2.1400577919999932,
+      "p95": 3.0921159159999974,
+      "worst": 18.82833016700002,
+      "n": 55
+    },
+    "en": {
+      "n": 25,
+      "mean_wer": 0.38,
+      "mean_cer": 0.16468013468013468,
+      "intent_rate": 0.8,
+      "first_span_rate": 0.68,
+      "term_preservation": 0.5714285714285714
+    },
+    "ne": {
+      "n": 7,
+      "mean_wer": 0.5904761904761905,
+      "mean_cer": 0.44469289969289966,
+      "intent_rate": 0.5714285714285714,
+      "first_span_rate": 0.7142857142857143,
+      "term_preservation": 0.0
+    },
+    "mix": {
+      "n": 23,
+      "mean_wer": 0.6040027605244996,
+      "mean_cer": 0.4183599309133349,
+      "intent_rate": 0.5217391304347826,
+      "first_span_rate": 0.4782608695652174,
+      "term_preservation": 0.34375
+    },
+    "numeric_fidelity_mean": 0.3976190476190476,
+    "classification": "ENGLISH_ONLY_QUALIFIED",
+    "note": "Historical control — not re-run"
+  },
+  "omnilingual_ctc_300m": {
+    "candidate": "omniASR-CTC-300M",
+    "cold_load_s": 1.2820656659969245,
+    "peak_rss_mib": 1623.75,
+    "latency": {
+      "p50": 3.7083439999987604,
+      "p95": 7.82838704200185,
+      "worst": 11.349336166997091,
+      "n": 70
+    },
+    "en": {
+      "n": 30,
+      "mean_wer": 1.0344444444444443,
+      "mean_cer": 0.8723989609230572,
+      "intent_rate": 0.03333333333333333,
+      "first_span_rate": 0.03333333333333333,
+      "term_preservation": 0.11764705882352941
+    },
+    "ne": {
+      "n": 10,
+      "mean_wer": 1.04,
+      "mean_cer": 0.795013986013986,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.1,
+      "term_preservation": 0.0
+    },
+    "mix": {
+      "n": 30,
+      "mean_wer": 0.9457142857142856,
+      "mean_cer": 0.6464737589583314,
+      "intent_rate": 0.06666666666666667,
+      "first_span_rate": 0.03333333333333333,
+      "term_preservation": 0.175
+    },
+    "owner": {
+      "n": 15,
+      "mean_wer": 1.1033333333333333,
+      "mean_cer": 0.9561894771894772,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    },
+    "numeric_fidelity_mean": 0.0,
+    "gates": {
+      "en_ok": false,
+      "ne_intent_ok": false,
+      "ne_first_ok": false,
+      "ne_cer_ok": false,
+      "mix_ok": false,
+      "numeric_ok": false,
+      "ne_passed": false,
+      "universal": false
+    }
+  },
+  "head_to_head": {
+    "en_intent": {
+      "whisper": 0.8,
+      "omni": 0.03333333333333333
+    },
+    "ne_intent": {
+      "whisper": 0.5714285714285714,
+      "omni": 0.0
+    },
+    "mix_intent": {
+      "whisper": 0.5217391304347826,
+      "omni": 0.06666666666666667
+    },
+    "numeric": {
+      "whisper": 0.3976190476190476,
+      "omni": 0.0
+    },
+    "rss": {
+      "whisper": 1433.46875,
+      "omni": 1623.75
+    }
+  }
+}

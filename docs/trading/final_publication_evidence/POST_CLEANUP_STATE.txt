@@ -1,0 +1,26 @@
+=== POST CLEANUP ===
+ M docs/evidence/m25/LATEST_ENVIRONMENT_OBSERVATION.json
+ M docs/evidence/m25/LIVE_CERT_EVIDENCE.json
+ M docs/evidence/m25/LIVE_CERT_SUMMARY.md
+ M docs/evidence/m27/connector_events.jsonl
+ M docs/evidence/m28/deprecation_events.jsonl
+ M docs/trading/final_publication_evidence/GITHUB_PUSH_SUMMARY.json
+?? docs/design-spec/
+?? docs/trading/final_publication_evidence/CLEANUP_ACTIONS.json
+?? docs/trading/final_publication_evidence/CLEANUP_CANDIDATES.json
+?? docs/trading/final_publication_evidence/POST_CLEANUP_STATE.txt
+?? docs/trading/final_publication_evidence/RECOVERABILITY_MANIFEST.json
+?? docs/trading/m312_m319_evidence/cg_evidence.db
+milestone/m312-m319-connectivity-governance
+a07c1b98dc9c92ac7f8ee48f2bc3f8cd9b47313b
+a07c1b98dc9c92ac7f8ee48f2bc3f8cd9b47313b	refs/heads/milestone/m312-m319-connectivity-governance
+=== SMOKE ===
+..............................                                           [100%]
+30 passed in 0.48s
+TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS GOVERNANCE_ONLY
+SOURCE_OK
+GIT_OK
+DESIGN_SPEC_PRESERVED
+CG_DB_PRESERVED
+NEXT_REMOVED
+PYTEST_CACHE_REMOVED (recreated by smoke then re-deleted)

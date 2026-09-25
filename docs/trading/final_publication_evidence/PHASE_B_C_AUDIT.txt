@@ -1,0 +1,97 @@
+=== REQUIRED FILES TRACKED ===
+      22
+saathi/platform/tg/connectivity_governance/__init__.py
+saathi/platform/tg/connectivity_governance/account_scope.py
+saathi/platform/tg/connectivity_governance/approval_policy.py
+saathi/platform/tg/connectivity_governance/approval_records.py
+saathi/platform/tg/connectivity_governance/authority.py
+saathi/platform/tg/connectivity_governance/canary_policy.py
+saathi/platform/tg/connectivity_governance/certification.py
+saathi/platform/tg/connectivity_governance/charter.py
+saathi/platform/tg/connectivity_governance/credential_policy.py
+saathi/platform/tg/connectivity_governance/emergency_shutdown.py
+saathi/platform/tg/connectivity_governance/errors.py
+saathi/platform/tg/connectivity_governance/incident_response.py
+saathi/platform/tg/connectivity_governance/jurisdiction.py
+saathi/platform/tg/connectivity_governance/maturity.py
+saathi/platform/tg/connectivity_governance/models.py
+saathi/platform/tg/connectivity_governance/provider_capabilities.py
+saathi/platform/tg/connectivity_governance/provider_registry.py
+saathi/platform/tg/connectivity_governance/revocation.py
+saathi/platform/tg/connectivity_governance/scope_policy.py
+saathi/platform/tg/connectivity_governance/service.py
+saathi/platform/tg/connectivity_governance/storage.py
+saathi/platform/tg/connectivity_governance/threat_model.py
+---
+docs/trading/CONNECTIVITY_GOVERNANCE_CHARTER.md
+docs/trading/M312_M319_CONNECTIVITY_GOVERNANCE.md
+      31
+docs/AUTONOMOUS_ROADMAP.md
+docs/CAPABILITY_MATURITY_MATRIX.md
+docs/autonomous/LOOP_STATE.json
+docs/trading/TRADING_GUARDIAN_MASTER_ROADMAP.md
+=== COMMIT VERIFY ===
+OK b974605
+OK 0b30ab4
+OK f1a4832
+OK 609cb21
+OK ea9a5ac
+OK 7fa568f
+OK 39084ae
+OK 74a45fd
+OK 08b2d9c
+OK e50fb4e
+=== LOOP_STATE ===
+TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION GOVERNANCE_ONLY 08b2d9c0c17fe6e9f16a98422b230452dbe1cfb7 08b2d9c0c17fe6e9f16a98422b230452dbe1cfb7
+=== SECRET SCAN (tracked source, no values) ===
+saathi-os/app/trading/connectivity-governance/page.jsx:105:            {/* Explicitly NO secret-entry fields, no password, no api_key inputs */}
+saathi/platform/tg/connectivity_governance/certification.py:119:        svc.reject_raw_credential("api_key", "sk_test_xxx")
+saathi/platform/tg/connectivity_governance/certification.py:126:        svc.scan_secrets({"api_key": "secret12345"})
+saathi/platform/tg/connectivity_governance/credential_policy.py:29:    re.compile(r"(?i)(password|passphrase)\s*[:=]\s*\S+"),
+saathi/platform/tg/connectivity_governance/credential_policy.py:38:    return n in FORBIDDEN_SECRET_FIELDS or any(f in n for f in ("password", "secret", "private_key", "api_key"))
+saathi/platform/tg/connectivity_governance/credential_policy.py:118:                "raw_api_keys", "raw_secrets", "passwords", "oauth_refresh_tokens",
+saathi/platform/tg/connectivity_governance/credential_policy.py:119:                "private_keys", "recovery_codes", "session_cookies", "bearer_tokens",
+saathi/platform/tg/connectivity_governance/models.py:141:    "real_api_key_accept",
+saathi/platform/tg/connectivity_governance/models.py:161:    "api_key", "api_secret", "secret_key", "private_key",
+saathi/platform/tg/connectivity_governance/models.py:162:    "access_token", "refresh_token", "bearer_token",
+saathi/platform/tg/connectivity_governance/models.py:163:    "password", "passphrase", "session_cookie",
+saathi/platform/tg/connectivity_governance/models.py:164:    "recovery_code", "oauth_code", "broker_password",
+saathi/platform/tg/connectivity_governance/models.py:165:    "client_secret", "signing_key",
+saathi/platform/tg/connectivity_governance/provider_registry.py:48:    "api_key_header",  # documented method only — not usable this milestone
+saathi/platform/tg/connectivity_governance/provider_registry.py:91:        "authentication_methods": ["api_key_header", "oauth2_authorization_code"],
+saathi/platform/tg/connectivity_governance/provider_registry.py:98:        "credential_types": ["api_key_secret_pair"],
+saathi/platform/tg/connectivity_governance/provider_registry.py:134:        "credential_types": ["username_password", "oauth"],
+saathi/platform/tg/connectivity_governance/provider_registry.py:158:        "authentication_methods": ["hmac_signature", "api_key_header"],
+saathi/platform/tg/connectivity_governance/provider_registry.py:165:        "credential_types": ["api_key_secret_pair"],
+saathi/platform/tg/connectivity_governance/service.py:333:                "enter_api_key",
+saathi/platform/tg/connectivity_governance/service.py:334:                "enter_password",
+saathi/platform/tg/connectivity_governance/service.py:465:        return self.reject_raw_credential("api_key", value)
+saathi/platform/tg/connectivity_governance/storage.py:72:    "api_key", "api_secret", "password", "secret", "token", "private_key",
+saathi/platform/tg/connectivity_governance/storage.py:73:    "access_token", "refresh_token", "oauth_code", "balance", "position",
+saathi/platform/tg/connectivity_governance/storage.py:116:            if bad in low and bad not in ("token",):  # allow 'token' only if not access_token etc.
+saathi/platform/tg/connectivity_governance/storage.py:119:                    "api_key", "api_secret", "password", "private_key",
+saathi/platform/tg/connectivity_governance/storage.py:120:                    "access_token", "refresh_token", "bearer_token",
+saathi/platform/tg/connectivity_governance/storage.py:121:                    "client_secret", "secret_key",
+saathi/platform/tg/connectivity_governance/storage.py:126:            "api_key", "api_secret", "password", "private_key",
+saathi/platform/tg/connectivity_governance/storage.py:127:            "access_token", "refresh_token", "oauth_code", "broker_password",
+saathi/platform/tg/connectivity_governance/storage.py:183:            for f in ("api_key", "api_secret", "password", "private_key", "access_token", "refresh_token", "balance", "position"):
+tests/test_m312_m319_connectivity_governance.py:201:    r = svc.reject_raw_credential("api_key", "sk_test_abc")
+tests/test_m312_m319_connectivity_governance.py:208:        svc.scan_secrets({"api_key": "supersecretvalue"})
+tests/test_m312_m319_connectivity_governance.py:233:        svc.store.execute("INSERT INTO cg_meta(key, value, updated_at) VALUES('api_key','x',0)")
+tests/test_m312_m319_connectivity_governance.py:292:    assert "enter_api_key" in d["forbidden_ui_actions"]
+=== DIFF STAT (uncommitted) ===
+ .../m25/LATEST_ENVIRONMENT_OBSERVATION.json        |  36 ++++---
+ docs/evidence/m25/LIVE_CERT_EVIDENCE.json          |  78 ++++++++++----
+ docs/evidence/m25/LIVE_CERT_SUMMARY.md             |   6 +-
+ docs/evidence/m27/connector_events.jsonl           | 120 +++++++++++++++++++++
+ docs/evidence/m28/deprecation_events.jsonl         | 102 ++++++++++++++++++
+ 5 files changed, 300 insertions(+), 42 deletions(-)
+=== design-spec listing ===
+docs/design-spec/vol-06-08-language.md
+docs/design-spec/vol-13-15-experience.md
+docs/design-spec/DHAAGO_DESIGN_BIBLE.md
+docs/design-spec/vol-09-12-behavior.md
+docs/design-spec/vol-01-02-foundation.md
+docs/design-spec/vol-03-05-structure.md
+docs/design-spec/vol-16-18-engineering.md
+-rw-r--r--@ 1 macbookpro  staff  114688 Jul 30 20:12 docs/trading/m312_m319_evidence/cg_evidence.db

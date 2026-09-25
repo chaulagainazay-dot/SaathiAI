@@ -1,0 +1,337 @@
+"""Offline-only mock and replay transport abstractions.
+
+No network transport class exists in this package.
+"""
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from copy import deepcopy
+from dataclasses import dataclass
+from threading import RLock
+from typing import Any, Callable, Iterable, Mapping
+
+from saathi.platform.tg.provider_contracts.errors import (
+    ProviderContractError,
+    ProviderErrorCode,
+)
+from saathi.platform.tg.provider_contracts.models import (
+    ProviderRequest,
+    ProviderResponse,
+    ResponseStatus,
+    TransportKind,
+    digest,
+)
+from saathi.platform.tg.provider_contracts.schema import validate_response
+from saathi.platform.tg.provider_contracts.schema import validate_replay_fixture_payload
+
+Resolver = Callable[[str, Mapping[str, Any]], tuple[str, dict[str, Any]]]
+
+
+class ProviderTransport(ABC):
+    network_enabled = False
+
+    @property
+    @abstractmethod
+    def kind(self) -> TransportKind:
+        raise NotImplementedError
+
+    @abstractmethod
+    def send(self, request: ProviderRequest) -> ProviderResponse:
+        raise NotImplementedError
+
+
+class _IdempotencyLedger:
+    def __init__(self) -> None:
+        self._entries: dict[str, tuple[str, ProviderResponse]] = {}
+        self._lock = RLock()
+
+    def lookup(self, request: ProviderRequest) -> ProviderResponse | None:
+        with self._lock:
+            existing = self._entries.get(request.idempotency_key)
+            if existing is None:
+                return None
+            fingerprint, response = existing
+            if fingerprint != request.fingerprint:
+                raise ProviderContractError(
+                    ProviderErrorCode.IDEMPOTENCY_CONFLICT,
+                    "Idempotency key was already used for a different request",
+                    details={"idempotency_key": request.idempotency_key},
+                )
+            return deepcopy(response)
+
+    def save(self, request: ProviderRequest, response: ProviderResponse) -> ProviderResponse:
+        with self._lock:
+            existing = self.lookup(request)
+            if existing is not None:
+                return existing
+            self._entries[request.idempotency_key] = (
+                request.fingerprint,
+                deepcopy(response),
+            )
+            return deepcopy(response)
+
+    def size(self) -> int:
+        with self._lock:
+            return len(self._entries)
+
+
+class MockTransport(ProviderTransport):
+    def __init__(self, provider_id: str, resolver: Resolver):
+        self.provider_id = provider_id
+        self._resolver = resolver
+        self._idempotency = _IdempotencyLedger()
+
+    @property
+    def kind(self) -> TransportKind:
+        return TransportKind.MOCK
+
+    def send(self, request: ProviderRequest) -> ProviderResponse:
+        if request.provider_id != self.provider_id:
+            raise ProviderContractError(
+                ProviderErrorCode.INVALID_REQUEST,
+                "Request provider does not match mock transport",
+            )
+        cached = self._idempotency.lookup(request)
+        if cached is not None:
+            return cached
+        fixture_id, data = self._resolver(request.operation, request.params)
+        response = validate_response(ProviderResponse(
+            provider_id=request.provider_id,
+            request_id=request.request_id,
+            operation=request.operation,
+            status=ResponseStatus.OK,
+            data=data,
+            error=None,
+            transport=self.kind,
+            fixture_id=fixture_id,
+        ))
+        return self._idempotency.save(request, response)
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind.value,
+            "network_enabled": False,
+            "protocol": "in_process_fixture_resolver",
+            "idempotency_entries": self._idempotency.size(),
+        }
+
+
+@dataclass(frozen=True)
+class ReplayRecord:
+    fixture_id: str
+    provider_id: str
+    operation: str
+    params: Mapping[str, Any]
+    response_data: Mapping[str, Any]
+    integrity_hash: str | None = None
+
+    @property
+    def request_fingerprint(self) -> str:
+        return digest({
+            "provider_id": self.provider_id,
+            "operation": self.operation,
+            "params": dict(self.params),
+        })
+
+    @property
+    def recorded_response_hash(self) -> str:
+        return self.integrity_hash or self.computed_response_hash
+
+    @property
+    def computed_response_hash(self) -> str:
+        return digest({
+            "fixture_id": self.fixture_id,
+            "response_data": dict(self.response_data),
+        })
+
+    @property
+    def integrity_valid(self) -> bool:
+        return self.recorded_response_hash == self.computed_response_hash
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fixture_id": self.fixture_id,
+            "recorded_request": {
+                "provider_id": self.provider_id,
+                "operation": self.operation,
+                "params": dict(self.params),
+            },
+            "recorded_response_hash": self.recorded_response_hash,
+            "integrity_valid": self.integrity_valid,
+            "credentialless": True,
+            "network_capture": False,
+        }
+
+
+class ReplayTransport(ProviderTransport):
+    def __init__(self, provider_id: str, records: Iterable[ReplayRecord]):
+        self.provider_id = provider_id
+        self._records: dict[str, ReplayRecord] = {}
+        for record in records:
+            validate_replay_fixture_payload({
+                "fixture_id": record.fixture_id,
+                "provider_id": record.provider_id,
+                "operation": record.operation,
+                "params": record.params,
+                "response_data": record.response_data,
+                "recorded_response_hash": record.recorded_response_hash,
+            })
+            if record.provider_id != provider_id:
+                raise ProviderContractError(
+                    ProviderErrorCode.INVALID_RESPONSE,
+                    "Replay record provider mismatch",
+                )
+            if record.request_fingerprint in self._records:
+                raise ProviderContractError(
+                    ProviderErrorCode.FIXTURE_CONFLICT,
+                    "Duplicate replay request fixture",
+                )
+            if not record.integrity_valid:
+                raise ProviderContractError(
+                    ProviderErrorCode.REPLAY_INTEGRITY_FAILURE,
+                    "Replay fixture integrity check failed",
+                    details={"fixture_id": record.fixture_id},
+                )
+            if (
+                record.response_data.get("source_type") != "REPLAY"
+                or record.response_data.get("live") is not False
+                or record.response_data.get("synthetic") is not True
+            ):
+                raise ProviderContractError(
+                    ProviderErrorCode.INVALID_RESPONSE,
+                    "Replay fixture provenance violates offline-only policy",
+                    details={"fixture_id": record.fixture_id},
+                )
+            self._records[record.request_fingerprint] = record
+        if not self._records:
+            raise ProviderContractError(
+                ProviderErrorCode.TRANSPORT_UNAVAILABLE,
+                "Replay transport requires at least one validated fixture",
+            )
+        self._idempotency = _IdempotencyLedger()
+
+    @property
+    def kind(self) -> TransportKind:
+        return TransportKind.REPLAY
+
+    @staticmethod
+    def _match_key(request: ProviderRequest) -> str:
+        return digest({
+            "provider_id": request.provider_id,
+            "operation": request.operation,
+            "params": dict(request.params),
+        })
+
+    def send(self, request: ProviderRequest) -> ProviderResponse:
+        if request.provider_id != self.provider_id:
+            raise ProviderContractError(
+                ProviderErrorCode.INVALID_REQUEST,
+                "Request provider does not match replay transport",
+            )
+        cached = self._idempotency.lookup(request)
+        if cached is not None:
+            return cached
+        record = self._records.get(self._match_key(request))
+        if record is None:
+            raise ProviderContractError(
+                ProviderErrorCode.FIXTURE_MISSING,
+                "No recorded fixture matches the request",
+                details={"operation": request.operation},
+            )
+        if not record.integrity_valid:
+            raise ProviderContractError(
+                ProviderErrorCode.REPLAY_INTEGRITY_FAILURE,
+                "Replay fixture integrity check failed",
+                details={"fixture_id": record.fixture_id},
+            )
+        response = validate_response(ProviderResponse(
+            provider_id=request.provider_id,
+            request_id=request.request_id,
+            operation=request.operation,
+            status=ResponseStatus.OK,
+            data=deepcopy(record.response_data),
+            error=None,
+            transport=self.kind,
+            fixture_id=record.fixture_id,
+        ))
+        return self._idempotency.save(request, response)
+
+    def manifest(self) -> list[dict[str, Any]]:
+        return [
+            record.to_dict()
+            for record in sorted(self._records.values(), key=lambda item: item.fixture_id)
+        ]
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind.value,
+            "network_enabled": False,
+            "protocol": "recorded_fixture_replay",
+            "fixture_count": len(self._records),
+            "integrity_verified": all(record.integrity_valid for record in self._records.values()),
+            "idempotency_entries": self._idempotency.size(),
+        }
+
+
+class TransportRegistry:
+    """Closed registry for in-process mock and validated replay transports."""
+
+    ALLOWED_KINDS = frozenset({TransportKind.MOCK, TransportKind.REPLAY})
+
+    def __init__(self) -> None:
+        self._transports: dict[str, ProviderTransport] = {}
+
+    def register(self, name: str, transport: ProviderTransport) -> None:
+        reject_transport_kind(name)
+        if transport.kind.value != name or transport.kind not in self.ALLOWED_KINDS:
+            raise ProviderContractError(
+                ProviderErrorCode.TRANSPORT_FORBIDDEN,
+                "Transport registration does not match the strict allowlist",
+            )
+        if transport.network_enabled is not False:
+            raise ProviderContractError(
+                ProviderErrorCode.TRANSPORT_FORBIDDEN,
+                "Network-enabled transports are forbidden",
+            )
+        if name in self._transports:
+            raise ProviderContractError(
+                ProviderErrorCode.FIXTURE_CONFLICT,
+                "Transport name is already registered",
+                details={"transport": name},
+            )
+        self._transports[name] = transport
+
+    def get(self, name: str) -> ProviderTransport:
+        reject_transport_kind(name)
+        transport = self._transports.get(name)
+        if transport is None:
+            raise ProviderContractError(
+                ProviderErrorCode.TRANSPORT_UNAVAILABLE,
+                "Allowed offline transport is unavailable",
+                details={"transport": name},
+            )
+        return transport
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "allowed": sorted(kind.value for kind in self.ALLOWED_KINDS),
+            "registered": sorted(self._transports),
+            "dynamic_imports": False,
+            "network_enabled": False,
+        }
+
+
+def reject_transport_kind(kind: str) -> None:
+    if not isinstance(kind, str) or kind not in {
+        TransportKind.MOCK.value,
+        TransportKind.REPLAY.value,
+    }:
+        raise ProviderContractError(
+            ProviderErrorCode.TRANSPORT_FORBIDDEN,
+            "Only mock and replay transports are permitted",
+            details={
+                "transport": kind,
+                "dynamic_import_attempted": False,
+                "network_attempted": False,
+            },
+        )

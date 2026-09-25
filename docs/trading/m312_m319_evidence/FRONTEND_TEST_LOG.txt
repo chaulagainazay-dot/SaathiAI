@@ -1,0 +1,14 @@
+▶ M312 connectivity governance UI
+  ✔ page exists and is governance-only (0.967875ms)
+  ✔ has no secret-entry fields (0.281166ms)
+  ✔ renders authority and maturity markers (0.089625ms)
+  ✔ has refuse controls not connect/order activation (0.082292ms)
+✔ M312 connectivity governance UI (2.025875ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.874458

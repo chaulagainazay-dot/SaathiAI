@@ -5,7 +5,7 @@ import { Panel, Eyebrow } from "@/components/ui";
 import MissionNav from "@/components/MissionNav";
 import { fetchProposal, generateProposal, decideProposal } from "@/lib/api";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", AMBER = "#E8B84B", RED = "#FF5A5A";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", AMBER = "#E8B84B", RED = "#FF5A5A";
 
 export default function ProposalPage() {
   const { id } = useParams();

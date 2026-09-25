@@ -161,6 +161,33 @@ class ActivationApprovalCenter:
             ap.consumed_at = time.time()
         return ap
 
+    def peek(self) -> tuple[dict[str, Any], ...]:
+        """An immutable view of every approval, WITHOUT lazily expiring any of them.
+
+        `get` and `list` call `_expire_if_needed`, which transitions a lapsed
+        PENDING approval to EXPIRED, stamps `decided_at` and freezes it. That is
+        correct when an operation is about to rely on the approval — expiry should
+        take effect the moment anyone acts on it. It is wrong for a health read:
+        merely *asking* how approvals are doing must not be what expires one, or
+        the audit trail would record a transition caused by a monitoring pass.
+
+        So this returns raw recorded state. A caller that needs to know which
+        approvals have lapsed compares `expires_at` against its own explicit
+        evaluation time, leaving the transition to whoever actually acts.
+        """
+        return tuple(
+            {
+                "id": ap.id,
+                "status": ap.status.value,
+                "expires_at": ap.expires_at,
+                "decided_at": ap.decided_at,
+                "consumed_at": ap.consumed_at,
+                "single_use": ap.single_use,
+                "immutable": ap.immutable,
+            }
+            for ap in self._by_id.values()
+        )
+
     def get(self, approval_id: str) -> ActivationApproval | None:
         ap = self._by_id.get(approval_id)
         if ap:

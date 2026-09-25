@@ -1,0 +1,101 @@
+{
+  "record": "SAATHIOS_PRIVATE_ALPHA_PERFORMANCE_BASELINE",
+  "measured_at": "2026-08-02T18:30:00+05:45",
+  "build_sha": "6b55013d52458628a19a065c49365a6ff0d3a9da",
+  "principle": "Measured first. No budget was defined before measurement, and no optimisation was performed without a measured bottleneck.",
+
+  "measurement_coverage": {
+    "unauthenticated_surfaces": "MEASURED",
+    "authenticated_surfaces": "NOT_MEASURED",
+    "authenticated_blocker": "All three platform accounts are password-protected. Automation must not enter the owner's password and must not bootstrap a new account (that would create a user + organization in the certified database). Login latency, workspace load, project load, mission creation, approval request, mission status and authenticated diagnostics therefore remain unmeasured."
+  },
+
+  "frontend_serving": {
+    "route_ttfb_seconds": { "/": 0.0095, "/unlock": 0.0120, "/platform": 0.0133 },
+    "all_http_status": 200,
+    "server_command": "next start -H 127.0.0.1 -p 3000",
+    "binding": "127.0.0.1 loopback only"
+  },
+
+  "api_latency_local_ms": {
+    "method": "5 sequential curl samples per endpoint, loopback",
+    "/api/v1/health": { "avg": 9, "max": 33 },
+    "/api/v1/platform/health": { "avg": 2, "max": 4 },
+    "/api/v1/auth/passkey/status": { "avg": 3, "max": 4 },
+    "authenticated_endpoints": "NOT_MEASURED (401 ANONYMOUS_PROHIBITED without a session)"
+  },
+
+  "client_bundle": {
+    "total_static_js": "2.5 MB across 174 files",
+    "first_load_js_shared_by_all": "102 kB",
+    "largest_chunks_bytes": {
+      "framework-eaf13c96191cb608.js": 189787,
+      "1255-cf02c4775860a5ab.js": 174043,
+      "4bd1b696-100b9d70ed4e49c1.js": 173025,
+      "main-0e66c9ebd2e533a0.js": 128589,
+      "8362-e8aad86638b1ba74.js": 124154
+    },
+    "route_count": 145,
+    "code_splitting": "PRESENT - Next.js app router emits per-route chunks; shared baseline is 102 kB",
+    "assessment": "102 kB shared first-load for a 145-route application is within normal range. No evidence-backed bundle bottleneck was found, so no bundle optimisation was performed."
+  },
+
+  "browser_runtime": {
+    "measured_surface": "/platform unauthenticated sign-in surface",
+    "uncaught_errors": 0,
+    "navigation_entries_per_load": 1,
+    "redirect_loops": 0,
+    "platform_api_calls_after_expiry_recovery": 6,
+    "platform_api_calls_stability": "stable across two 6-second observation windows (6 -> 6, not growing)",
+    "me_endpoint_calls": 1,
+    "distinct_platform_paths_called": ["/health", "/voice/health", "/voice/providers", "/voice/profiles", "/me", "/modules"],
+    "fcp_lcp_cls_inp": "NOT_MEASURED - requires Lighthouse or CDP performance tracing, not available through the current browser tooling"
+  },
+
+  "resource_usage": {
+    "data_directory_total": "7.3 MB",
+    "largest_databases_mb": {
+      "data/application_harness_runs/ledger.db": 1.23,
+      "data/platform/platform.db": 1.17,
+      "data/platform/knowledge_index.db": 0.68,
+      "data/agent_runtime.db": 0.24,
+      "data/tool_runtime/idempotency.db": 0.22
+    },
+    "log_directory": "ABSENT - no logs/ directory exists; no unbounded log growth observed",
+    "memory_cpu_file_descriptors": "NOT_MEASURED - no long-running soak was executed in this session"
+  },
+
+  "database_growth_finding": {
+    "prior_mission_premise": "The mission brief states a prior soak showed substantial database growth.",
+    "measured_reality": "platform.db is 1.17 MB holding 642 rows across 79 tables. Total data/ footprint is 7.3 MB.",
+    "verdict": "The substantial-growth premise is NOT reproduced at current scale. Growth governance is still warranted as a forward-looking policy, but it is not presently an urgent capacity problem.",
+    "dominant_row_sources": {
+      "audit_events": 428,
+      "sessions": 73,
+      "hcg_records": 26,
+      "projects": 20,
+      "platform_executions": 16,
+      "invitations": 16
+    },
+    "concentration": "audit_events + sessions = 501 of 642 rows (78%)"
+  },
+
+  "voice_latency": {
+    "status": "NOT_MEASURED",
+    "reason": "Voice runtime endpoints require an authenticated session (401 ANONYMOUS_PROHIBITED). Browser-side speechSynthesis is available with 180 local voices, but button-to-speaking, stop latency, microphone start and microphone release are owner-observable timings that were not captured."
+  },
+
+  "proposed_budgets_after_measurement": {
+    "note": "Proposed from measured local behaviour, not asserted before it. Authenticated budgets are provisional until authenticated measurement is possible.",
+    "sign_in_form_visible": { "budget": "3 s", "measured": "0.013 s TTFB", "status": "MET_WITH_LARGE_MARGIN" },
+    "local_api_ordinary_response": { "budget": "1 s", "measured": "2-9 ms avg", "status": "MET_WITH_LARGE_MARGIN" },
+    "dashboard_usable_after_login": { "budget": "5 s", "measured": null, "status": "UNVERIFIED" },
+    "mission_status_refresh": { "budget": "2 s", "measured": null, "status": "UNVERIFIED" },
+    "voice_stop_response": { "budget": "300 ms", "measured": null, "status": "UNVERIFIED" },
+    "unbounded_memory_or_log_growth": { "budget": "none permitted", "measured": "no logs/ dir; 7.3 MB data", "status": "NO_EVIDENCE_OF_UNBOUNDED_GROWTH" },
+    "database_growth_without_retention": { "budget": "not permitted", "status": "POLICY_NOW_DOCUMENTED_NOT_YET_ENFORCED" }
+  },
+
+  "optimisations_performed": [],
+  "optimisations_rationale": "No evidence-backed bottleneck was found on any measurable surface. Every measured value sits far inside its budget. Speculative optimisation was explicitly declined per the mission's own instruction."
+}

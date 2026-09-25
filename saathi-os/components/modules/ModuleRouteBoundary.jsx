@@ -7,16 +7,12 @@ import {
   GUARD,
   moduleForPath,
 } from "@/lib/modules/guard";
+import {
+  GATE_ACTION,
+  gateAriaRole,
+  presentRouteGate,
+} from "@/lib/modules/route-presentation";
 import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext";
-
-const LABEL = {
-  [GUARD.AUTH_REQUIRED]: "Sign in to open this application.",
-  [GUARD.NOT_IMPLEMENTED]: "This application is registered but not implemented.",
-  [GUARD.DISABLED]: "This application is disabled.",
-  [GUARD.PERMISSION_RESTRICTED]: "You do not have permission to open this application.",
-  [GUARD.DEGRADED]: "This application is degraded and is not currently actionable.",
-  [GUARD.UNAVAILABLE]: "This application is unavailable.",
-};
 
 export default function ModuleRouteBoundary({ children }) {
   const pathname = usePathname();
@@ -45,19 +41,44 @@ export default function ModuleRouteBoundary({ children }) {
   );
   if (!ready && !fallbackOwnsPath) return children;
 
-  const message =
-    LABEL[outcome?.outcome] || "Checking application availability…";
+  // Presentation only — the withhold decision above is unchanged. Terminal
+  // bootstrap phases must not be dressed up as work still in progress.
+  const gate = presentRouteGate({
+    phase: discovery.phase,
+    outcome,
+    moduleName: module?.name,
+  });
+
   return (
     <section
-      role={outcome ? "alert" : "status"}
+      role={gateAriaRole(gate.kind)}
       aria-live="polite"
+      data-module-gate={gate.kind}
       style={{ maxWidth: 720, margin: "48px auto", padding: 24 }}
     >
-      <h1>{module?.name || "Application"}</h1>
-      <p>{message}</p>
-      <Link href={discovery.authenticated ? "/apps" : "/unlock"}>
-        {discovery.authenticated ? "Back to Applications" : "Sign in"}
-      </Link>
+      <h1>{gate.title}</h1>
+      <p>{gate.message}</p>
+      {gate.detail ? <p>{gate.detail}</p> : null}
+      {gate.actions.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 16 }}>
+          {gate.actions.map((action) =>
+            action.id === GATE_ACTION.RETRY ? (
+              <button
+                key={action.id}
+                type="button"
+                onClick={discovery.retry}
+                data-gate-action="retry"
+              >
+                {action.label}
+              </button>
+            ) : (
+              <Link key={action.id} href={action.href} data-gate-action={action.id}>
+                {action.label}
+              </Link>
+            )
+          )}
+        </div>
+      )}
     </section>
   );
 }

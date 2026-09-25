@@ -5,7 +5,7 @@ import { Eyebrow, Panel } from "@/components/ui";
 import { resetPassword } from "@/lib/api";
 import { Suspense } from "react";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A", AMBER = "#FFB800";
 
 function friendly(e) {
   const s = String(e && e.message ? e.message : e);

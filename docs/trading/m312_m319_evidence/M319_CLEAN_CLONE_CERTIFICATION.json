@@ -1,0 +1,28 @@
+{
+  "schema": "M319_CLEAN_CLONE_CERTIFICATION",
+  "M304_M311_COMMITTED_SOURCE_PRESENT": true,
+  "M312_M319_COMMITTED_SOURCE_PRESENT": true,
+  "UNTRACKED_REQUIRED_SOURCE_FILES": 0,
+  "required_source_missing": [],
+  "CLEAN_CLONE_BACKEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_FRONTEND_TESTS_PASSED": true,
+  "CLEAN_CLONE_PRODUCTION_BUILD_PASSED": true,
+  "M319_BROWSER_CERT_PASSED": true,
+  "NO_REAL_PROVIDER_CONNECTION": true,
+  "NO_REAL_CREDENTIALS": true,
+  "NO_ACCOUNT_ACCESS": true,
+  "NO_ORDER_EXECUTION": true,
+  "backend_log_tail": [
+    "..............................                                           [100%]",
+    "30 passed in 0.33s"
+  ],
+  "frontend_log_tail": [
+    "\u2139 fail 0",
+    "\u2139 cancelled 0",
+    "\u2139 skipped 0",
+    "\u2139 todo 0",
+    "\u2139 duration_ms 88.398958"
+  ],
+  "ok": true,
+  "overall_ok": true
+}

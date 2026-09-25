@@ -1,0 +1,566 @@
+{
+  "record": "SAATHIOS_FULL_APPLICATION_E2E_BROWSER_CERT",
+  "ui_base": "http://127.0.0.1:3000",
+  "api_base": "http://127.0.0.1:8766",
+  "totals": {
+    "checks": 86,
+    "passed": 86,
+    "failed": 0
+  },
+  "verdict": "SAATHIOS_FULL_APPLICATION_E2E_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "limitations": [
+    "Audible speech quality is not machine-verifiable; see MANUAL_AUDIO_CHECKLIST.md (OWNER_AUDIO_REVIEW_REQUIRED).",
+    "Headless Chromium grants no real microphone, so live speech recognition accuracy was not exercised.",
+    "Voice input/output journeys are certified at the control, permission and cleanup level only."
+  ],
+  "checks": [
+    {
+      "journey": "A",
+      "name": "login form renders an email field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "login form renders a password field",
+      "ok": true,
+      "detail": "regression guard for DEFECT-005"
+    },
+    {
+      "journey": "A",
+      "name": "password field masks input",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "invalid password shows an error",
+      "ok": true,
+      "detail": "✕ErrorPlatform errorSign-in failed. Check the email and password and try again."
+    },
+    {
+      "journey": "A",
+      "name": "invalid login creates no session",
+      "ok": true,
+      "detail": "login form still present"
+    },
+    {
+      "journey": "A",
+      "name": "error does not reveal account existence or internals",
+      "ok": true,
+      "detail": "✕ErrorPlatform errorSign-in failed. Check the email and password and try again."
+    },
+    {
+      "journey": "A",
+      "name": "valid owner login succeeds through the rendered form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "signed-in shell shows the acting identity",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "private-alpha labelling is visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "reload preserves a valid session",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "no public registration control is rendered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "no credential/provider entry control is rendered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "no order submission control is rendered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/ops renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9050 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/platform/ops shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/ops is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/operations/private-alpha-readiness renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 8800 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/operations/private-alpha-readiness shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/operations/private-alpha-readiness is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/health renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9691 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/health shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/health is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/diagnostics renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9629 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/diagnostics shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/diagnostics is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/alerts renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9579 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/alerts shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/alerts is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/backups renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9611 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/backups shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/trading/operations/backups is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/evidence renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 9703 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/platform/evidence shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/evidence is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/notifications renders a usable shell",
+      "ok": true,
+      "detail": "http 200 · 8715 chars"
+    },
+    {
+      "journey": "F",
+      "name": "/platform/notifications shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "F",
+      "name": "/platform/notifications is not stuck on a bare spinner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "operator can authenticate for journey setup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "operator creates a project",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "operator creates a mission",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "duplicate mission key returns a conflict, not a server error",
+      "ok": true,
+      "detail": "http 409 · MISSION_KEY_EXISTS (regression guard for DEFECT-001)"
+    },
+    {
+      "journey": "B",
+      "name": "approval contradicting the tool contract is refused at request time",
+      "ok": true,
+      "detail": "http 400 · VALIDATION_FAILED (regression guard for DEFECT-002)"
+    },
+    {
+      "journey": "B",
+      "name": "operator requests approval",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "self-approval is refused",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "journey": "B",
+      "name": "approval center renders the pending request",
+      "ok": true,
+      "detail": "matched by tool id or approval id"
+    },
+    {
+      "journey": "B",
+      "name": "owner approves",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "approval is single-use",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "journey": "B",
+      "name": "approved local mission executes to completion",
+      "ok": true,
+      "detail": "COMPLETED "
+    },
+    {
+      "journey": "B",
+      "name": "execution without approval fails closed",
+      "ok": true,
+      "detail": "http 409 · "
+    },
+    {
+      "journey": "B",
+      "name": "/platform/missions renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "/platform/evidence renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "B",
+      "name": "audit trail is readable by the owner",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "viewer can authenticate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "viewer cannot create a mission",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "journey": "G",
+      "name": "viewer cannot decide an approval",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "journey": "G",
+      "name": "operator cannot operate the runtime (RUNTIME_OPERATE is owner+)",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "journey": "G",
+      "name": "unauthenticated API access is denied",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "bogus token is denied",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "email-only login is refused for a credentialed account",
+      "ok": true,
+      "detail": "http 401 (regression guard for DEFECT-005)"
+    },
+    {
+      "journey": "G",
+      "name": "private-alpha contract is advertised",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "G",
+      "name": "every hard authority remains false",
+      "ok": true,
+      "detail": "none set true"
+    },
+    {
+      "journey": "C",
+      "name": "conversation health endpoint answers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "C",
+      "name": "chat route renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "C",
+      "name": "chat does not claim an AI connection it cannot prove",
+      "ok": true,
+      "detail": "guards against an overclaiming status string"
+    },
+    {
+      "journey": "C",
+      "name": "chat shows no raw stack trace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "D/E",
+      "name": "voice health endpoint answers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "D/E",
+      "name": "STT provider inventory is readable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "D/E",
+      "name": "browser speech capability probed truthfully",
+      "ok": true,
+      "detail": "{\"speechSynthesis\":true,\"recognition\":true,\"mediaDevices\":true,\"voices\":0}"
+    },
+    {
+      "journey": "D/E",
+      "name": "voice route renders",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "E",
+      "name": "no audio is left playing after route change",
+      "ok": true,
+      "detail": "{\"playingAudio\":0,\"speaking\":false}"
+    },
+    {
+      "journey": "A",
+      "name": "sessions are listable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "a session can be revoked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "a revoked session is denied",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "journey": "A",
+      "name": "logout succeeds",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "A",
+      "name": "a logged-out token is denied",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "journey": "A",
+      "name": "clearing the session returns the login form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "login form renders on a phone viewport",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "owner can sign in on a phone viewport",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/home renders on mobile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/home does not overflow horizontally",
+      "ok": true,
+      "detail": "0px overflow"
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/missions renders on mobile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/missions does not overflow horizontally",
+      "ok": true,
+      "detail": "0px overflow"
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/approvals renders on mobile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "journey": "mobile",
+      "name": "/platform/approvals does not overflow horizontally",
+      "ok": true,
+      "detail": "0px overflow"
+    },
+    {
+      "journey": "G",
+      "name": "no forbidden external request was made",
+      "ok": true,
+      "detail": "zero external hosts"
+    },
+    {
+      "journey": "quality",
+      "name": "no uncaught page error",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "screenshots": [
+    "A1-login-form.png",
+    "A2-invalid-login.png",
+    "A3-owner-signed-in.png",
+    "F1-ops.png",
+    "F2-readiness.png",
+    "F3-health.png",
+    "F4-diagnostics.png",
+    "F5-alerts.png",
+    "F6-backups.png",
+    "F7-evidence.png",
+    "F8-notifications.png",
+    "B1-approval-center.png",
+    "B2-missions.png",
+    "B3-evidence.png",
+    "C1-chat.png",
+    "DE1-voice.png",
+    "A4-signed-out.png",
+    "M1-login-mobile.png",
+    "M2-home-mobile.png",
+    "M3-missions-mobile.png",
+    "M4-approvals-mobile.png"
+  ],
+  "console_errors": [
+    {
+      "page": "desktop",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    }
+  ],
+  "page_errors": [],
+  "request_failures": [],
+  "external_requests": []
+}

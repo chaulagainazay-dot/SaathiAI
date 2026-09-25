@@ -1,0 +1,170 @@
+{
+  "mission": "V-NEXT-2B.3",
+  "gates": {
+    "ne_intent_min": 0.6,
+    "ne_first_span_min": 0.5,
+    "ne_cer_max": 0.45,
+    "mix_intent_min": 0.6,
+    "mix_first_span_min": 0.5,
+    "mix_term_min": 0.5,
+    "mix_cer_max": 0.5,
+    "en_intent_min": 0.7,
+    "numeric_fidelity_min": 0.7,
+    "peak_rss_mib_max": 1500
+  },
+  "candidates": [
+    {
+      "name": "bijay-base-ne-en-v3.1-ct2",
+      "error": null,
+      "classification": "NOT_QUALIFIED",
+      "ne_gate": {
+        "intent_ok": false,
+        "first_span_ok": true,
+        "cer_ok": true,
+        "passed": false
+      },
+      "mix_gate": {
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_ok": false,
+        "cer_ok": true,
+        "passed": false
+      },
+      "en_metrics": {
+        "n": 25,
+        "mean_wer": 0.6646666666666668,
+        "mean_cer": 0.2473518862665868,
+        "intent_rate": 0.52,
+        "first_span_rate": 0.56,
+        "term_preservation": 0.6071428571428571
+      },
+      "ne_metrics": {
+        "n": 7,
+        "mean_wer": 0.5761904761904761,
+        "mean_cer": 0.43852314352314353,
+        "intent_rate": 0.5714285714285714,
+        "first_span_rate": 0.7142857142857143,
+        "term_preservation": 0.14285714285714285
+      },
+      "mix_metrics": {
+        "n": 23,
+        "mean_wer": 0.6417874396135267,
+        "mean_cer": 0.4845732395393982,
+        "intent_rate": 0.43478260869565216,
+        "first_span_rate": 0.391304347826087,
+        "term_preservation": 0.34375
+      },
+      "numeric_fidelity_mean": 0.3261904761904762,
+      "peak_rss_mib": 859.40625,
+      "latency": {
+        "p50": 0.6394696249999967,
+        "p95": 1.1764762919999967,
+        "worst": 14.765517917,
+        "n": 55
+      },
+      "cold_load_s": 0.10618845899999974
+    },
+    {
+      "name": "bijay-small-ne-en-v3.1-ct2",
+      "error": null,
+      "classification": "ENGLISH_ONLY_QUALIFIED",
+      "ne_gate": {
+        "intent_ok": false,
+        "first_span_ok": true,
+        "cer_ok": true,
+        "passed": false
+      },
+      "mix_gate": {
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_ok": false,
+        "cer_ok": true,
+        "passed": false
+      },
+      "en_metrics": {
+        "n": 25,
+        "mean_wer": 0.38,
+        "mean_cer": 0.16468013468013468,
+        "intent_rate": 0.8,
+        "first_span_rate": 0.68,
+        "term_preservation": 0.5714285714285714
+      },
+      "ne_metrics": {
+        "n": 7,
+        "mean_wer": 0.5904761904761905,
+        "mean_cer": 0.44469289969289966,
+        "intent_rate": 0.5714285714285714,
+        "first_span_rate": 0.7142857142857143,
+        "term_preservation": 0.0
+      },
+      "mix_metrics": {
+        "n": 23,
+        "mean_wer": 0.6040027605244996,
+        "mean_cer": 0.4183599309133349,
+        "intent_rate": 0.5217391304347826,
+        "first_span_rate": 0.4782608695652174,
+        "term_preservation": 0.34375
+      },
+      "numeric_fidelity_mean": 0.3976190476190476,
+      "peak_rss_mib": 1433.46875,
+      "latency": {
+        "p50": 2.1400577919999932,
+        "p95": 3.0921159159999974,
+        "worst": 18.82833016700002,
+        "n": 55
+      },
+      "cold_load_s": 0.19496891600000055
+    },
+    {
+      "name": "bijay-tiny-ne-en-v3.1-ct2",
+      "error": null,
+      "classification": "NOT_QUALIFIED",
+      "ne_gate": {
+        "intent_ok": false,
+        "first_span_ok": true,
+        "cer_ok": false,
+        "passed": false
+      },
+      "mix_gate": {
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_ok": false,
+        "cer_ok": false,
+        "passed": false
+      },
+      "en_metrics": {
+        "n": 25,
+        "mean_wer": 0.6600000000000001,
+        "mean_cer": 0.2566788357169483,
+        "intent_rate": 0.44,
+        "first_span_rate": 0.44,
+        "term_preservation": 0.4642857142857143
+      },
+      "ne_metrics": {
+        "n": 7,
+        "mean_wer": 0.5619047619047619,
+        "mean_cer": 0.5176065601065601,
+        "intent_rate": 0.42857142857142855,
+        "first_span_rate": 0.7142857142857143,
+        "term_preservation": 0.0
+      },
+      "mix_metrics": {
+        "n": 23,
+        "mean_wer": 1.1303657694962046,
+        "mean_cer": 0.7842109084230743,
+        "intent_rate": 0.30434782608695654,
+        "first_span_rate": 0.43478260869565216,
+        "term_preservation": 0.1875
+      },
+      "numeric_fidelity_mean": 0.3023809523809523,
+      "peak_rss_mib": 1433.46875,
+      "latency": {
+        "p50": 0.3184035829999914,
+        "p95": 0.8728535830000226,
+        "worst": 6.860903791999988,
+        "n": 55
+      },
+      "cold_load_s": 0.07320154100000309
+    }
+  ]
+}

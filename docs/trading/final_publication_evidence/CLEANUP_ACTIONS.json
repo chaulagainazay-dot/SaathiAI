@@ -1,0 +1,153 @@
+{
+  "schema": "CLEANUP_ACTIONS",
+  "deleted_count": 22,
+  "bytes_freed": 900679608,
+  "mb_freed": 858.955,
+  "actions": [
+    {
+      "path": "saathi-os/.next",
+      "size_bytes": 881768176,
+      "size_mb": 840.92,
+      "status": "deleted"
+    },
+    {
+      "path": ".pytest_cache",
+      "size_bytes": 455957,
+      "size_mb": 0.435,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__",
+      "size_bytes": 380823,
+      "size_mb": 0.363,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__",
+      "size_bytes": 102083,
+      "size_mb": 0.097,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__",
+      "size_bytes": 80749,
+      "size_mb": 0.077,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__",
+      "size_bytes": 129527,
+      "size_mb": 0.124,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__",
+      "size_bytes": 63152,
+      "size_mb": 0.06,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__",
+      "size_bytes": 154495,
+      "size_mb": 0.147,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__",
+      "size_bytes": 163623,
+      "size_mb": 0.156,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__",
+      "size_bytes": 133196,
+      "size_mb": 0.127,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__",
+      "size_bytes": 234553,
+      "size_mb": 0.224,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__",
+      "size_bytes": 34191,
+      "size_mb": 0.033,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__",
+      "size_bytes": 115891,
+      "size_mb": 0.111,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__",
+      "size_bytes": 136534,
+      "size_mb": 0.13,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__",
+      "size_bytes": 211174,
+      "size_mb": 0.201,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__",
+      "size_bytes": 177721,
+      "size_mb": 0.169,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__",
+      "size_bytes": 145086,
+      "size_mb": 0.138,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__",
+      "size_bytes": 177242,
+      "size_mb": 0.169,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__",
+      "size_bytes": 154075,
+      "size_mb": 0.147,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__",
+      "size_bytes": 134461,
+      "size_mb": 0.128,
+      "status": "deleted"
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__",
+      "size_bytes": 34029,
+      "size_mb": 0.032,
+      "status": "deleted"
+    },
+    {
+      "path": "tests/__pycache__",
+      "size_bytes": 15692870,
+      "size_mb": 14.966,
+      "status": "deleted"
+    }
+  ],
+  "preserved_explicitly": [
+    "/Users/macbookpro/SaathiAI",
+    ".git",
+    ".venv",
+    "saathi-os/node_modules",
+    "docs/evidence/m25",
+    "docs/evidence/m27",
+    "docs/evidence/m28",
+    "docs/design-spec",
+    "docs/trading/m312_m319_evidence/cg_evidence.db",
+    ".env",
+    "all source under saathi/"
+  ]
+}

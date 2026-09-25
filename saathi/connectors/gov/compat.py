@@ -60,7 +60,22 @@ def governed_manager_execute(
             "bypass": False,
             "governed": True,
         }
-    if acct["status"] != "connected":
+    # Readiness is per-adapter. A provider with a LIVE adapter can reach the
+    # outside world, so it demands CONNECTED — which only provider evidence
+    # mints. A simulated provider cannot reach anything, so SIMULATED is enough
+    # to dispatch a metadata-only capability. The distinction matters the day a
+    # provider gains a live adapter: accounts still marked SIMULATED do not
+    # silently inherit the ability to act.
+    from saathi.connectors.accounts import AccountStatus
+    from saathi.connectors import manager as _mgr
+
+    has_live_adapter = getattr(_mgr, "_LIVE_ADAPTERS", {}).get(provider) is not None
+    ready = (
+        {AccountStatus.CONNECTED.value}
+        if has_live_adapter
+        else {AccountStatus.CONNECTED.value, AccountStatus.SIMULATED.value}
+    )
+    if acct["status"] not in ready:
         return {
             "ok": False,
             "error": f"account status is '{acct['status']}' — reconnect first",

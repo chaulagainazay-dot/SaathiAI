@@ -1,3 +1,10 @@
+> **RETIRED — 2026-09-08.** This deployment is decommissioned. SaathiOS runs as a
+> single local runtime; see `docs/decommission/LEGACY_VM_2026-09-08.md` for the
+> unique-state audit, the archive location and the staged shutdown steps.
+> These instructions are kept as a historical record. Do not redeploy from them
+> without an explicit remote-peer requirement and a governance decision about
+> which backend holds authority.
+
 # Host SaathiAI on Oracle Cloud (Always Free) — permanent HTTPS home
 
 Replaces the temporary `trycloudflare` tunnels with a proper always-on server: a stable

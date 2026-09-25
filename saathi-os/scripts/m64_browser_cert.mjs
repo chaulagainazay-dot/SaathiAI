@@ -4,11 +4,22 @@
  * Requires the checkout-local backend and production frontend on loopback.
  * Evidence contains booleans/counts and UI-only screenshots; authentication
  * material stays in memory and is never logged or written.
+ *
+ * The run refuses to start until both halves of the system have identified
+ * themselves and agree on the commit under test (see scripts/lib/
+ * cert-provenance.mjs), and the certificate it writes records that identity.
+ * A certificate that cannot say which code produced it certifies nothing.
+ *
+ * Authentication goes through the real platform login endpoint. The harness
+ * never derives a session from BAADAR_PASSWORD, BAADAR_PASSWORD_HASH,
+ * SAATHI_TOKEN or .env seed material — minting a session to make the run pass
+ * would skip the very flow the certificate claims to exercise.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { certificateProvenance, verifyRuntime } from "./lib/cert-provenance.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -18,9 +29,14 @@ const API = "http://127.0.0.1:8765";
 const MODULES_URL = "**/api/v1/platform/modules";
 mkdirSync(OUT, { recursive: true });
 
+const HARNESS_FILE = "saathi-os/scripts/m64_browser_cert.mjs";
+const COMMAND = "npm --prefix saathi-os run cert:m64";
+
 const report = {
-  schema: "m64.browser_cert.v1",
+  schema: "m64.browser_cert.v2",
   mode: "production-build-loopback",
+  provenance: null,
+  runtimeGates: {},
   hardGates: {},
   stateGates: {},
   responsive: {},
@@ -298,8 +314,16 @@ async function certifyFailureStates(browser, token) {
 async function certifyLogout(browser, token) {
   const context = await authContext(browser, token, { width: 1280, height: 900 });
   const page = await context.newPage();
+
+  const sessionsResponse = page.waitForResponse(
+    (r) => r.url().includes("/api/v1/auth/sessions") && r.request().method() === "GET"
+  );
+
   await page.goto(`${UI}/security`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /Sign out$/ }).waitFor();
+
+  await sessionsResponse;
+
   await page.getByRole("button", { name: /Sign out$/ }).click();
   await page.waitForFunction(
     () => !localStorage.getItem("saathi_platform_token"),
@@ -317,8 +341,16 @@ async function certifyLogout(browser, token) {
   await unauthenticated.close();
 }
 
+let runtime = null;
+
 const browser = await chromium.launch({ headless: true });
 try {
+  runtime = await verifyRuntime({
+    chromium,
+    ui: UI,
+    api: API,
+    check: (name, condition) => check(name, condition, report.runtimeGates),
+  });
   const token = await loginToken();
   await certifyHealthy(browser, token);
   await certifyResponsive(browser, token, "tablet", { width: 820, height: 1100 });
@@ -336,6 +368,13 @@ try {
   report.failedGate = String(error?.message || error).slice(0, 240);
   throw error;
 } finally {
+  report.provenance = certificateProvenance({
+    runtime,
+    ui: UI,
+    api: API,
+    command: COMMAND,
+    harnessFile: HARNESS_FILE,
+  });
   writeFileSync(join(OUT, "M64_BROWSER_CERT.json"), `${JSON.stringify(report, null, 2)}\n`);
   await browser.close();
 }

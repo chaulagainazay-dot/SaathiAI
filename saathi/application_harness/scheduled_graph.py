@@ -197,12 +197,38 @@ class ScheduledGraphCoordinator:
             self.engine.reconcile_running_mission(mid, owner=owner)
             m = self.engine.inspect(mid) or m
             st = m["state"]
+        # Prefer an already-settled deterministic recovered mission when present —
+        # concurrent recoveries converge on the same linked id.
+        rec_id = self.engine._recovered_mission_id(mid)
+        rec_m = self.engine.inspect(rec_id)
+        if rec_m and rec_m["state"] in L.MISSION_TERMINAL:
+            out = self.scheduler.settle_occurrence_from_mission(
+                occurrence_id, rec_m, now=now, graph_recovery=True)
+            out["recovered_mission_id"] = rec_id
+            out["idempotent"] = True
+            out["converged"] = True
+            return out
         # a FAILED graph mission → resume through the existing recovery interface
         recovered = None
         if st == L.MISSION_FAILED:
             recovered = self.engine.resume_graph_mission(mid, owner=owner, now=now)
-            rid = recovered.get("mission_id", mid)
-            m = self.engine.inspect(rid) or m
+            # Contention: another worker holds the recovery claim or is mid-resume.
+            # Do NOT settle the occurrence from the original failed mission — that
+            # races the winner into a permanent OCC_FAILED after recovery is no
+            # longer "retryable". Leave the occurrence recoverable instead.
+            if recovered.get("in_progress"):
+                rec_m = self.engine.inspect(rec_id)
+                if rec_m and rec_m["state"] in L.MISSION_TERMINAL:
+                    m = rec_m
+                else:
+                    return {"ok": False, "state": L.OCC_RETRY_WAIT,
+                            "reason": "resume_in_progress", "in_progress": True,
+                            "recoverable": True, "mission_id": mid,
+                            "recovered_mission_id": rec_id,
+                            "pipeline_id": recovered.get("pipeline_id", "")}
+            else:
+                rid = recovered.get("mission_id", mid)
+                m = self.engine.inspect(rid) or m
         # settle the occurrence from the authoritative (recovered) mission, keeping
         # retryable-still-failing missions recoverable for a bounded next pass
         out = self.scheduler.settle_occurrence_from_mission(occurrence_id, m, now=now,
@@ -211,6 +237,9 @@ class ScheduledGraphCoordinator:
             out["recovered_mission_id"] = recovered.get("mission_id")
             out["reused_steps"] = recovered.get("reused_steps", 0)
             out["rerun_steps"] = recovered.get("rerun_steps", 0)
+            if recovered.get("converged") or recovered.get("idempotent"):
+                out["converged"] = True
+                out["idempotent"] = True
         return out
 
     # ── bounded automatic reconciliation (opt-in; deterministic; restart-safe) ─

@@ -1,0 +1,68 @@
+from datetime import datetime, timezone
+from decimal import Decimal
+from saathi.platform.crypto.binance import BinancePublicProvider, SequenceTracker, BoundedStreamController, MarketDataSupervisor, StreamState, OrderBookSynchronizer, BinanceWebSocketTransport
+from saathi.platform.market_data.models import Timeframe, MarketDataQuality
+
+UTC=timezone.utc
+def transport(path, params):
+    if path.endswith("ticker/24hr"): return {"symbol":"BTCUSDT","bidPrice":"99","askPrice":"101","lastPrice":"100","bidQty":"2","askQty":"3","closeTime":1700000000000}
+    if path.endswith("klines"): return [[1700000000000,"95","105","90","100","10",1700003600000]]
+    return {"symbols":[{"symbol":"BTCUSDT","baseAsset":"BTC","quoteAsset":"USDT","status":"TRADING","baseAssetPrecision":8,"quoteAssetPrecision":8}]}
+
+def test_binance_public_quote_and_bar_normalize():
+    p=BinancePublicProvider(transport=transport)
+    q=p.get_quote("BTC/USDT", now=datetime(2023,11,15,tzinfo=UTC))
+    assert q.ok and q.data.instrument == "BINANCE:BTC/USDT" and q.data.last == Decimal("100")
+    b=p.get_bars("BTC/USDT", Timeframe.D1, datetime(2023,1,1,tzinfo=UTC), datetime(2023,12,1,tzinfo=UTC), now=datetime(2023,11,15,tzinfo=UTC))
+    assert b.ok and b.data[0].close == Decimal("100")
+
+def test_sequence_tracker_detects_gap_and_duplicate():
+    t=SequenceTracker(); assert t.accept(1) == "OK"; assert t.accept(1) == "DUPLICATE"; assert t.accept(3) == "GAP"; assert t.accept(2) == "REGRESSION"
+
+def test_stream_controller_bounds_queue_and_marks_gap():
+    c = BoundedStreamController(max_queue=2, max_reconnects=2)
+    assert c.on_connect() == "CONNECTED"
+    assert c.on_frame({"u": 1}) == "ACCEPTED"
+    assert c.on_frame({"u": 2}) == "ACCEPTED"
+    assert c.on_frame({"price": "3"}) == "DROPPED_BACKPRESSURE"
+    assert c.quality == "GAPPED"  # overflow is explicit degradation
+    assert c.on_frame({"u": 4}) == "GAP_DETECTED"
+    assert c.on_disconnect() == "RECONNECT_SCHEDULED"
+    assert c.on_disconnect() == "RECONNECT_SCHEDULED"
+    assert c.on_disconnect() == "RECONNECT_EXHAUSTED"
+
+def test_supervisor_liveness_and_bounded_backoff():
+    s = MarketDataSupervisor(heartbeat_timeout=5, max_reconnects=2, base_backoff=1, max_backoff=4)
+    assert s.connect() == StreamState.CONNECTED
+    assert s.observe(datetime(2023,11,15, tzinfo=UTC)) == StreamState.LIVE
+    assert s.check_liveness(datetime(2023,11,15,0,0,10,tzinfo=UTC)) == StreamState.STALE
+    assert s.disconnect("timeout") == StreamState.BACKOFF
+    assert s.next_backoff() == 1
+    assert s.disconnect("timeout") == StreamState.BACKOFF
+    assert s.next_backoff() == 2
+    assert s.disconnect("timeout") == StreamState.FAILED
+
+def test_order_book_snapshot_delta_requires_continuity():
+    b = OrderBookSynchronizer(max_depth=2)
+    assert b.apply_snapshot(10, [["100","2"]], [["101","1"]]) == "LIVE"
+    assert b.apply_delta(11, [["100","3"]], []) == "APPLIED"
+    assert b.apply_delta(13, [], []) == "GAP_DETECTED"
+    assert b.state == "GAPPED"
+
+def test_supervisor_capture_is_bounded_and_deterministic():
+    s = MarketDataSupervisor(max_capture=2)
+    s.capture({"u": 1}); s.capture({"u": 2}); s.capture({"u": 3})
+    assert s.capture_overflow == 1 and [x["u"] for x in s.captured] == [2,3]
+
+def test_websocket_transport_allowlists_host_and_subscribes():
+    class Fake:
+        def __init__(self): self.sent=[]; self.closed=False
+        def send(self, x): self.sent.append(x)
+        def recv(self): return '{"e":"trade","s":"BTCUSDT"}'
+        def close(self): self.closed=True
+    fake=Fake(); t=BinanceWebSocketTransport(ws_factory=lambda url, **kw: fake)
+    assert t.connect() is fake
+    t.subscribe(["btcusdt@trade"])
+    assert 'btcusdt@trade' in fake.sent[0]
+    assert t.recv_json()["s"] == "BTCUSDT"
+    t.close(); assert fake.closed

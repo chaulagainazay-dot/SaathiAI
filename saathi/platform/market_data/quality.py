@@ -14,6 +14,12 @@ from saathi.platform.market_data.models import (
     MDQuote, MDBar, MarketDataQuality, QualityFinding, Timeframe,
     TIMEFRAME_SECONDS, INTRADAY_TIMEFRAMES, is_aware, FreshnessPolicy, DEFAULT_FRESHNESS,
 )
+from saathi.platform.nepse.calendar import (
+    NEPAL_TZ,
+    NepseCalendar,
+    SessionClassification,
+    SessionState,
+)
 
 
 # Spread wider than this fraction of mid is flagged abnormal.
@@ -27,7 +33,8 @@ def _finding(findings: list[QualityFinding], code: str, detail: str = "") -> Non
 
 
 def classify_quote(q: MDQuote, *, now: datetime, policy: FreshnessPolicy = DEFAULT_FRESHNESS,
-                   market_open: bool | None = None) -> MarketDataQuality:
+                   market_open: bool | None = None,
+                   nepse_calendar: NepseCalendar | None = None) -> MarketDataQuality:
     """Classify a quote in place (sets q.quality, appends q.findings). Fail-closed."""
     f = q.findings
     # timestamps must be aware
@@ -60,6 +67,19 @@ def classify_quote(q: MDQuote, *, now: datetime, policy: FreshnessPolicy = DEFAU
         _finding(f, "ABNORMAL_SPREAD", f"spread {(q.ask - q.bid)} on mid {mid}")
         q.quality = MarketDataQuality.OUTLIER
         return q.quality
+    # NEPSE session truth is calendar-owned. Unknown holiday coverage is not
+    # stale data and must not be collapsed into either open or closed.
+    if q.instrument.upper().startswith("NEPSE:"):
+        canonical = nepse_calendar or NepseCalendar()
+        date_classification = canonical.classify_session(now.astimezone(NEPAL_TZ).date())
+        if date_classification in (
+            SessionClassification.POTENTIAL_OPEN_HOLIDAY_UNKNOWN,
+            SessionClassification.UNKNOWN,
+        ):
+            _finding(f, "CALENDAR_COVERAGE_UNKNOWN", "NEPSE holiday coverage unavailable")
+            q.quality = MarketDataQuality.UNVERIFIED
+            return q.quality
+        market_open = canonical.session_state(now) is SessionState.OPEN
     # market closed (explicit signal)
     if market_open is False:
         _finding(f, "MARKET_CLOSED", "quote observed while market closed")

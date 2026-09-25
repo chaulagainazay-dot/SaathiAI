@@ -5,7 +5,7 @@ import { Panel, Eyebrow } from "@/components/ui";
 import MissionNav from "@/components/MissionNav";
 import { applyIntake, extractDocument } from "@/lib/api";
 
-const ACCENT = "#9B6BFF", TEAL = "#00BFA5", RED = "#FF5A5A";
+const ACCENT = "var(--accent)", TEAL = "#00BFA5", RED = "#FF5A5A";
 const ACCOUNTS = ["website", "facebook", "instagram", "tiktok", "youtube", "google_business", "telegram", "whatsapp"];
 
 export default function IntakePage() {

@@ -27,6 +27,13 @@ python -m saathi.platform.tg data import ./nepse_nabil.csv \
   --adapter nepse --instrument NABIL --calendar NEPSE --currency NPR
 ```
 
+The shipped NEPSE calendar has no fabricated holiday table. Sunday-Thursday
+rows are retained as potential sessions and marked
+`HOLIDAY_COVERAGE_UNKNOWN`; Friday/Saturday rows are confirmed closed and cause
+a calendar-quality rejection. An accepted-with-warning import is raw evidence,
+not certified-backtest eligibility. NEPSE research requires a versioned calendar
+with complete coverage for every tested year.
+
 ## Binance public export
 
 ```bash
@@ -66,3 +73,5 @@ python -m saathi.platform.tg strategy-qualify --dataset-id <id> --strategy koteg
 | DUPLICATE_DATASET | Same content fingerprint already accepted |
 | insufficient_disk | Free space; do not force |
 | INSUFFICIENT_COVERAGE | Provide longer history or accept research-only |
+| NEPSE_CALENDAR_COVERAGE_REQUIRED | Load genuine, versioned annual calendar coverage; do not infer holidays |
+| NEPSE_CONFIRMED_CLOSED_SESSION_BAR | Verify the source timestamp/venue; do not silently delete the row |

@@ -1,0 +1,183 @@
+{
+  "schema": "m337.regression_debt_closure.v1",
+  "milestone": "M337",
+  "title": "Bounded regression debt closure",
+  "branch": "milestone/m336-m343-private-alpha-readiness",
+  "predecessor_sha": "6cdf72661834242eb4901f7eaf44a4425957db37",
+
+  "result": {
+    "M57_INHERITED_FAILURES": 0,
+    "M157_INHERITED_FAILURES": 0,
+    "RELEASE_GATE_FAILURES": 0,
+    "TOTAL_INHERITED_FAILURES_REMAINING": 0
+  },
+
+  "before": {
+    "command": "pytest tests/test_m57_local.py tests/test_m157_private_alpha.py tests/test_ops.py -p no:randomly -q",
+    "executed_in": "pristine detached worktree at 6cdf72661834242eb4901f7eaf44a4425957db37 (untouched source)",
+    "summary": "8 failed, 47 passed, 3 warnings",
+    "log": "docs/private-alpha/m336_m343_evidence/M336_BEFORE_FOCUSED_TEST_LOG.txt"
+  },
+  "after": {
+    "command": "pytest tests/test_m57_local.py tests/test_m157_private_alpha.py tests/test_ops.py tests/test_m336_m343_regression_closure.py -p no:randomly -q",
+    "summary": "73 passed, 4 warnings",
+    "log": "docs/private-alpha/m336_m343_evidence/M337_AFTER_FOCUSED_TEST_LOG.txt"
+  },
+  "related_milestone_regressions": {
+    "suites": [
+      "tests/test_m21_4_runtime_consolidation.py",
+      "tests/test_m51_identity_sessions.py",
+      "tests/test_m51_invites_membership.py",
+      "tests/test_m51_product_flow.py",
+      "tests/test_m208_m215_ops_graduation.py"
+    ],
+    "summary": "123 passed",
+    "log": "docs/private-alpha/m336_m343_evidence/M337_RELATED_MILESTONE_REGRESSIONS.txt"
+  },
+
+  "fixes": [
+    {
+      "id": "FIX-1",
+      "root_cause": "RC-A",
+      "closes_failures": [1, 2, 3],
+      "file": "bin/saathi-local",
+      "root_cause_statement": "cmd_start called _check_env() unconditionally before the readiness decision layer. _check_env required the repository-root .venv and saathi-os/node_modules — artifacts only the SPAWN paths consume. On any checkout without them, start aborted before it could reuse a healthy process or report a real blocker, and the operator was told the venv was missing when the actual blocker was an unhealthy or unrelated listener.",
+      "smallest_architectural_repair": "Split _check_env into three scoped predicates. _check_env now covers only the host-level prerequisite every readiness probe needs (curl). _check_backend_toolchain (venv) is invoked from _ensure_backend on the `free` branch — the only branch that spawns uvicorn. _check_frontend_toolchain (node_modules) is invoked from _ensure_frontend on its `free` branch — the only branch that spawns `npm run dev`.",
+      "safety_preserved": [
+        "Both spawn paths still abort non-zero with the identical remediation text when their toolchain is missing.",
+        "Fail-closed blockers for owned-unhealthy, external-unhealthy and unrelated listeners are unchanged.",
+        "No external process is killed; PID ownership logic untouched.",
+        "Localhost-only binding, lock file, and log redaction untouched."
+      ],
+      "safety_improved": [
+        "The PID-safety refusal ('refusing to kill it') and the frontend BLOCKER message are now reachable and are reported as the actual reason for failure instead of being masked by a generic environment error."
+      ],
+      "regression_tests_added": [
+        "test_launcher_still_fails_closed_when_backend_must_spawn_without_venv",
+        "test_launcher_still_fails_closed_when_frontend_must_spawn_without_node_modules",
+        "test_launcher_toolchain_checks_still_exist_in_source",
+        "test_launcher_reuse_path_is_not_gated_on_build_artifacts",
+        "test_launcher_unrelated_occupant_blocker_is_reported_not_masked"
+      ]
+    },
+    {
+      "id": "FIX-2",
+      "root_cause": "RC-A",
+      "closes_failures": [4, 5, 6, 7],
+      "files": [
+        "saathi/platform/private_alpha/prepare.py",
+        "saathi/platform/private_alpha/upgrade.py",
+        "saathi/platform/private_alpha/certification.py"
+      ],
+      "root_cause_statement": "prepare() aggregated the .venv and saathi-os/node_modules checks into `ok` as required host prerequisites. Because these are OUTPUTS of installation, prepare() could never return ok on a machine where installation had not already been performed in place, permanently blocking init_first_run() (PREPARE_FAILED), upgrade_preflight()/apply_local_upgrade() (PREFLIGHT_FAILED) and the M165 certification gate (installation_prepare FAIL).",
+      "smallest_architectural_repair": "Introduce INSTALLABLE_CHECKS = ('python_venv', 'frontend_deps'). prepare()'s add() marks those entries installable=True and routes their FAIL status to a new deterministic field `install_complete` plus `pending_install_steps`, instead of clearing `ok`. `ok` continues to reflect every genuine host prerequisite. doctor(), init_first_run(), upgrade_preflight() and the M165 gate all propagate the new field; the gate gains an explicit `installation_complete` check so an incomplete install stays visible rather than being dropped.",
+      "safety_preserved": [
+        "Both checks still run and still record status FAIL with their full detail text.",
+        "Both remediation strings ('python3 -m venv .venv && .venv/bin/pip install -e .[dev]', 'cd saathi-os && npm install') are still emitted.",
+        "init_first_run still hard-refuses when a host prerequisite fails (ok=False → PREPARE_FAILED).",
+        "The acknowledge_local_only gate, the 'no API credentials collected' posture, symlink rejection on required directories, disk-headroom gating, remote_fetch=false and production_authorized=false are all unchanged.",
+        "No check was deleted, downgraded to PASS, made non-required, or removed from the report."
+      ],
+      "safety_improved": [
+        "The M165 certification report now distinguishes an unusable host from an un-installed one, so a genuinely failing prerequisite is no longer camouflaged by a permanently-red gate."
+      ],
+      "regression_tests_added": [
+        "test_prepare_still_reports_installable_checks_with_remediation",
+        "test_prepare_host_prerequisites_still_gate_ok",
+        "test_prepare_never_collects_secrets_or_authorizes_production",
+        "test_certification_surfaces_install_completeness_as_its_own_check"
+      ]
+    },
+    {
+      "id": "FIX-3",
+      "root_cause": "RC-B",
+      "closes_failures": [8],
+      "file": "saathi/ops/release_gate.py",
+      "root_cause_statement": "The gate counted any `private_key_block` rule hit as a strong credential leak. That rule matches the PEM header alone. Two security-control modules embed the header as intentional non-secret material — a rejection sample proving the payload sanitiser refuses private keys (broker_readiness/security.py:100) and a detector pattern definition (integration_assurance/security.py:114) — so the gate returned EXIT_SECURITY (3) on its own safety machinery. Its only exclusion was a tests/ and docs/ path prefix filter, which does not cover security-control source.",
+      "smallest_architectural_repair": "Add pem_carries_key_material(): a private_key_block hit counts as a strong credential only when a base64 body of at least 100 characters follows the PEM header — the same materiality standard integration_assurance/security.py already applies. Non-material markers are recorded in the report under `non_material_markers` with an explicit reason rather than being silently dropped. Every other strong rule blocks unchanged.",
+      "why_this_is_not_a_weakening": [
+        "A real PEM private key always carries a base64 body; a bare marker never does. Detection of real key material is unchanged.",
+        "No file, directory or module was added to an allowlist.",
+        "The tests/ and docs/ path exclusion was NOT widened — a test asserts the original exclusion expression is still present and that neither offending module name appears in the gate source.",
+        "The two excluded markers are reported in the gate output, so the exclusion is auditable rather than invisible.",
+        "An end-to-end regression test injects a credential-bearing hit and asserts the gate still returns EXIT_SECURITY."
+      ],
+      "regression_tests_added": [
+        "test_bare_pem_marker_is_not_key_material",
+        "test_real_pem_key_body_is_still_detected (4 PEM header variants)",
+        "test_release_gate_still_blocks_on_a_real_committed_private_key",
+        "test_release_gate_reports_non_material_markers_instead_of_hiding_them",
+        "test_release_gate_did_not_widen_path_exclusions"
+      ],
+      "gate_result_after_fix": {
+        "exit_code": 0,
+        "exit_name": "EXIT_READY",
+        "secret_scan": {
+          "clean": true,
+          "strong_hits": 0,
+          "non_material_markers": [
+            {"file": "saathi/platform/tg/broker_readiness/security.py", "rule": "private_key_block", "reason": "PEM header without key material"},
+            {"file": "saathi/platform/tg/integration_assurance/security.py", "rule": "private_key_block", "reason": "PEM header without key material"}
+          ]
+        }
+      }
+    }
+  ],
+
+  "proof_tests_were_not_weakened": {
+    "tests_modified": [],
+    "tests_skipped": [],
+    "tests_xfailed": [],
+    "tests_deleted": [],
+    "assertions_removed_or_relaxed": [],
+    "sleeps_or_timing_hacks_added": [],
+    "global_error_suppression_added": [],
+    "test_specific_hardcoded_outcomes": [],
+    "byte_identity_check": {
+      "method": "git hash-object <file> compared to git rev-parse 6cdf726:<file>",
+      "tests/test_m57_local.py": {
+        "worktree": "69f15c3525a6f3821a15dc96ba0607b527c7aa77",
+        "predecessor": "69f15c3525a6f3821a15dc96ba0607b527c7aa77",
+        "identical": true
+      },
+      "tests/test_m157_private_alpha.py": {
+        "worktree": "1886201a7cf4a99b77eb04fe0f1dfce8bcdc5edc",
+        "predecessor": "1886201a7cf4a99b77eb04fe0f1dfce8bcdc5edc",
+        "identical": true
+      },
+      "tests/test_ops.py": {
+        "worktree": "dbb5679b8962166d54e6bdab42ec7a8eb4cc33e9",
+        "predecessor": "dbb5679b8962166d54e6bdab42ec7a8eb4cc33e9",
+        "identical": true
+      }
+    },
+    "conclusion": "All three suites containing the eight inherited failures are byte-identical to the predecessor commit. Every failure was closed in implementation. 18 new focused regression tests were added in tests/test_m336_m343_regression_closure.py, each of which asserts a safety behaviour that the repair had to preserve."
+  },
+
+  "authority_expansion_check": {
+    "files_changed": [
+      "bin/saathi-local",
+      "saathi/ops/release_gate.py",
+      "saathi/platform/private_alpha/prepare.py",
+      "saathi/platform/private_alpha/upgrade.py",
+      "saathi/platform/private_alpha/certification.py",
+      "docs/platform/M57_PROCESS_MANAGEMENT.md"
+    ],
+    "connectivity_added": false,
+    "credentials_requested": false,
+    "provider_calls_added": false,
+    "execution_authority_added": false,
+    "public_exposure_added": false,
+    "network_calls_added": false,
+    "production_authorized": false,
+    "public_registration_enabled": false,
+    "note": "No new network, credential, provider, execution or deployment capability was introduced. All changes are local classification and reporting logic."
+  },
+
+  "documentation_updated": [
+    "docs/platform/M57_PROCESS_MANAGEMENT.md — Start section now describes the role-conditional toolchain preflight precisely."
+  ],
+
+  "verdict": "M337_REGRESSION_DEBT_CLOSED",
+  "next_gate": "M338 — Private-alpha contract"
+}

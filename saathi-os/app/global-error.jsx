@@ -18,7 +18,7 @@ export default function GlobalError({ error, reset }) {
               marginTop: 10, maxHeight: 240, overflow: "auto" }}>{error.stack.slice(0, 1000)}</pre>
           )}
           <button onClick={() => reset()} style={{ marginTop: 16, padding: "10px 20px", borderRadius: 10,
-            border: "none", cursor: "pointer", fontWeight: 600, color: "#fff", background: "#9B6BFF" }}>
+            border: "none", cursor: "pointer", fontWeight: 600, color: "#fff", background: "var(--accent)" }}>
             Reload
           </button>
         </div>

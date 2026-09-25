@@ -26,7 +26,7 @@ if _fb_json_str and not _fb_file.exists():
 # If GOOGLE_API_KEY is set, Gemini is used; otherwise falls back to Claude.
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 # Gemini 3.5 Flash — the default brain (free tier, strong quality). Override via env.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 # Cheap proxy — routes Anthropic API calls to Groq (free) via anthropic-proxy
@@ -42,6 +42,9 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 SHIMMY_URL = os.getenv("SHIMMY_URL", "http://127.0.0.1:11435/v1")
 SHIMMY_MODEL = os.getenv("SHIMMY_MODEL", "tinyllama-1.1b")
 SHIMMY_API_KEY = os.getenv("SHIMMY_API_KEY", "sk-local")
+# NVIDIA NIM (OpenAI-compatible, explicitly selected; never auto-enabled).
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+NVIDIA_KIMI_MODEL = os.getenv("NVIDIA_KIMI_MODEL", "moonshotai/kimi-k3")
 # Pick brain: set LLM_PROVIDER=groq|gemini|shimmy|ollama|anthropic in .env to force one;
 # otherwise Groq if keyed (fastest), then Gemini, then Claude.
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") or (
@@ -123,3 +126,11 @@ FIREBASE_STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 # awesome-llm-apps: 100+ production AI agent & RAG patterns (cloned locally)
 AWESOME_LLM_APPS_PATH = os.getenv("AWESOME_LLM_APPS_PATH",
     str(Path.home() / "awesome-llm-apps"))
+
+# --- Owner API-key store (paste-a-key UI) ---
+# Load persisted keys (~/.saathi/keys.env) into the live environment so providers pick them up.
+try:
+    from saathi.platform.settings.keys import load_keys as _load_owner_keys
+    _load_owner_keys()
+except Exception:
+    pass

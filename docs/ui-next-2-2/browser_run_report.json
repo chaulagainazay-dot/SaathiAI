@@ -1,0 +1,84 @@
+{
+  "mission": "UI-NEXT-2.2",
+  "base": "http://127.0.0.1:3122",
+  "port": 3122,
+  "screenshots": [
+    "01-command-desktop.png",
+    "02-agents-desktop.png",
+    "03-investments-desktop.png",
+    "04-evidence-desktop.png",
+    "01b-command-1280.png",
+    "05-command-tablet.png",
+    "06-command-mobile.png",
+    "06b-agents-mobile.png",
+    "07-risk-warning.png",
+    "08-reconciliation-required.png",
+    "09-voice-listening.png",
+    "10-voice-speaking.png",
+    "11-voice-degraded.png",
+    "12-reduced-motion.png",
+    "13-zoom-150.png",
+    "14-long-content-stress.png"
+  ],
+  "consoleErrors": [
+    {
+      "type": "console",
+      "text": "Access to fetch at 'http://localhost:8765/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3122' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "console",
+      "text": "Access to resource at 'http://localhost:8765/api/events/stream?demo=0' from origin 'http://127.0.0.1:3122' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "console",
+      "text": "Access to fetch at 'http://localhost:8765/api/executive/briefing' from origin 'http://127.0.0.1:3122' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "findings": [],
+  "axeResults": [
+    {
+      "label": "command-desktop-healthy",
+      "url": "http://127.0.0.1:3122/design-lab",
+      "violations": [],
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    {
+      "label": "command-recon-required",
+      "url": "http://127.0.0.1:3122/design-lab",
+      "violations": [],
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    {
+      "label": "investments-desktop",
+      "url": "http://127.0.0.1:3122/design-lab",
+      "violations": [],
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    }
+  ],
+  "axeGate": {
+    "critical": 0,
+    "serious": 0
+  },
+  "serverLogTail": "   ▲ Next.js 15.5.22\n   - Local:        http://127.0.0.1:3122\n   - Network:      http://127.0.0.1:3122\n\n ✓ Starting...\n ✓ Ready in 1152ms\n ○ Compiling /design-lab ...\n ✓ Compiled /design-lab in 815ms (1448 modules)\n GET /design-lab 200 in 1114ms\n GET /design-lab 200 in 83ms\n GET /design-lab 200 in 74ms\n GET /design-lab 200 in 69ms\n"
+}

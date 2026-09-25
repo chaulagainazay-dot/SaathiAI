@@ -1,0 +1,4593 @@
+{
+  "schema": "CLEANUP_CANDIDATES",
+  "candidates": [
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.169
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/maturity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/incident_response.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/threat_model.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.039
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/authority.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/approval_policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/credential_policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/charter.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/revocation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/provider_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/emergency_shutdown.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "tests/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 14.966
+    },
+    {
+      "path": "tests/__pycache__/test_code_memory_connector.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m35_credential_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.076
+    },
+    {
+      "path": "tests/__pycache__/test_bma.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m19_4_context_composer.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_eventstream.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m36_certification_and_evidence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.038
+    },
+    {
+      "path": "tests/__pycache__/test_m42_graduation_review.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.034
+    },
+    {
+      "path": "tests/__pycache__/test_m39_5_monitoring_incident.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m21_4_runtime_consolidation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.048
+    },
+    {
+      "path": "tests/__pycache__/test_m63_module_registry.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.035
+    },
+    {
+      "path": "tests/__pycache__/test_failure_injection.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_brand_voice.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m25_cert_evidence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_gateway_enforcement.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_business.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m43_machine_verified_canary.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m272_m279_research_lab.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_infra_events.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m52_platform_agent_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.057
+    },
+    {
+      "path": "tests/__pycache__/test_bff_contract.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m39_1_operator_tooling.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.039
+    },
+    {
+      "path": "tests/__pycache__/test_m39_5_monitoring_incident.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_executive_finance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_mission_twin.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m20_7_console_consolidation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m65_ielts_foundation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_curriculum.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m21_0_production_config.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.058
+    },
+    {
+      "path": "tests/__pycache__/test_telegram_ceo.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_domain_boundaries.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m48_2_start_agent_run.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_production_automation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_chat.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.06
+    },
+    {
+      "path": "tests/__pycache__/test_m17_computer_agent.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_reference_intel.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_model_router_providers.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_dashboard.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_shell_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_mission_control.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_library.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_portfolio.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m19_1_knowledge_adoption.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.081
+    },
+    {
+      "path": "tests/__pycache__/test_mission_intel.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_library.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_research.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_learning.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_execution.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_approval_scope.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m21_1_request_contract.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m5_explainability.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m45_runtime_attestation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_browser_service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_storage_service.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_integration_pielts.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m71_mission_runtime_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m36_real_session_lifecycle.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.036
+    },
+    {
+      "path": "tests/__pycache__/test_m18_2_codebase_memory.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.046
+    },
+    {
+      "path": "tests/__pycache__/test_m39_8_operator_package.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m62_2_market_data.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.087
+    },
+    {
+      "path": "tests/__pycache__/test_m22_provider_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_lifecycle.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m148_core_os.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m62_trading_models.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.049
+    },
+    {
+      "path": "tests/__pycache__/test_m56_cluster.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.037
+    },
+    {
+      "path": "tests/__pycache__/test_m37_provider_and_lifecycle.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_episode_bridge.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_integration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_studio_os.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.068
+    },
+    {
+      "path": "tests/__pycache__/test_m19_3_real_index_campaign.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.049
+    },
+    {
+      "path": "tests/__pycache__/test_m35_certification_and_evidence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_executive.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_run_manager.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_bff.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m18_4_insforge_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_execution.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m39_6_adversarial.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_social_workflows.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_promotion.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_content_pipeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_idempotency.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m17_24_browser_dispatch_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.064
+    },
+    {
+      "path": "tests/__pycache__/test_cli_file_handling.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_learning.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_browser_session.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_gateway_enforcement.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m5_explainability.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_connectors.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_bma_phases.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m51_product_flow.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_revenue.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m17_24_external_capability_foundation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m15_connectors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m19_5_incremental_refresh.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.056
+    },
+    {
+      "path": "tests/__pycache__/test_m20_5_session_ledger_recovery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_failure_injection.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_tool_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_integration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m17_17_scheduled_graph_recovery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.072
+    },
+    {
+      "path": "tests/__pycache__/test_telegram_ceo.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_3_harness.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_dashboard.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_bff.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m46_bounded_canary.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.101
+    },
+    {
+      "path": "tests/__pycache__/test_m17_13_mission_engine.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.068
+    },
+    {
+      "path": "tests/__pycache__/test_evidence_service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_live.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m36_authorization_and_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m87_knowledge_grounding.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.061
+    },
+    {
+      "path": "tests/__pycache__/test_daily_mission.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_live.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_voice_os.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.083
+    },
+    {
+      "path": "tests/__pycache__/test_m19_5_incremental_refresh.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_verification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m232_m239_integration_assurance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.047
+    },
+    {
+      "path": "tests/__pycache__/test_m17_25_mcp_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.089
+    },
+    {
+      "path": "tests/__pycache__/test_m50_api.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m18_3_insforge_provider.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.064
+    },
+    {
+      "path": "tests/__pycache__/test_referral.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_memory_conventions_split.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_investment.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_investment_learning.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_graph.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_cancellation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_reference_intel.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_26_production_browser.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.144
+    },
+    {
+      "path": "tests/__pycache__/test_m80_conversation_service.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_m52_platform_agent_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_m36_transport_and_scope.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.035
+    },
+    {
+      "path": "tests/__pycache__/test_publication.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m121_app_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_m50_approval_and_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m62_5_paper_broker.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.108
+    },
+    {
+      "path": "tests/__pycache__/test_m296_m303_portfolio_risk.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m22_provider_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m18_4_insforge_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.068
+    },
+    {
+      "path": "tests/__pycache__/test_m17_14_mission_scheduler.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.097
+    },
+    {
+      "path": "tests/__pycache__/test_automation_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_cleanup.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m192_m199_paper_activation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_workspace.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m36_real_session_lifecycle.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m40_live_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.038
+    },
+    {
+      "path": "tests/__pycache__/test_m48_2_start_agent_run.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_visual_department.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m25_live_provider_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_intelligence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_redteam.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_agent_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_os_m14.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_dry_run.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_auth_logto.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_platform_memory.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.038
+    },
+    {
+      "path": "tests/__pycache__/test_events_bus_api.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m19_1_knowledge_adoption.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_safety.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m15_connectors.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.035
+    },
+    {
+      "path": "tests/__pycache__/test_m20_6_live_local_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_publishing_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_platform_maturity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_audience.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m28_connector_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m17_20_registry_concurrency.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.069
+    },
+    {
+      "path": "tests/__pycache__/test_auth_logto.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_regression_gates.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_mission_intel.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m70_mission_runtime_orchestration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m20_3_opt_in_llm_caller_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.074
+    },
+    {
+      "path": "tests/__pycache__/test_m62_7_safety.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.1
+    },
+    {
+      "path": "tests/__pycache__/test_trade_journal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_durable_idempotency.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_voice_studio.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_tool_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_bma.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m17_25_mcp_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_publication.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_graph.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_run_ledger.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_missions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_toolintent.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.038
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_subprocess.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_m19_2_shadow_adoption.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m35_sandbox_sessions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_durable_idempotency.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m71_mission_runtime_api.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_investment_pipeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_brand_voice.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m139_ielts_productization.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m20_0_engineering_orchestrator.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.097
+    },
+    {
+      "path": "tests/__pycache__/test_ai_studio.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_human_browser.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_auto_repair.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m29_connector_identity.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.062
+    },
+    {
+      "path": "tests/__pycache__/test_m39_3_canary_framework.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_m50_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m15_2_harness.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m47_6_cors_policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m38_retry_failure_canary.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_execution.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_m66_ielts_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_closure_audits.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m30_connector_conformance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_ui.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_m50_platform_identity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m312_m319_connectivity_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_m32_provider_adapter.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_events_bus_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_studio_directors.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_cli_file_handling.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m17_19_registry_untrusted_persistence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_contracts.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m21_1_request_contract.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.054
+    },
+    {
+      "path": "tests/__pycache__/test_generation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_daily_scorecard.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m17_18_registry_persistence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_shell_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m25_cert_evidence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.041
+    },
+    {
+      "path": "tests/__pycache__/test_m34_live_external_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_m29_connector_identity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_legacy_elimination.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m51_identity_sessions.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_teach_mode.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m17_21_registry_health.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_voice_os.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_m46_bounded_canary.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.035
+    },
+    {
+      "path": "tests/__pycache__/test_opportunity.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m32_provider_adapter.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.083
+    },
+    {
+      "path": "tests/__pycache__/test_episode_bridge.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_selector_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_run_ledger.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.063
+    },
+    {
+      "path": "tests/__pycache__/test_m74_voice_foundation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.068
+    },
+    {
+      "path": "tests/__pycache__/test_m64_module_discovery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_m248_m255_institutional_intelligence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.052
+    },
+    {
+      "path": "tests/__pycache__/test_model_router.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_infra_diagnostics.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_m31_credentials.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.034
+    },
+    {
+      "path": "tests/__pycache__/test_m69_mission_runtime_foundation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_m36_transport_and_scope.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_publishing_director.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m20_5_session_ledger_recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_mission_intake.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m17_10_run_monitor.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.041
+    },
+    {
+      "path": "tests/__pycache__/test_m41_canary_rollout.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m130_hcg_operations.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.044
+    },
+    {
+      "path": "tests/__pycache__/test_m17_24_external_capability_foundation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_11_notification_delivery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.073
+    },
+    {
+      "path": "tests/__pycache__/test_m74_voice_foundation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_publishing_director.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m35_credential_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_m43_machine_verified_canary.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_connector_layer.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_selector_registry.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m72_mission_runtime_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_curriculum.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m36_certification_and_evidence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_ops.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_m288_m295_paper_simulation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m39_4_deploy_rollback.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_predictive.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m51_product_flow.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_revenue.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m24_durable_provider_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.084
+    },
+    {
+      "path": "tests/__pycache__/test_m32_provider_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.077
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_idempotency.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m70_mission_runtime_orchestration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_os_snapshot.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m17_6_jq.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_connector_drivers.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_m112_skill_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.036
+    },
+    {
+      "path": "tests/__pycache__/test_run_manager.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_executive.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m216_m223_broker_sandbox.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.068
+    },
+    {
+      "path": "tests/__pycache__/test_agent_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m280_m287_research_orchestrator.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_website_intel.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_m64_module_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_business_pielts.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_daily_youtube.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_8_task_control.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m35_sandbox_sessions.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.048
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_contracts.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_integration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_automation_center.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_connectors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_memory_engine.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m39_2_failure_simulation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_auth_v12.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.058
+    },
+    {
+      "path": "tests/__pycache__/test_m54_readiness.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.046
+    },
+    {
+      "path": "tests/__pycache__/test_m21_0_production_config.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_repair_reliability.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m17_23_browser_execution_gateway.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.08
+    },
+    {
+      "path": "tests/__pycache__/test_publish_video.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m17_hardening.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_compatibility_retirement.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_supply_chain.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m41_canary_rollout.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_authority.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_21_registry_health.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_capabilities.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_ops.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_llm_execution.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_integration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_code_memory_connector.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m25_live_provider_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.049
+    },
+    {
+      "path": "tests/__pycache__/test_youtube_publish.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m17_2_native.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m166_m175_trading_guardian.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.085
+    },
+    {
+      "path": "tests/__pycache__/test_m20_4_engineering_control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_review_queue.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m37_negative_and_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_content_intelligence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_subprocess.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_learning_directors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m20_1_openjarvis_inference.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.071
+    },
+    {
+      "path": "tests/__pycache__/test_m224_m231_broker_readiness.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.044
+    },
+    {
+      "path": "tests/__pycache__/test_render_director.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m17_computer_agent.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m44_rollout_authorization.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.036
+    },
+    {
+      "path": "tests/__pycache__/test_agent_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.09
+    },
+    {
+      "path": "tests/__pycache__/test_m17_18_registry_persistence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_m20_0_engineering_orchestrator.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_client_intake.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m64_localhost_binding.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_cancellation_completion.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m55_release.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m38_multisession_and_recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m35_credential_lifecycle.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.065
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_regression_gates.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m16_control_center.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m30_connector_conformance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.088
+    },
+    {
+      "path": "tests/__pycache__/test_infra_diagnostics.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_teach_mode.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_studio_planner.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m72_mission_runtime_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m54_readiness.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m39_4_deploy_rollback.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_missions.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_llm_execution.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_visual_department.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_investment_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_model_router.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_ui.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.078
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_compatibility_retirement.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_proposal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m62_4_strategy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m26_inference_operations.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.094
+    },
+    {
+      "path": "tests/__pycache__/test_m240_m247_provider_canary_planning.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.056
+    },
+    {
+      "path": "tests/__pycache__/test_evidence_service.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m79_voice_runtime_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_self_healing.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_business.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_repair_reliability.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.033
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_trading_boundary.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m39_7_reproducibility.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m27_connector_framework.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_lifecycle.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_verification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m35_credential_lifecycle.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_studio_directors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_financial_mission_control.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m17_1_live.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m34_reliability_and_readiness.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.033
+    },
+    {
+      "path": "tests/__pycache__/test_m95_orchestration_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.05
+    },
+    {
+      "path": "tests/__pycache__/test_m38_multisession_and_recovery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_generation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m40_live_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_events.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_execution.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.086
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_authority.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m20_1_openjarvis_inference.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m20_2_governed_local_inference.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.073
+    },
+    {
+      "path": "tests/__pycache__/test_m18_2_codebase_memory.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_investment.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m304_m311_market_observation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_m19_4_context_composer.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.053
+    },
+    {
+      "path": "tests/__pycache__/test_mission_control.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m18_3_insforge_provider.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_dry_run.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m37_provider_and_lifecycle.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m62_6_reconciliation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.056
+    },
+    {
+      "path": "tests/__pycache__/test_m34_reliability_and_readiness.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m35_certification_and_evidence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_daily_mission.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_promotion.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_event_bus.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m23_governed_chat_default.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_mission_twin.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_self_healing.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_chat.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m39_2_failure_simulation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m17_2_native.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m33_external_provider_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.037
+    },
+    {
+      "path": "tests/__pycache__/test_m47_6_cors_policy.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_intelligence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m15_specs.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_skills_library.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m38_retry_failure_canary.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m15_specs.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_legacy_retirement.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_m17_20_registry_concurrency.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_events.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_vision_and_timeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m256_m263_market_data.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.05
+    },
+    {
+      "path": "tests/__pycache__/test_connector_drivers.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_integration_pielts.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_8_task_control.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m21_3_residual_path_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_business_pielts.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m15_2_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m51_identity_sessions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_platform_maturity.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m17_6_jq.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m15_2_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_execution_gateway.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m39_7_reproducibility.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_closure_audits.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m21_2_provider_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_investment_learning.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_production_automation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m39_6_adversarial.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m17_3_harness.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_script_director.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m17_13_mission_engine.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_vision_and_timeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m20_9_final_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_m50_approval_and_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_studio_os.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_memory_engine.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.076
+    },
+    {
+      "path": "tests/__pycache__/test_voice_studio.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_event_bus.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_17_scheduled_graph_recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_m34_live_external_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_ai_lab.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_browser_session.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m19_0_unified_knowledge.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_m19_2_shadow_adoption.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.066
+    },
+    {
+      "path": "tests/__pycache__/test_m264_m271_recovery_historical.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m39_live_validation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_skills_library.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_memory_conventions_split.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.038
+    },
+    {
+      "path": "tests/__pycache__/test_mission_intake.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_research.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m62_4_strategy.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.076
+    },
+    {
+      "path": "tests/__pycache__/test_m20_2_governed_local_inference.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_m17_1_live.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_opportunity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m57_local.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.044
+    },
+    {
+      "path": "tests/__pycache__/test_m184_m191_historical_research.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.077
+    },
+    {
+      "path": "tests/__pycache__/test_audience.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m21_4_runtime_consolidation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.149
+    },
+    {
+      "path": "tests/__pycache__/test_graph.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m20_4_engineering_control_center.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.053
+    },
+    {
+      "path": "tests/__pycache__/test_m74_voice_api.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.037
+    },
+    {
+      "path": "tests/__pycache__/test_director_library.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_portfolio.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_script_director.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_live_local.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_storage.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_coach.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m17_23_browser_execution_gateway.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_m17_16_parallel_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.046
+    },
+    {
+      "path": "tests/__pycache__/test_knowledge_supply_chain.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m16_control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m48_4_convergence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_browser_service.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m49_2_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_learning_directors.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_m17_5_sqlite.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_conversation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_daily_youtube.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m48_3_lifecycle.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m49_4_legacy_retirement.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_platform_memory.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m53_runtime_operations.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.047
+    },
+    {
+      "path": "tests/__pycache__/test_daily_scorecard.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m208_m215_ops_graduation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.051
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_connector_approval_scope.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_predictive.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_content_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_referral.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "tests/__pycache__/test_m17_4_multiapp.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_youtube_publish.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "tests/__pycache__/test_bff_contract.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_toolintent.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.079
+    },
+    {
+      "path": "tests/__pycache__/test_content_factory.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m176_m183_paper_validation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.054
+    },
+    {
+      "path": "tests/__pycache__/test_studio_planner.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_auth_v1.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m42_graduation_review.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m53_runtime_operations.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_review_queue.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.034
+    },
+    {
+      "path": "tests/__pycache__/test_alerts.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_workspace.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m34_live_external_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_workflow.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_storage_service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_bma_phases.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m48_3_lifecycle.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.029
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_os_m14.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.061
+    },
+    {
+      "path": "tests/__pycache__/test_m45_runtime_attestation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.065
+    },
+    {
+      "path": "tests/__pycache__/test_m15_3_enterprise.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_human_browser.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_website_intel.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m21_2_provider_governance.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.143
+    },
+    {
+      "path": "tests/__pycache__/test_connector_layer.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_publishing_pipeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_m17_24_browser_dispatch_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_m51_invites_membership.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_redteam.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_control_room.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_infra_events.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_concurrency.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_cleanup.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m34_live_external_security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m15_3_enterprise.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_auto_repair.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.058
+    },
+    {
+      "path": "tests/__pycache__/test_m17_16_parallel_pipeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.101
+    },
+    {
+      "path": "tests/__pycache__/test_execution_gateway.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m36_authorization_and_security.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.05
+    },
+    {
+      "path": "tests/__pycache__/test_m17_10_run_monitor.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "tests/__pycache__/test_m17_22_execution_gateway.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.073
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_legacy_elimination.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m17_4_multiapp.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "tests/__pycache__/test_m17_14_mission_scheduler.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.043
+    },
+    {
+      "path": "tests/__pycache__/test_m200_m207_durable_paper.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_workflow.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_ceo_os_snapshot.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_m62_8_workspace.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m27_connector_framework.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.066
+    },
+    {
+      "path": "tests/__pycache__/test_content_intelligence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m17_15_pipeline_recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.034
+    },
+    {
+      "path": "tests/__pycache__/test_m39_3_canary_framework.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m17_25_interactive_browser.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "tests/__pycache__/test_m69_mission_runtime_foundation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "tests/__pycache__/test_m39_8_operator_package.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_m48_1_agent_runtime_contracts.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m19_0_unified_knowledge.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "tests/__pycache__/test_auth_hardening.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m17_5_sqlite.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m44_rollout_authorization.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.096
+    },
+    {
+      "path": "tests/__pycache__/test_capabilities.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_coach.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m26_inference_operations.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.033
+    },
+    {
+      "path": "tests/__pycache__/test_financial_mission_control.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_api.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_trade_journal.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m17_26_production_browser.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.048
+    },
+    {
+      "path": "tests/__pycache__/test_director_library.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m19_3_real_index_campaign.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_evidence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_executive_finance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_m17_7_zip.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m48_1_agent_runtime_contracts.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.039
+    },
+    {
+      "path": "tests/__pycache__/test_m21_3_residual_path_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.074
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_trading_boundary.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "tests/__pycache__/test_ai_studio.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "tests/__pycache__/test_m103_fleet_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.06
+    },
+    {
+      "path": "tests/__pycache__/test_m61_workflow_persistence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.04
+    },
+    {
+      "path": "tests/__pycache__/test_content_factory.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "tests/__pycache__/test_m17_11_notification_delivery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_m28_connector_migration.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.091
+    },
+    {
+      "path": "tests/__pycache__/test_m157_private_alpha.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.05
+    },
+    {
+      "path": "tests/__pycache__/test_auth_v1.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.058
+    },
+    {
+      "path": "tests/__pycache__/test_m20_9_final_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m17_25_interactive_browser.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.066
+    },
+    {
+      "path": "tests/__pycache__/test_m17_hardening.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m17_15_pipeline_recovery.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.072
+    },
+    {
+      "path": "tests/__pycache__/test_m15_2_harness.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_social_workflows.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_conversation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_m20_3_opt_in_llm_caller_migration.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_graph.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "tests/__pycache__/test_auth_hardening.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_m17_12_harness_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_proposal.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_evidence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_m49_1_tool_cancellation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "tests/__pycache__/test_m48_4_convergence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m17_9_concurrency.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "tests/__pycache__/test_m51_invites_membership.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "tests/__pycache__/test_m39_live_validation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.05
+    },
+    {
+      "path": "tests/__pycache__/test_m32_provider_runtime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "tests/__pycache__/test_m20_6_live_local_certification.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "tests/__pycache__/test_ai_lab.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "tests/__pycache__/test_auth_v12.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_m79_voice_runtime.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.041
+    },
+    {
+      "path": "tests/__pycache__/test_m62_3_research.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.047
+    },
+    {
+      "path": "tests/__pycache__/test_alerts.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m37_negative_and_certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "tests/__pycache__/test_m15_1_live_local.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_safety.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.031
+    },
+    {
+      "path": "tests/__pycache__/test_m17_12_harness_pipeline.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.048
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_domain_boundaries.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "tests/__pycache__/test_m49_3_cancellation_completion.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "tests/__pycache__/test_m17_19_registry_untrusted_persistence.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.078
+    },
+    {
+      "path": "tests/__pycache__/test_agent_registry.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "tests/__pycache__/test_m39_1_operator_tooling.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_client_intake.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "tests/__pycache__/test_control_room.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_eventstream.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "tests/__pycache__/test_m17_22_execution_gateway.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.028
+    },
+    {
+      "path": "tests/__pycache__/test_m50_platform_identity.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "tests/__pycache__/test_publish_video.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "tests/__pycache__/test_render_director.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "tests/__pycache__/test_m20_7_console_consolidation.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "tests/__pycache__/test_m23_governed_chat_default.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.139
+    },
+    {
+      "path": "tests/__pycache__/test_m24_durable_provider_governance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.032
+    },
+    {
+      "path": "tests/__pycache__/test_m31_credentials.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.089
+    },
+    {
+      "path": "tests/__pycache__/test_model_router_providers.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "tests/__pycache__/test_m17_7_zip.cpython-312-pytest-9.1.1.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.363
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.097
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.077
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.124
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.06
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.147
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.156
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.127
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.224
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.033
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.111
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.13
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.201
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.169
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.138
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.169
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.147
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.128
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__",
+      "kind": "__pycache__",
+      "size_mb": 0.032
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/risk.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/journal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.054
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/evaluation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/data_contract.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/cli.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.089
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/kill_switch.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/fixtures.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/stress_lab.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/regime.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/domain.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.061
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/portfolio.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/walk_forward.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/__pycache__/__main__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.0
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/risk.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/journal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/ledger.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/calendar.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/exchange.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/corporate_actions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/matching.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "saathi/platform/tg/paper_simulation/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/sizing.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/limits.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/committee_v2.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/attribution.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/optimiser_v2.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/analytics.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/portfolio_risk/__pycache__/scenarios.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/journal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/portfolio_engine.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/approvals.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/order_simulator.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.034
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/activation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/analytics.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/reconciliation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/__pycache__/risk_controls.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.06
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/events.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.061
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/recovery.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/durable/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/intelligence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/evidence.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/dashboard.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/campaign_manager.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/analytics_adv.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/graduation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/monitoring.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/paper_activation/ops/__pycache__/simulation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/fixtures.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/observation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/market_observation/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/credentials.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/abstraction.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.016
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/failure.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/emulator.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/broker_sandbox/__pycache__/trust_pipeline.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/transport.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/authorization.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/supply_chain.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/dependencies.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/environment.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/source_audit.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/reproduction.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/sbom.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/integration_assurance/__pycache__/control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/monte_carlo.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/portfolio_engine.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.024
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/strategy_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.019
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/explainable.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/walk_forward_v2.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/committee.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/intelligence/__pycache__/backtest_v2.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/adjustments.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/dataset_split.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/provenance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/bias_controls.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/calendar.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/feature_store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/quality.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/catalog.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/licensing.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/reconciliation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/normalization.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/signal_validation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/corporate_actions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/market_data/__pycache__/ingestion.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/kotegawa_mean_reversion.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/base.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/no_trade.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/momentum_rs.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/strategies/__pycache__/trend_following.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/templates.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/journal.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/budget.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/dependencies.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/queue.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/estimator.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/registries.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/sessions.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/calendar.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/workers.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_orchestrator/__pycache__/scheduler.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/monte_carlo.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/calendars.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/normalize.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/import_service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.026
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/qualification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/quality.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/research.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.025
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/historical/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/base.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/yahoo.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/local_file.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/nepse.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/binance.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/historical/adapters/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.021
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/strategy_universe.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/allocation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/ensemble.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/regime_classifier.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/experiment_runner.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/candidate_promotion.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/robustness.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/experiment_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.022
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/stress_testing.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/lineage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/multiple_testing.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/portfolio_builder.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.027
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/regime_validation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/regimes.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/research_lab/__pycache__/comparison.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/transport.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/credentials.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/secrets.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.004
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/scope.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.012
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/adapter.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/snapshots.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.018
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/connection.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.014
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/drills.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.023
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/broker_readiness/__pycache__/control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/sources.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/transport.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.007
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.02
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/credentials.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/eligibility.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/security.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/gates.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/ranking.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.017
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/schema.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/canary.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.008
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/owner_package.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/capabilities.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/store.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.006
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": "saathi/platform/tg/provider_canary_planning/__pycache__/control_center.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/storage.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/maturity.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/incident_response.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/service.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.03
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/threat_model.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.039
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/authority.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/approval_policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.013
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/credential_policy.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.009
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/errors.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.002
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/charter.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.005
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/models.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.01
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/certification.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.011
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/revocation.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/provider_registry.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.015
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/emergency_shutdown.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.003
+    },
+    {
+      "path": "saathi/platform/tg/connectivity_governance/__pycache__/__init__.cpython-312.pyc",
+      "kind": "pyc",
+      "size_mb": 0.001
+    },
+    {
+      "path": ".pytest_cache",
+      "kind": "cache_or_build",
+      "size_mb": 0.435
+    },
+    {
+      "path": "saathi-os/.next",
+      "kind": "cache_or_build",
+      "size_mb": 840.92
+    }
+  ],
+  "total_size_mb": 876.886,
+  "excluded": [
+    ".venv",
+    "saathi-os/node_modules",
+    "docs/evidence/m25",
+    "docs/design-spec",
+    "cg_evidence.db"
+  ]
+}

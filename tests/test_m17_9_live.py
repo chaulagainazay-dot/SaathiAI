@@ -14,7 +14,10 @@ from saathi.application_harness.models import HarnessDefinition, HarnessActionIn
 from saathi.application_harness.task_control import HarnessTaskController
 
 POSIX = os.name == "posix"
-pytestmark = pytest.mark.skipif(not POSIX, reason="POSIX process control only")
+pytestmark = [
+    pytest.mark.browser,
+    pytest.mark.skipif(not POSIX, reason="POSIX process control only"),
+]
 HAS_SLEEP = os.path.exists("/bin/sleep")
 HAS_SH = os.path.exists("/bin/sh")
 

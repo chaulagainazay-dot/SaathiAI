@@ -1,0 +1,8 @@
+{
+  "evidence": "fm_i6_2_live.tool_prose_result.v1",
+  "status": "NOT_RUN",
+  "reason": "combined memory gate denied admission (MODEL_HEADROOM_LOW)",
+  "inference_attempted": false,
+  "tool_execution": false,
+  "execution_gateway_call": false
+}

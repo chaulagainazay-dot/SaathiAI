@@ -1,0 +1,31 @@
+{
+  "schema": "m327.security_scans.v1",
+  "ok": true,
+  "secret_scan": {
+    "clean": true,
+    "files_scanned": 28,
+    "finding_count": 0,
+    "contains_secret_values": false
+  },
+  "transport_isolation": {
+    "ok": true,
+    "allowed_transports": [
+      "mock",
+      "replay"
+    ],
+    "network_transport_classes": 0,
+    "broker_sdk_imports": 0,
+    "dynamic_provider_imports": 0,
+    "runtime_network_attempted": false,
+    "runtime_sdk_import_attempted": false,
+    "socket_block_test_passed": true
+  },
+  "governance": {
+    "deny_overrides_allow": true,
+    "approval_activates_connectivity": false,
+    "llm_may_approve": false,
+    "llm_may_activate": false
+  },
+  "hard_authority_all_false": true,
+  "isolation_assertions_all_true": true
+}

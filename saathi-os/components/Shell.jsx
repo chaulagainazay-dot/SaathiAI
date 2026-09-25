@@ -11,7 +11,6 @@ import MobileTabBar from "./mobile/MobileTabBar";
 import QuickSheet from "./mobile/QuickSheet";
 import { LiveProvider } from "./live/LiveProvider";
 import LiveToasts from "./live/LiveToasts";
-import MobileMic from "./MobileMic";
 import Sidebar from "./shell/Sidebar";
 import StatusBar from "./shell/StatusBar";
 import CopilotPanel from "./shell/CopilotPanel";
@@ -20,15 +19,22 @@ import { GO_SHORTCUTS } from "@/lib/navigation";
 import { ModuleDiscoveryProvider } from "@/lib/modules/ModuleDiscoveryContext";
 import { useModuleDiscoveryContext } from "@/lib/modules/ModuleDiscoveryContext";
 import ModuleRouteBoundary from "./modules/ModuleRouteBoundary";
+import { VoiceSessionProvider } from "./voice/VoiceSessionProvider";
 import { VoiceOutputProvider } from "./voice/VoiceOutputProvider";
 import VoiceOutputDock from "./voice/VoiceOutputDock";
 import { VoiceRuntimeProvider } from "./voice/VoiceRuntimeProvider";
 import VoiceRuntimeDock from "./voice/VoiceRuntimeDock";
+import AuthGate from "./AuthGate";
 
 function ShellInner({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const bare = pathname?.startsWith("/project/create/");
+  const dedicatedCaptureRoute = pathname === "/voice" || pathname === "/os";
+  // Routes that enforce their own auth via cookie-gated APIs and must NOT depend on
+  // the platform-token module-discovery gate (which shows "Sign in required" when the
+  // separate saathi_platform_token is absent even though the auth cookie is valid).
+  const selfAuthedRoute = pathname === "/finance/browser";
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [ceoOpen, setCeoOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -134,9 +140,6 @@ function ShellInner({ children }) {
       <MobileTopBar />
       <MobileTabBar onAdd={() => setSheetOpen(true)} onCopilot={openCopilot} />
       <QuickSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-      <div className="only-touch">
-        <MobileMic />
-      </div>
 
       {/* Single main content tree (desktop + mobile) */}
       <main
@@ -144,7 +147,7 @@ function ShellInner({ children }) {
         data-sidebar={sidebarExpanded ? "expanded" : "collapsed"}
         data-copilot={copilotOpen ? "open" : "closed"}
       >
-        <ModuleRouteBoundary>{children}</ModuleRouteBoundary>
+        {selfAuthedRoute ? children : <ModuleRouteBoundary>{children}</ModuleRouteBoundary>}
       </main>
 
       {copilotOpen && (
@@ -168,7 +171,8 @@ function ShellInner({ children }) {
       )}
 
       <LiveToasts />
-      <VoiceRuntimeDock />
+      <AuthGate />
+      {!dedicatedCaptureRoute && <VoiceRuntimeDock />}
       <VoiceOutputDock />
       <CommandPalette
         open={paletteOpen}
@@ -184,11 +188,13 @@ export default function Shell({ children }) {
   return (
     <ShellChromeProvider>
       <ModuleDiscoveryProvider>
-        <VoiceOutputProvider>
-          <VoiceRuntimeProvider>
-            <ShellInner>{children}</ShellInner>
-          </VoiceRuntimeProvider>
-        </VoiceOutputProvider>
+        <VoiceSessionProvider>
+          <VoiceOutputProvider>
+            <VoiceRuntimeProvider>
+              <ShellInner>{children}</ShellInner>
+            </VoiceRuntimeProvider>
+          </VoiceOutputProvider>
+        </VoiceSessionProvider>
       </ModuleDiscoveryProvider>
     </ShellChromeProvider>
   );

@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body{margin:0;background:#f7f5f0;color:#16201b;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;}
+    *{box-sizing:border-box;}
+    h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;}
+    .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+    a{color:#1f8a53;text-decoration:none;} a:hover{color:#166b40;}
+    .card{background:#fff;border:1px solid #dcdfd5;border-radius:12px;padding:1.1rem 1.25rem;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+    .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#1f8a53;display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:#1f8a53;box-shadow:0 0 0 3px #e4f2e9;}
+    .badge{display:inline-flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;padding:.15rem .5rem;border-radius:100px;}
+    .up{background:#e4f2e9;color:#1f8a53;} .down{background:#fbeae7;color:#b83f34;}
+    .neutral{background:#eef0ea;color:#55645b;} .gold{background:#f6ecd6;color:#9a6d1f;}
+    .btn{font-size:.88rem;font-weight:600;padding:.5rem .9rem;border-radius:8px;border:1px solid #1f8a53;background:#1f8a53;color:#fff;display:inline-block;}
+    .btn.ghost{background:transparent;color:#1f8a53;}
+    .inp{font-size:.9rem;padding:.5rem .7rem;border:1px solid #dcdfd5;border-radius:8px;background:#fff;color:#16201b;}
+    th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:#8a988f;font-weight:500;padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;white-space:nowrap;}
+    td{padding:.6rem .8rem;border-bottom:1px solid #dcdfd5;color:#55645b;white-space:nowrap;}
+    td.s{color:#16201b;font-weight:600;}
+    table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .wrap{border:1px solid #dcdfd5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(22,32,27,.04),0 8px 24px -12px rgba(22,32,27,.12);}
+  </style>
+</helmet>
+<div style="min-height:100%;background:#f7f5f0;"><div style="max-width:1180px;margin:0 auto;padding:1.5rem 1.5rem 3rem;">
+  <div class="eyebrow">Scanner</div>
+  <h1 style="font-size:2.3rem;letter-spacing:-0.01em;">Strategy scans</h1>
+  <p style="margin-top:.5rem;color:#55645b;max-width:60ch;">Saved conditions run across all 372 listed companies. A stock whose indicator could not be computed is reported as <em>unknown</em>, never quietly excluded as a non-match.</p>
+
+  <div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;margin-top:1.25rem;align-items:start;">
+
+    <div class="card">
+      <div class="tag">Saved strategies</div>
+      <div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.4rem;">
+        <div style="padding:.5rem .6rem;border-radius:8px;background:#e4f2e9;border:1px solid #1f8a53;">
+          <div style="font-weight:600;font-size:.9rem;">Oversold reversal</div>
+          <div style="color:#55645b;font-size:.78rem;">12 matches · 3 unknown</div>
+        </div>
+        <div style="padding:.5rem .6rem;border-radius:8px;border:1px solid #dcdfd5;">
+          <div style="font-weight:600;font-size:.9rem;">Volume breakout</div>
+          <div style="color:#8a988f;font-size:.78rem;">last run 2026-09-03</div>
+        </div>
+        <div style="padding:.5rem .6rem;border-radius:8px;border:1px solid #dcdfd5;">
+          <div style="font-weight:600;font-size:.9rem;">Trending with ADX</div>
+          <div style="color:#8a988f;font-size:.78rem;">last run 2026-09-03</div>
+        </div>
+        <div style="padding:.5rem .6rem;border-radius:8px;border:1px solid #dcdfd5;">
+          <div style="font-weight:600;font-size:.9rem;">Demand-zone retest</div>
+          <div style="color:#8a988f;font-size:.78rem;">last run 2026-09-02</div>
+        </div>
+        <div style="padding:.5rem .6rem;border-radius:8px;border:1px dashed #dcdfd5;color:#8a988f;font-size:.88rem;">+ New strategy</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="tag">Oversold reversal · conditions</div>
+          <span class="btn ghost" style="font-size:.8rem;padding:.3rem .7rem;">Run scan</span>
+        </div>
+
+        <div style="margin-top:.75rem;border:1px solid #dcdfd5;border-radius:10px;padding:.75rem;background:#f7f5f0;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">
+            <span class="badge up" style="font-weight:600;">ALL</span>
+            <span style="color:#55645b;font-size:.85rem;">of the following must hold</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:.45rem;padding-left:.85rem;border-left:2px solid #dcdfd5;">
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+              <span class="inp" style="padding:.3rem .6rem;">RSI (14)</span>
+              <span class="inp" style="padding:.3rem .6rem;">is below</span>
+              <span class="inp num" style="padding:.3rem .6rem;width:72px;">35</span>
+            </div>
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+              <span class="inp" style="padding:.3rem .6rem;">Close</span>
+              <span class="inp" style="padding:.3rem .6rem;">crosses above</span>
+              <span class="inp" style="padding:.3rem .6rem;">SMA (20)</span>
+            </div>
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+              <span class="inp" style="padding:.3rem .6rem;">Volume ratio (20)</span>
+              <span class="inp" style="padding:.3rem .6rem;">is at least</span>
+              <span class="inp num" style="padding:.3rem .6rem;width:72px;">1.5</span>
+            </div>
+
+            <div style="border:1px solid #dcdfd5;border-radius:8px;padding:.5rem .6rem;background:#fff;">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
+                <span class="badge neutral" style="font-weight:600;">ANY</span>
+                <span style="color:#55645b;font-size:.85rem;">at least one of</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:.4rem;padding-left:.85rem;border-left:2px solid #dcdfd5;">
+                <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+                  <span class="inp" style="padding:.3rem .6rem;">Candlestick pattern</span>
+                  <span class="inp" style="padding:.3rem .6rem;">is</span>
+                  <span class="inp" style="padding:.3rem .6rem;">Bullish engulfing</span>
+                </div>
+                <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+                  <span class="inp" style="padding:.3rem .6rem;">Price</span>
+                  <span class="inp" style="padding:.3rem .6rem;">is inside</span>
+                  <span class="inp" style="padding:.3rem .6rem;">a demand zone</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="color:#8a988f;font-size:.88rem;">+ add condition</div>
+          </div>
+        </div>
+
+        <div style="border-left:3px solid #1f8a53;background:#e4f2e9;border-radius:0 8px 8px 0;padding:.7rem .95rem;font-size:.86rem;margin-top:.75rem;">
+          <strong>Three-valued logic.</strong> A condition on a reading that could not be computed evaluates to <em>unknown</em>, not false — <span class="num">ALL(true, unknown)</span> is unknown and the stock is listed separately, so a scan never silently drops a match it simply could not judge.
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;">
+          <h3 style="font-size:1rem;">12 matches</h3>
+          <span style="color:#9a6d1f;font-size:.82rem;">3 could not be evaluated</span>
+        </div>
+        <div class="wrap">
+          <table>
+            <thead><tr><th>Symbol</th><th>Sector</th><th style="text-align:right;">LTP</th><th style="text-align:right;">RSI</th><th style="text-align:right;">Vol ratio</th><th style="text-align:right;">Score</th><th>Pattern</th></tr></thead>
+            <tbody>
+              <tr><td class="s">CKHL</td><td>Hydropower</td><td class="num" style="text-align:right;">615.00</td><td class="num" style="text-align:right;">32.1</td><td class="num" style="text-align:right;">2.41</td><td class="num" style="text-align:right;">74</td><td><span class="badge up">Bullish engulfing</span></td></tr>
+              <tr style="background:#eef0ea;"><td class="s">ALBSL</td><td>Microfinance</td><td class="num" style="text-align:right;">1,190.00</td><td class="num" style="text-align:right;">34.8</td><td class="num" style="text-align:right;">1.92</td><td class="num" style="text-align:right;">69</td><td><span class="badge up">Hammer</span></td></tr>
+              <tr><td class="s">SLICL</td><td>Life Insurance</td><td class="num" style="text-align:right;">387.00</td><td class="num" style="text-align:right;">31.4</td><td class="num" style="text-align:right;">1.63</td><td class="num" style="text-align:right;">66</td><td><span class="badge neutral">Demand zone</span></td></tr>
+              <tr><td class="s">MKHC</td><td>Hydropower</td><td class="num" style="text-align:right;">269.60</td><td class="num" style="text-align:right;">28.9</td><td class="num" style="text-align:right;">1.55</td><td class="num" style="text-align:right;">61</td><td><span class="badge up">Piercing line</span></td></tr>
+              <tr><td class="s">HDL</td><td>Manufacturing</td><td class="num" style="text-align:right;">1,842.00</td><td class="num" style="text-align:right;">33.7</td><td class="num" style="text-align:right;">1.51</td><td class="num" style="text-align:right;">58</td><td><span class="badge neutral">Demand zone</span></td></tr>
+              <tr><td class="s" style="color:#8a988f;">NBBD2085</td><td style="color:#8a988f;">Debenture</td><td class="num" style="text-align:right;color:#8a988f;">—</td><td class="num" style="text-align:right;color:#8a988f;">unknown</td><td class="num" style="text-align:right;color:#8a988f;">unknown</td><td class="num" style="text-align:right;color:#8a988f;">—</td><td><span class="badge gold">Not evaluable</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+</x-dc>
+</body>
+</html>

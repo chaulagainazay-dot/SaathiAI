@@ -1,8 +1,11 @@
 # ADR: claude-video Rendering Integration vs. OpenMontage
 
-**Date:** 2026-07-10  
-**Status:** DISCOVERY IN PROGRESS (awaiting claude-video discovery agent completion)  
-**Context:** Character-animation pipeline for Mr. Yeti; video generation provider comparison  
+**Date:** 2026-07-10
+**Status:** DRAFT (historical discovery; FM-C1: not current execution architecture)
+**Implementation status:** Not an ExecutionGateway or agent-runtime authority document
+**Context:** Character-animation pipeline for Mr. Yeti; video generation provider comparison
+**Superseded by:** Prefer ADR-VIDEO-BACKEND-POLICY + ADR-OPENMONTAGE-SEPARATE-SERVICE for video routing; EG remains sole side-effect path
+
 
 ---
 
@@ -122,6 +125,6 @@ Sanitized Result + Evidence
 
 ---
 
-**Status:** ✅ APPROVED FOR IMPLEMENTATION  
-**Documents:** CLAUDE_VIDEO_DISCOVERY.md, CLAUDE_VIDEO_ARCHITECTURE.md, CLAUDE_VIDEO_CAPABILITY_MATRIX.md  
+**Status:** ✅ APPROVED FOR IMPLEMENTATION
+**Documents:** CLAUDE_VIDEO_DISCOVERY.md, CLAUDE_VIDEO_ARCHITECTURE.md, CLAUDE_VIDEO_CAPABILITY_MATRIX.md
 **Next:** Begin Phase 1 implementation (2026-07-15)

@@ -5,9 +5,9 @@
 - **Latest live_provider_certified:** False
 - **Production certified:** False
 - **Historical live cert:** PASS at 2026-07-17T11:33:35+00:00 model=qwen2.5:1.5b
-- **Run ID:** `aed168e407d241409587c1d7ea17fe65`
-- **Commit:** `0a25728d9b551c1d86f6e57a2e43beb5aec708b7`
-- **Timestamp:** 2026-07-17T13:18:53+00:00
+- **Run ID:** `56622a6fdd6e4d209cb881bb55b76448`
+- **Commit:** `c1995a7cd3d1fb4abc9371d230038739a2599b93`
+- **Timestamp:** 2026-09-04T00:45:51+00:00
 - **Blockers (latest):** insufficient_model_memory_headroom, memory_pressure
 - **Downloads performed:** False
 - **Cloud calls:** 0

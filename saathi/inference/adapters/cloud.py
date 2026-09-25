@@ -167,6 +167,7 @@ def register_builtin_cloud_engines(registry) -> None:
         ("deepseek", "deepseek", 0.3),
         ("glm", "glm", 0.5),
         ("qwen", "qwen", 0.4),
+        ("nvidia_kimi", "nvidia_kimi", 15.0),
     ]
     callers = getattr(hp, "DEFAULT_FAMILY_CALLERS", {})
     for engine_id, family, cost in mapping:

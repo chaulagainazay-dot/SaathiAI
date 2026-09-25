@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { Panel, Eyebrow, Pill } from "@/components/ui";
 import MissionNav from "@/components/MissionNav";
 
-const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API || "http://localhost:8765";
+const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API ?? "http://localhost:8765";
 
 export default function WebsiteIntelligence() {
   const { id } = useParams();
@@ -161,7 +161,7 @@ export default function WebsiteIntelligence() {
                   {Object.entries(result.seo).map(([key, val]) => (
                     <div key={key} className="glass-soft" style={{ padding: 14 }}>
                       <div style={{ fontSize: 10, opacity: 0.5, textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</div>
-                      <div style={{ fontSize: 14, marginTop: 4, color: "var(--color-ink-100)" }}>
+                      <div style={{ fontSize: 14, marginTop: 4, color: "var(--text-primary)" }}>
                         {typeof val === "object" ? JSON.stringify(val) : String(val)}
                       </div>
                     </div>

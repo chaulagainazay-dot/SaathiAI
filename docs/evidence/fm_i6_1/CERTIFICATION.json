@@ -1,0 +1,39 @@
+{
+  "certification": "fm_i6_1.closeout.v1",
+  "milestone": "FM-I6.1",
+  "title": "LocalModelHarness Closeout, Runtime Boundary Verification, and Publication Readiness",
+  "baseline_sha": "228f6efbc94402fc2a4129cb038b34d5ec7f8f51",
+  "branch": "implementation/fm-i6-bounded-local-model-harness",
+  "terminal_verdict": "FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS",
+  "production_certified": false,
+  "model_role_qualified": false,
+  "new_functionality": false,
+  "mock_tests": {
+    "result": "184 passed, 1 skipped",
+    "authoritative": true
+  },
+  "live_inference": {
+    "attempted": false,
+    "result": "SKIPPED",
+    "reasons": [
+      "LIVE_OLLAMA_BINDING_UNSAFE",
+      "RESOURCE_PRESSURE free_percent_below_20"
+    ]
+  },
+  "runtime_boundary": {
+    "classification": "TRUE_WILDCARD_EXPOSURE",
+    "operator_guide": "docs/agent-runtime/FM_I6_1_OLLAMA_LOOPBACK_OPERATOR_GUIDE.md",
+    "evidence": "docs/evidence/fm_i6_1/RUNTIME_BOUNDARY_EVIDENCE.json"
+  },
+  "repository": {
+    "uv_lock": "removed_and_gitignored_test_artifact"
+  },
+  "fm_i7_ready": false,
+  "limitations": [
+    "Ollama wildcard bind reachable on LAN and global IPv6",
+    "macOS application firewall disabled at capture time",
+    "Host memory free% below harness live floor",
+    "Live Ollama path not exercised in this closeout",
+    "Model not operationally role-qualified"
+  ]
+}

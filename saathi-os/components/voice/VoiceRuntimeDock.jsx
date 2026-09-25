@@ -1,6 +1,8 @@
 "use client";
 
 import { useVoiceRuntime } from "./VoiceRuntimeProvider";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 function stateColor(runtime) {
   if (runtime.interrupted && runtime.listening) return "#ff8c8c";
@@ -13,41 +15,90 @@ function stateColor(runtime) {
 }
 
 export default function VoiceRuntimeDock() {
-  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel } =
+  const { token, runtime, busy, toggleMic, interrupt, retry, micLabel, inputMode, setInputMode } =
     useVoiceRuntime();
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(true);
   if (!token) return null;
 
   const color = stateColor(runtime);
+  const statusLabel = runtime.speaking
+    ? "Speaking"
+    : runtime.recording
+      ? "Recording"
+      : runtime.listening
+        ? "Listening"
+        : runtime.state === "THINKING"
+          ? "Thinking"
+          : runtime.interrupted
+            ? "Interrupted"
+            : "Ready";
+
+  if (collapsed) {
+    return (
+      <div className={`voice-runtime-dock voice-runtime-dock-collapsed ${pathname === "/chat" ? "voice-runtime-dock-chat" : ""}`} data-testid="voice-runtime-dock" style={{ position: "fixed", left: pathname === "/chat" ? "auto" : 16, right: pathname === "/chat" ? 16 : "auto", bottom: pathname === "/chat" ? 0 : 16, zIndex: 50, minWidth: 150, height: 44, padding: "4px 6px", display: "inline-flex", alignItems: "center", gap: 8, boxSizing: "border-box", borderRadius: 14, border: "1px solid rgba(255,255,255,.08)", background: "rgba(10,14,28,.88)", color: "#e8eefc", fontSize: 12 }}>
+        <button
+          type="button"
+          className="voice-runtime-compact-mic"
+          data-testid="voice-runtime-compact-mic"
+          data-active={runtime.recording || runtime.listening ? "true" : "false"}
+          aria-label={micLabel}
+          title={micLabel}
+          disabled={busy && !runtime.recording && !runtime.speaking}
+          onClick={() => toggleMic()}
+          style={{ color, borderColor: `${color}88`, width: 32, height: 32, borderRadius: 999, border: "1px solid", background: "rgba(255,255,255,.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15 }}
+        >{runtime.recording ? "■" : "🎤"}</button>
+        <span className="voice-runtime-compact-status" aria-live="polite" style={{ minWidth: 58, textAlign: "center", fontSize: 11 }}>{statusLabel}</span>
+        <button
+          type="button"
+          className="voice-runtime-expand"
+          data-testid="voice-runtime-expand"
+          aria-label="Expand Live voice controls"
+          title="Expand Live voice controls"
+          onClick={() => setCollapsed(false)}
+          style={{ width: 32, height: 32, borderRadius: 999, border: "1px solid rgba(255,255,255,.16)", background: "rgba(255,255,255,.06)", color: "inherit", cursor: "pointer", fontSize: 14 }}
+        >⌃</button>
+      </div>
+    );
+  }
 
   return (
     <section
       className="voice-runtime-dock"
       data-voice-runtime-state={runtime.state}
       data-voice-input-state={runtime.inputState}
+      data-testid="voice-runtime-dock"
       aria-label="Real-time voice conversation"
     >
       <div className="voice-runtime-head">
         <strong>Live voice</strong>
+        <button
+          type="button"
+          className="voice-runtime-collapse"
+          data-testid="voice-runtime-collapse"
+          aria-label="Collapse Live voice"
+          title="Collapse Live voice"
+          onClick={() => setCollapsed(true)}
+        >
+          −
+        </button>
         <span
           className="voice-runtime-badge"
           style={{ color, borderColor: `${color}66`, background: `${color}22` }}
           aria-live="polite"
         >
-          {runtime.speaking
-            ? "Speaking"
-            : runtime.recording
-              ? "Recording"
-              : runtime.listening
-                ? "Listening"
-                : runtime.state === "THINKING"
-                  ? "Thinking"
-                  : runtime.interrupted
-                    ? "Interrupted"
-                    : "Idle"}
+          {statusLabel}
         </span>
       </div>
 
       <div className="voice-runtime-controls">
+        <label className="voice-runtime-mode">
+          <span>Input</span>
+          <select value={inputMode} onChange={(e) => setInputMode(e.target.value)} disabled={runtime.recording || runtime.listening}>
+            <option value="LOCAL">Local</option>
+            <option value="BROWSER">Browser</option>
+          </select>
+        </label>
         <button
           type="button"
           className="voice-runtime-mic"
@@ -158,7 +209,13 @@ export default function VoiceRuntimeDock() {
 
       <style jsx>{`
         .voice-runtime-dock {
-          margin: 8px 12px 0;
+          position: fixed;
+          left: 16px;
+          bottom: 16px;
+          z-index: 50;
+          width: min(360px, calc(100vw - 32px));
+          box-sizing: border-box;
+          margin: 0;
           padding: 10px 12px;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.08);
@@ -172,6 +229,59 @@ export default function VoiceRuntimeDock() {
           justify-content: space-between;
           gap: 8px;
           margin-bottom: 8px;
+        }
+        .voice-runtime-collapse {
+          margin-left: auto;
+          width: 24px;
+          height: 24px;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 6px;
+          background: rgba(255,255,255,.05);
+          color: inherit;
+          cursor: pointer;
+          font-size: 16px;
+          line-height: 1;
+        }
+        .voice-runtime-dock-collapsed {
+          width: auto;
+          min-width: 150px;
+          height: 44px;
+          padding: 4px 6px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .voice-runtime-dock-chat {
+          left: auto;
+          right: 16px;
+        }
+        .voice-runtime-compact-mic,
+        .voice-runtime-expand {
+          width: 32px;
+          height: 32px;
+          border-radius: 999px;
+          border: 1px solid;
+          background: rgba(255,255,255,.06);
+          color: inherit;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+        }
+        .voice-runtime-expand {
+          border-color: rgba(255,255,255,.16);
+          font-size: 14px;
+        }
+        .voice-runtime-compact-mic:disabled {
+          opacity: .55;
+          cursor: not-allowed;
+        }
+        .voice-runtime-compact-status {
+          min-width: 58px;
+          font-size: 11px;
+          text-align: center;
         }
         .voice-runtime-badge {
           border: 1px solid;
@@ -291,7 +401,14 @@ export default function VoiceRuntimeDock() {
         }
         @media (max-width: 720px) {
           .voice-runtime-dock {
-            margin: 6px 8px 0;
+            left: 8px;
+            bottom: 8px;
+            width: calc(100vw - 16px);
+          }
+          .voice-runtime-dock-chat {
+            left: auto;
+            right: 8px;
+            width: auto;
           }
         }
       `}</style>

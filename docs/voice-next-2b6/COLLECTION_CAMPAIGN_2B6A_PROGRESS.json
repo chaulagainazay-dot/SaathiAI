@@ -1,0 +1,114 @@
+{
+  "campaign": "V-NEXT-2B.6A",
+  "updated_at": "2026-08-07T10:33:20.187084+00:00",
+  "commercial_speakers_registered": 0,
+  "speakers_registered": 0,
+  "speakers_with_pass_clips": 0,
+  "clips_by_speaker_pass": {},
+  "total_clips_manifest": 0,
+  "accepted_product_clean_pass": 0,
+  "rejected_or_fail": 0,
+  "pending_qa": 0,
+  "MIX_accepted": 0,
+  "numeric_accepted": 0,
+  "EN_accepted": 0,
+  "NE_accepted": 0,
+  "interrupt_accepted_est": 0,
+  "hours_accepted": 0.0,
+  "qa_pass_rate": 0.0,
+  "human_verified_pass_clips": 0,
+  "device_distribution": {},
+  "noise_environment_distribution": {},
+  "validation_test_speaker_availability": {
+    "split_report_status": "NO_MANIFEST",
+    "speaker_disjoint": false,
+    "train_speakers": null,
+    "val_speakers": null,
+    "test_speakers": null
+  },
+  "contamination_status": "CLEAN",
+  "authorization_verdict": "PRODUCT_CLEAN_DATA_INSUFFICIENT_FOR_TRAINING",
+  "assignment_plan_summary": {
+    "spk_001": {
+      "planned_split": "TRAIN",
+      "total_assigned": 191,
+      "by_bucket": {
+        "numeric": 42,
+        "lang_MIX": 134,
+        "flag_numeric": 42,
+        "MIX": 105,
+        "NE": 18,
+        "EN": 18,
+        "interrupt": 8
+      }
+    },
+    "spk_002": {
+      "planned_split": "TRAIN",
+      "total_assigned": 191,
+      "by_bucket": {
+        "numeric": 42,
+        "lang_MIX": 125,
+        "flag_numeric": 42,
+        "MIX": 105,
+        "NE": 18,
+        "EN": 18,
+        "interrupt": 8
+      }
+    },
+    "spk_003": {
+      "planned_split": "TRAIN",
+      "total_assigned": 191,
+      "by_bucket": {
+        "numeric": 42,
+        "lang_MIX": 131,
+        "flag_numeric": 42,
+        "MIX": 105,
+        "NE": 18,
+        "EN": 18,
+        "interrupt": 8
+      }
+    },
+    "spk_004": {
+      "planned_split": "VALIDATION",
+      "total_assigned": 191,
+      "by_bucket": {
+        "numeric": 42,
+        "lang_MIX": 130,
+        "flag_numeric": 42,
+        "MIX": 105,
+        "NE": 18,
+        "EN": 18,
+        "interrupt": 8
+      }
+    },
+    "spk_005": {
+      "planned_split": "TEST",
+      "total_assigned": 191,
+      "by_bucket": {
+        "numeric": 42,
+        "lang_MIX": 132,
+        "flag_numeric": 42,
+        "MIX": 105,
+        "NE": 18,
+        "EN": 18,
+        "interrupt": 8
+      }
+    }
+  },
+  "blockers": [
+    "need_>=5_commercial_consents",
+    "need_>=5_speakers_with_pass_clips",
+    "mix_clean_0_of_500",
+    "numeric_clean_0_of_200",
+    "speaker_disjoint_holdout_not_ready",
+    "no_human_speakers_recorded_yet"
+  ],
+  "gate_thresholds": {
+    "min_speakers": 5,
+    "min_mix": 500,
+    "min_numeric": 200
+  },
+  "raw_audio_root": "/Users/macbookpro/.saathi/stt-product-corpus",
+  "fabricated": false,
+  "note": "Progress reflects only real consents/clips under the local corpus. Autonomous agent cannot recruit multi-speaker humans; recording requires live participants."
+}

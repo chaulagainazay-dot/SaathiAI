@@ -1,6 +1,48 @@
 {
-  "schema": "m64.browser_cert.v1",
+  "schema": "m64.browser_cert.v2",
   "mode": "production-build-loopback",
+  "provenance": {
+    "schema": "saathi.cert_provenance.v1",
+    "capturedAt": "2026-08-16T14:34:05.577Z",
+    "repoSha": "8b645e3cec97547fdae672c57626483696a4d39a",
+    "repoBranch": "integration/saathios-trunk-v3",
+    "repoDirty": true,
+    "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
+    "repository": "SaathiAI-trunk-v3",
+    "frontendSha": "8b645e3cec97547fdae672c57626483696a4d39a",
+    "backendSha": "8b645e3cec97547fdae672c57626483696a4d39a",
+    "frontendOrigin": "http://127.0.0.1:3000",
+    "backendOrigin": "http://127.0.0.1:8765",
+    "observedApiOrigins": [
+      "http://127.0.0.1:8765"
+    ],
+    "identifiedBackends": [
+      {
+        "origin": "http://127.0.0.1:8765",
+        "sha": "8b645e3cec97547fdae672c57626483696a4d39a"
+      }
+    ],
+    "certificationCommand": "npm --prefix saathi-os run cert:m64",
+    "harnessSha": "e9221b638ed590c0039ceda06bb7d62c23060e06",
+    "harnessVersion": "saathi.cert_provenance.v1"
+  },
+  "runtimeGates": {
+    "api_port_available": true,
+    "ui_port_available": true,
+    "frontend_identifies_itself": true,
+    "backend_identifies_itself": true,
+    "frontend_sha_known": true,
+    "backend_sha_known": true,
+    "frontend_backend_sha_match": true,
+    "runtime_matches_expected_sha": true,
+    "frontend_worktree_identified": true,
+    "backend_worktree_identified": true,
+    "frontend_worktree_matches_harness": true,
+    "backend_worktree_matches_harness": true,
+    "runtime_api_traffic_observed": true,
+    "runtime_api_origin_verified": true,
+    "no_foreign_backend_origin": true
+  },
   "hardGates": {
     "sign_in": true,
     "apps_http_200": true,

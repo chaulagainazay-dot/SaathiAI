@@ -256,6 +256,26 @@ class ChatEngine:
 
         user_msg = self.store.add_message(cid, "user", text)
 
+        # Command Deck brain — market questions answered by the deterministic finance engines
+        # (analysis / strategy / desk / fundamentals / quote / movers / simulated paper trade),
+        # short-circuiting the LLM. Observation/simulation-only; falls through when not a market msg.
+        try:
+            from saathi.platform.finance.chat_intent import handle_finance_chat
+            fin = handle_finance_chat(text)
+        except Exception:
+            fin = None
+        if fin and fin.get("handled"):
+            reply = self.store.add_message(cid, "assistant", fin["text"],
+                                           model="saathi-market-desk", parent_id=user_msg["id"])
+            execution = self.store.record_execution(
+                reply["id"], intent_id="market-" + str(fin.get("kind", "x")),
+                provider="market-desk", status="success", cost_usd=0.0, duration_sec=0.0)
+            try:
+                self.store.add_summary(cid, f"market:{fin.get('kind')} {text[:80]}", upto_message_id=reply["id"])
+            except Exception:
+                pass
+            return SendResult(message=reply, execution=execution, memory_links=[], citations=[])
+
         # Layers 5+6+8 — automatic pre-execution context
         links, mem_context, mem_citations = self._retrieve_memory(cid, text, conv)
         knowledge, citation_specs = self._retrieve_knowledge(cid, text)

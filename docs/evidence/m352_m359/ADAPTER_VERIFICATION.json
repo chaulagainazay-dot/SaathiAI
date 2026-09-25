@@ -1,0 +1,237 @@
+{
+  "report": "agentdev.adapter_verification.v1",
+  "adapter": "ollama",
+  "model": "qwen3:4b",
+  "capabilities": {
+    "adapter": "ollama",
+    "adapter_version": "agentdev.model_adapter.v1",
+    "model": "qwen3:4b",
+    "endpoint": "http://127.0.0.1:11434",
+    "supports": [
+      "cancel",
+      "health_check",
+      "load",
+      "receive_response",
+      "record_metadata",
+      "resource_measurement",
+      "retry",
+      "send_prompt",
+      "timeout"
+    ],
+    "denies": [
+      "credentials",
+      "filesystem_writes",
+      "non_loopback_network",
+      "paid_api_calls",
+      "provider_fallback",
+      "shell_access",
+      "tool_invocation"
+    ],
+    "max_attempts": 2,
+    "deterministic_defaults": {
+      "temperature": 0.0,
+      "seed": 1
+    },
+    "limitation": "Determinism is requested, not guaranteed: temperature 0 and a fixed seed make runs comparable, but the provider may still vary output across versions, quantisations or hardware."
+  },
+  "health": {
+    "healthy": true,
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3:4b",
+    "model_present": true,
+    "available_models": [
+      "gemma4:e2b",
+      "qwen2.5-coder:3b",
+      "qwen2.5:1.5b",
+      "qwen3:4b",
+      "qwen3:8b"
+    ],
+    "resident_models": [
+      {
+        "model": "qwen3:4b",
+        "size_bytes": 3169761361,
+        "size_gib": 2.95
+      }
+    ],
+    "resident_count": 1,
+    "latency_ms": 75.856,
+    "error_code": ""
+  },
+  "host_before": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "cpu_count": 8,
+    "total_memory_bytes": 8589934592,
+    "peak_process_memory_bytes": 27033600,
+    "disk_total_bytes": 245107195904,
+    "disk_free_bytes": 66782113792,
+    "load_average": [
+      3.92,
+      4.48,
+      4.13
+    ],
+    "measured_at": 1785765907.120227,
+    "total_memory_gib": 8.0,
+    "disk_free_gib": 62.2,
+    "peak_process_memory_mib": 25.8,
+    "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+  },
+  "load": {
+    "loaded": true,
+    "model": "qwen3:4b",
+    "duration_ms": 300.708,
+    "error_detail": "",
+    "resident_after": [
+      {
+        "model": "qwen3:4b",
+        "size_bytes": 3169761361,
+        "size_gib": 2.95
+      }
+    ]
+  },
+  "calls": [
+    {
+      "ok": true,
+      "model": "qwen3:4b",
+      "adapter": "ollama",
+      "text": "Hmm, the user wants me to reply",
+      "error_code": "",
+      "error_detail": "",
+      "latency_ms": 1085.376,
+      "attempts": 1,
+      "cancelled": false,
+      "tokens": {
+        "prompt_tokens": 17,
+        "response_tokens": 8,
+        "source": "measured",
+        "total_tokens": 25
+      },
+      "peak_memory_growth_bytes": 0,
+      "finish_reason": "length",
+      "request_label": "single_word",
+      "throughput_tokens_per_second": 7.37,
+      "peak_memory_growth_mib": 0.0,
+      "memory_note": "Growth in this process's peak RSS. The model runs in the provider daemon, so its resident size is reported by health(), not here.",
+      "label": "single_word",
+      "request": {
+        "prompt": "Reply with exactly one word: ready",
+        "system": "",
+        "max_tokens": 8,
+        "temperature": 0.0,
+        "seed": 1,
+        "timeout_s": 120.0,
+        "json_mode": false,
+        "stop": [],
+        "label": "single_word",
+        "prompt_chars": 34,
+        "system_chars": 0
+      }
+    },
+    {
+      "ok": true,
+      "model": "qwen3:4b",
+      "adapter": "ollama",
+      "text": "{\n  \"status\": \"success\",\n  \"reason\": \"This JSON object has been created with the required keys: 'status' and 'reason'. The status is set to 'success' as a default positive status, and the reason provides a brief explanation of the successful creation.\"\n}",
+      "error_code": "",
+      "error_detail": "",
+      "latency_ms": 4610.043,
+      "attempts": 1,
+      "cancelled": false,
+      "tokens": {
+        "prompt_tokens": 23,
+        "response_tokens": 59,
+        "source": "measured",
+        "total_tokens": 82
+      },
+      "peak_memory_growth_bytes": 0,
+      "finish_reason": "stop",
+      "request_label": "json_object",
+      "throughput_tokens_per_second": 12.8,
+      "peak_memory_growth_mib": 0.0,
+      "memory_note": "Growth in this process's peak RSS. The model runs in the provider daemon, so its resident size is reported by health(), not here.",
+      "label": "json_object",
+      "request": {
+        "prompt": "Return a JSON object with keys \"status\" and \"reason\".",
+        "system": "",
+        "max_tokens": 96,
+        "temperature": 0.0,
+        "seed": 1,
+        "timeout_s": 120.0,
+        "json_mode": true,
+        "stop": [],
+        "label": "json_object",
+        "prompt_chars": 53,
+        "system_chars": 0
+      },
+      "json_parsed": true
+    },
+    {
+      "ok": true,
+      "model": "qwen3:4b",
+      "adapter": "ollama",
+      "text": "Okay, the user is asking for the SHA of the current commit but says \"you have been given no evidence.\" Hmm, that's interesting. \n\nFirst, I need to parse what they mean by \"no evidence.\" In software development contexts, \"SHA\" usually refers to a commit hash in version control systems like Git. But the user explicitly states there's no evidence provided to me. \n\nI recall that as an AI, I don't have access to any real-time system",
+      "error_code": "",
+      "error_detail": "",
+      "latency_ms": 8052.963,
+      "attempts": 1,
+      "cancelled": false,
+      "tokens": {
+        "prompt_tokens": 34,
+        "response_tokens": 96,
+        "source": "measured",
+        "total_tokens": 130
+      },
+      "peak_memory_growth_bytes": 0,
+      "finish_reason": "length",
+      "request_label": "refusal_of_unknown",
+      "throughput_tokens_per_second": 11.92,
+      "peak_memory_growth_mib": 0.0,
+      "memory_note": "Growth in this process's peak RSS. The model runs in the provider daemon, so its resident size is reported by health(), not here.",
+      "label": "refusal_of_unknown",
+      "request": {
+        "prompt": "You have been given no evidence. Answer only from what you were given. What is the SHA of the current commit?",
+        "system": "",
+        "max_tokens": 96,
+        "temperature": 0.0,
+        "seed": 1,
+        "timeout_s": 120.0,
+        "json_mode": false,
+        "stop": [],
+        "label": "refusal_of_unknown",
+        "prompt_chars": 109,
+        "system_chars": 0
+      }
+    }
+  ],
+  "host_after": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "cpu_count": 8,
+    "total_memory_bytes": 8589934592,
+    "peak_process_memory_bytes": 30457856,
+    "disk_total_bytes": 245107195904,
+    "disk_free_bytes": 66784288768,
+    "load_average": [
+      5.19,
+      4.74,
+      4.23
+    ],
+    "measured_at": 1785765921.2496698,
+    "total_memory_gib": 8.0,
+    "disk_free_gib": 62.2,
+    "peak_process_memory_mib": 29.0,
+    "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+  },
+  "verified": true,
+  "latency_ms": {
+    "min": 1085.4,
+    "max": 8053.0,
+    "mean": 4582.8
+  },
+  "throughput_tokens_per_second": [
+    7.37,
+    12.8,
+    11.92
+  ],
+  "limitation": "Three calls on one host at one moment. Establishes that the adapter path works and what it cost here \u2014 not what any model will do."
+}

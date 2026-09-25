@@ -134,6 +134,12 @@ class PaperBroker:
             return ValidationResult(False, f"account not ACTIVE ({account.status.value})")
         if qty <= 0:
             return ValidationResult(False, "quantity must be positive")
+        # T-NEXT-4: an order must never be admitted against a non-positive or
+        # non-finite reference price. The fill path already refuses a zero touch
+        # price, but without this an order is still created and cash reserved
+        # against a meaningless price.
+        if ref_price is None or D(ref_price) <= 0:
+            return ValidationResult(False, "reference price must be positive")
         if order_type not in (OrderType.MARKET, OrderType.LIMIT):
             return ValidationResult(False, f"unsupported order type {order_type.value}")
         if order_type == OrderType.LIMIT and (limit_price is None or D(limit_price) <= 0):
@@ -149,8 +155,20 @@ class PaperBroker:
 
     def reserve_for_buy(self, *, quantity: Decimal, ref_price: Decimal, limit_price: Decimal | None,
                         order_type: OrderType) -> Decimal:
-        """Cash to reserve for a BUY: notional + estimated fee + bounded slippage reserve."""
-        px = D(limit_price) if (order_type == OrderType.LIMIT and limit_price is not None) else D(ref_price)
+        """Cash to reserve for a BUY: notional + estimated fee + bounded slippage reserve.
+
+        FINANCIAL-NUMERIC-1: quantity and the applicable price are REQUIRED. D()
+        maps None to its default of zero, which is the right policy for an
+        optional field and the wrong one here — a missing quantity used to yield a
+        reservation of 0.00, i.e. a buy admitted against no reserved cash. Absence
+        is refused explicitly at this boundary rather than parsed into a number.
+        """
+        if quantity is None:
+            raise ValueError("reserve_for_buy: quantity is required")
+        effective_price = limit_price if (order_type == OrderType.LIMIT and limit_price is not None) else ref_price
+        if effective_price is None:
+            raise ValueError("reserve_for_buy: a reference or limit price is required")
+        px = D(effective_price)
         notional = D(quantity) * px
         fee = self.fee_model.fee(quantity=quantity, price=px)
         slip_reserve = notional * (self.slippage_model.bps / Decimal("10000"))

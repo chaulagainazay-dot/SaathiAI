@@ -1,15 +1,58 @@
 {
-  "schema": "m64.browser_cert.v1",
+  "schema": "m64.browser_cert.v2",
   "mode": "production-build-loopback",
+  "provenance": {
+    "schema": "saathi.cert_provenance.v1",
+    "capturedAt": "2026-08-16T14:28:24.291Z",
+    "repoSha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+    "repoBranch": "integration/saathios-trunk-v3",
+    "repoDirty": false,
+    "worktreePath": "/Users/macbookpro/SaathiAI-trunk-v3",
+    "repository": "SaathiAI-trunk-v3",
+    "frontendSha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+    "backendSha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf",
+    "frontendOrigin": "http://127.0.0.1:3000",
+    "backendOrigin": "http://127.0.0.1:8765",
+    "observedApiOrigins": [
+      "http://localhost:8765"
+    ],
+    "identifiedBackends": [
+      {
+        "origin": "http://localhost:8765",
+        "sha": "257f0ba4f0abda1f38d47562e62b0d8891c437bf"
+      }
+    ],
+    "certificationCommand": "npm --prefix saathi-os run cert:m64",
+    "harnessSha": "e9221b638ed590c0039ceda06bb7d62c23060e06",
+    "harnessVersion": "saathi.cert_provenance.v1"
+  },
+  "runtimeGates": {
+    "api_port_available": true,
+    "ui_port_available": true,
+    "frontend_identifies_itself": true,
+    "backend_identifies_itself": true,
+    "frontend_sha_known": true,
+    "backend_sha_known": true,
+    "frontend_backend_sha_match": true,
+    "runtime_matches_expected_sha": true,
+    "frontend_worktree_identified": true,
+    "backend_worktree_identified": true,
+    "frontend_worktree_matches_harness": true,
+    "backend_worktree_matches_harness": true,
+    "runtime_api_traffic_observed": true,
+    "runtime_api_origin_verified": true,
+    "no_foreign_backend_origin": true
+  },
   "hardGates": {
     "sign_in": true,
     "apps_http_200": true,
     "backend_navigation_trading": true,
-    "placeholder_ieltsalert": true,
+    "backend_navigation_ielts": true,
     "placeholder_hcg_pos": true,
     "placeholder_travel": true,
     "placeholder_finance": true,
     "trading_actionable_card": true,
+    "ielts_actionable_card": true,
     "no_placeholder_card_links": true,
     "truthful_placeholder_statuses": true,
     "command_palette_trading": true,
@@ -58,12 +101,10 @@
   ],
   "browserErrors": {
     "page": 0,
-    "console": 6,
-    "expectedTopbarCors": 6,
+    "console": 0,
+    "expectedTopbarCors": 0,
     "unexpectedConsole": 0,
-    "consoleCategories": {
-      "topbar_approvals_cors": 6
-    },
+    "consoleCategories": {},
     "overlay": 0
   },
   "verdict": "PASS"

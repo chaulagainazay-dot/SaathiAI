@@ -1,0 +1,49 @@
+{
+  "schema": "saathios.provider_comparison.v1",
+  "recorded_at": "2026-07-31T03:31:15Z",
+  "budget_policy": {
+    "monthly_budget_usd": "20",
+    "warning_threshold_usd": "15",
+    "hard_stop_usd": "19",
+    "emergency_reserve_usd": "1",
+    "max_parallel_cloud_agents": 1,
+    "max_retries": 2,
+    "max_tool_iterations": 20,
+    "expensive_model_requires_approval": true
+  },
+  "providers": [
+    {
+      "provider": "ollama",
+      "model": "qwen2.5:1.5b",
+      "execution": "local benchmark artifact",
+      "cost_usd": "0.00",
+      "decision": "KEEP_DEFAULT"
+    },
+    {
+      "provider": "kimi",
+      "model": "kimi-k2.7-code",
+      "execution": "deterministic adapter contract only; no credential/no live call",
+      "pricing_usd_per_million": {
+        "cache_hit_input": 0.19,
+        "input": 0.95,
+        "output": 4.0
+      },
+      "task_success": null,
+      "tool_discipline": null,
+      "decision": "BENCHMARK_DEFERRED_NO_CREDENTIAL"
+    },
+    {
+      "provider": "kimi",
+      "model": "kimi-k3",
+      "execution": "not called; expensive model approval required",
+      "pricing_usd_per_million": {
+        "cache_hit_input": 0.3,
+        "input": 3.0,
+        "output": 15.0
+      },
+      "task_success": null,
+      "tool_discipline": null,
+      "decision": "BENCHMARK_DEFERRED_NO_CREDENTIAL"
+    }
+  ]
+}

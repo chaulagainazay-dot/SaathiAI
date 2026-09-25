@@ -6,11 +6,18 @@ The backend now uses SQLite via Security Store instead of JSON files.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import secrets
 import time
 
 from saathi.security.store import get_store
+
+# Bounded active-session policy for this private, single-owner install. A small
+# global cap with LRU eviction prevents hundreds of live owner sessions from
+# accumulating again, without per-device fingerprinting (device identity is not
+# reliably available). Remember-me TTL (30d) is unchanged. Env-overridable.
+MAX_ACTIVE_SESSIONS = max(1, int(os.getenv("SAATHI_MAX_ACTIVE_SESSIONS", "10")))
 
 
 def _hash(token: str) -> str:
@@ -139,6 +146,91 @@ def revoke_all(except_token: str = "") -> int:
     """Logout everywhere. Keep only the caller's own session when given."""
     keep_th = _hash(except_token) if except_token else ""
     return _store().session_revoke_all(_owner_id(), except_hash=keep_th)
+
+
+def prune() -> dict:
+    """Hard-delete the owner's expired + revoked sessions. Returns {expired, revoked}."""
+    return _store().session_prune(_owner_id())
+
+
+def enforce_cap(keep_token: str = "", cap: int | None = None) -> int:
+    """Bound active owner sessions to the global cap via LRU eviction, never
+    revoking `keep_token` (the current session). Returns count revoked."""
+    limit = MAX_ACTIVE_SESSIONS if cap is None else cap
+    keep = _hash(keep_token) if keep_token else ""
+    return _store().session_enforce_cap(_owner_id(), limit, keep_hash=keep)
+
+
+# ── one-time historical migration (consent-gated) ─────────────────────────────
+# The cap is the permanent FUTURE policy, but activating it must NOT let an
+# ordinary login silently mass-revoke hundreds of pre-policy sessions. Cap
+# enforcement on login is therefore gated on this marker: it stays off until the
+# owner explicitly migrates (via the local reset/migrate CLI), which collapses
+# the historical excess once and flips the marker. Afterwards every login
+# enforces the cap normally, with no repeated prompt/state.
+_MIGRATION_KEY = "session_cap_migrated"
+
+
+def policy_migrated() -> bool:
+    return _store().kv_get(_MIGRATION_KEY) == "1"
+
+
+def mark_policy_migrated() -> None:
+    _store().kv_set(_MIGRATION_KEY, "1")
+
+
+def enforce_cap_if_migrated(keep_token: str = "") -> int:
+    """Login-time enforcement: no-op until the owner has explicitly migrated."""
+    if not policy_migrated():
+        return 0
+    return enforce_cap(keep_token=keep_token)
+
+
+def migrate_sessions(keep_token: str = "", cap: int | None = None) -> dict:
+    """Explicit one-time collapse of historical sessions to the cap, then flip the
+    marker so future logins enforce normally. Idempotent after the first run."""
+    already = policy_migrated()
+    evicted = enforce_cap(keep_token=keep_token, cap=cap)
+    pruned = prune()
+    _store().kv_set(_MIGRATION_KEY, "1")
+    return {"already_migrated": already, "evicted": evicted, "pruned": pruned,
+            "counts": counts()}
+
+
+def counts() -> dict:
+    """Non-secret session counts for owner diagnostics (no token material)."""
+    return _store().session_counts(_owner_id())
+
+
+def revoke_all_including_current() -> int:
+    """Owner emergency: revoke EVERY session incl. the caller's own."""
+    return _store().session_revoke_all(_owner_id(), except_hash="")
+
+
+def status(token: str) -> dict:
+    """Validity + non-secret metadata of one token's session. Never returns the token.
+
+    `id` is token_hash[:12] — a bounded, irreversible fingerprint, safe to surface."""
+    if not token:
+        return {"authenticated": False, "session": None}
+    th = _hash(token)
+    rec = _store().session_by_hash(th)
+    valid = validate(token, touch=False)
+    if not rec:
+        return {"authenticated": valid, "session": None}
+    return {
+        "authenticated": valid,
+        "session": {
+            "id": rec.get("id", th[:12]),
+            "created_at": rec.get("first_seen", 0),
+            "last_used_at": rec.get("last_seen", 0),
+            "expires_at": rec.get("expires_at", 0),
+            "remember_me": bool(rec.get("remember_me", 1)),
+            "revoked": bool(rec.get("revoked", 0)),
+            "browser": rec.get("browser", "Unknown"),
+            "device_name": rec.get("device_name", "Unknown"),
+        },
+    }
 
 
 def rename(session_id: str, label: str) -> bool:

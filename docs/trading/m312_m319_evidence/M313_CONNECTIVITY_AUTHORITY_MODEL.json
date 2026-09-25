@@ -1,0 +1,497 @@
+{
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "approval_does_not_equal_activation": true,
+  "authority_does_not_implicitly_expand": true,
+  "current_maturity": "GOVERNANCE_ONLY",
+  "deny_overrides_allow": {
+    "deny_overrides_allow": true,
+    "granted_and_denied_state": "DENIED",
+    "granted_state": "ACTIVE_BOUNDED",
+    "ok": true
+  },
+  "emergency_override": {
+    "emergency_dominates": true,
+    "emergency_state": "EMERGENCY_DISABLED",
+    "normal_state": "ACTIVE_BOUNDED",
+    "ok": true
+  },
+  "expiry": {
+    "expired_state": "EXPIRED",
+    "ok": true,
+    "valid_state": "ACTIVE_BOUNDED"
+  },
+  "governance_only": true,
+  "matrix": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "approval_does_not_equal_activation": true,
+    "authority_does_not_implicitly_expand": true,
+    "capabilities": [
+      {
+        "capability": "offline_fixture_access",
+        "default_state": "POLICY_ELIGIBLE",
+        "domain": "market_data",
+        "reason": "policy_eligible"
+      },
+      {
+        "capability": "public_unauthenticated_data",
+        "default_state": "APPROVAL_REQUIRED",
+        "domain": "market_data",
+        "reason": "approval_required"
+      },
+      {
+        "capability": "authenticated_market_data",
+        "default_state": "PROHIBITED",
+        "domain": "market_data",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "historical_refresh",
+        "default_state": "DENIED",
+        "domain": "market_data",
+        "reason": "default_deny"
+      },
+      {
+        "capability": "real_time_quote_stream",
+        "default_state": "PROHIBITED",
+        "domain": "market_data",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "account_metadata",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "balances",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "positions",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "orders",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "fills",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "activity",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "margin_state",
+        "default_state": "PROHIBITED",
+        "domain": "account_read",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "submit_order",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "modify_order",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "cancel_order",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "transfer",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "withdraw",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "change_settings",
+        "default_state": "PROHIBITED",
+        "domain": "account_write",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "internal_simulation",
+        "default_state": "POLICY_ELIGIBLE",
+        "domain": "execution",
+        "reason": "policy_eligible"
+      },
+      {
+        "capability": "external_paper",
+        "default_state": "PROHIBITED",
+        "domain": "execution",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "live_execution",
+        "default_state": "PROHIBITED",
+        "domain": "execution",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "credential_reference_creation",
+        "default_state": "APPROVAL_REQUIRED",
+        "domain": "credential",
+        "reason": "approval_required"
+      },
+      {
+        "capability": "credential_validation",
+        "default_state": "PROHIBITED",
+        "domain": "credential",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "credential_use",
+        "default_state": "PROHIBITED",
+        "domain": "credential",
+        "reason": "milestone_prohibited"
+      },
+      {
+        "capability": "credential_rotation",
+        "default_state": "DENIED",
+        "domain": "credential",
+        "reason": "default_deny"
+      },
+      {
+        "capability": "credential_revocation",
+        "default_state": "POLICY_ELIGIBLE",
+        "domain": "credential",
+        "reason": "policy_eligible"
+      }
+    ],
+    "current_maturity": "GOVERNANCE_ONLY",
+    "deny_overrides_allow": true,
+    "domains": {
+      "account_read": [
+        "account_metadata",
+        "balances",
+        "positions",
+        "orders",
+        "fills",
+        "activity",
+        "margin_state"
+      ],
+      "account_write": [
+        "submit_order",
+        "modify_order",
+        "cancel_order",
+        "transfer",
+        "withdraw",
+        "change_settings"
+      ],
+      "credential": [
+        "credential_reference_creation",
+        "credential_validation",
+        "credential_use",
+        "credential_rotation",
+        "credential_revocation"
+      ],
+      "execution": [
+        "internal_simulation",
+        "external_paper",
+        "live_execution"
+      ],
+      "market_data": [
+        "offline_fixture_access",
+        "public_unauthenticated_data",
+        "authenticated_market_data",
+        "historical_refresh",
+        "real_time_quote_stream"
+      ]
+    },
+    "governance_only": true,
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "non_implication_edges": [
+      {
+        "from": "offline_fixture_access",
+        "implies": false,
+        "to": "authenticated_market_data"
+      },
+      {
+        "from": "public_unauthenticated_data",
+        "implies": false,
+        "to": "account_metadata"
+      },
+      {
+        "from": "authenticated_market_data",
+        "implies": false,
+        "to": "balances"
+      },
+      {
+        "from": "balances",
+        "implies": false,
+        "to": "positions"
+      },
+      {
+        "from": "positions",
+        "implies": false,
+        "to": "orders"
+      },
+      {
+        "from": "orders",
+        "implies": false,
+        "to": "submit_order"
+      },
+      {
+        "from": "account_metadata",
+        "implies": false,
+        "to": "submit_order"
+      },
+      {
+        "from": "external_paper",
+        "implies": false,
+        "to": "live_execution"
+      },
+      {
+        "from": "internal_simulation",
+        "implies": false,
+        "to": "external_paper"
+      },
+      {
+        "from": "credential_reference_creation",
+        "implies": false,
+        "to": "credential_use"
+      },
+      {
+        "from": "credential_reference_creation",
+        "implies": false,
+        "to": "credential_validation"
+      },
+      {
+        "from": "historical_refresh",
+        "implies": false,
+        "to": "real_time_quote_stream"
+      },
+      {
+        "from": "fills",
+        "implies": false,
+        "to": "submit_order"
+      },
+      {
+        "from": "activity",
+        "implies": false,
+        "to": "transfer"
+      }
+    ],
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true
+  },
+  "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+  "no_account_access": true,
+  "no_balance_access": true,
+  "no_broker_login": true,
+  "no_canary_activation": true,
+  "no_credential_storage": true,
+  "no_implicit_expansion": {
+    "authority_does_not_implicitly_expand": true,
+    "count": 14,
+    "ok": true,
+    "proofs": [
+      {
+        "implicit_expansion": false,
+        "source": "offline_fixture_access",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "authenticated_market_data",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "public_unauthenticated_data",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "account_metadata",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "authenticated_market_data",
+        "source_state": "PROHIBITED",
+        "target": "balances",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "balances",
+        "source_state": "PROHIBITED",
+        "target": "positions",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "positions",
+        "source_state": "PROHIBITED",
+        "target": "orders",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "orders",
+        "source_state": "PROHIBITED",
+        "target": "submit_order",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "account_metadata",
+        "source_state": "PROHIBITED",
+        "target": "submit_order",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "external_paper",
+        "source_state": "PROHIBITED",
+        "target": "live_execution",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "internal_simulation",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "external_paper",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "credential_reference_creation",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "credential_use",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "credential_reference_creation",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "credential_validation",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "historical_refresh",
+        "source_state": "ACTIVE_BOUNDED",
+        "target": "real_time_quote_stream",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "fills",
+        "source_state": "PROHIBITED",
+        "target": "submit_order",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      },
+      {
+        "implicit_expansion": false,
+        "source": "activity",
+        "source_state": "PROHIBITED",
+        "target": "transfer",
+        "target_state_with_source_grant_only": "PROHIBITED"
+      }
+    ]
+  },
+  "no_live_trading": true,
+  "no_oauth": true,
+  "no_orders": true,
+  "no_position_access": true,
+  "no_provider_connection": true,
+  "offline_first": true,
+  "paper_only": true,
+  "raw_credentials_forbidden": true,
+  "research_only": true,
+  "revocation": {
+    "ok": true,
+    "state": "REVOKED"
+  },
+  "sandbox_only": true,
+  "schema": "M313_CONNECTIVITY_AUTHORITY_MODEL",
+  "states": [
+    "DENIED",
+    "UNDEFINED",
+    "POLICY_ELIGIBLE",
+    "APPROVAL_REQUIRED",
+    "APPROVED_NOT_ACTIVE",
+    "ACTIVE_BOUNDED",
+    "EXPIRED",
+    "REVOKED",
+    "EMERGENCY_DISABLED",
+    "PROHIBITED"
+  ]
+}

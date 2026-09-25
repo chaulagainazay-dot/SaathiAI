@@ -63,6 +63,7 @@ export default function ApprovalsPage() {
       paletteData={{ approvals }}
     >
       <RequireSession token={d.token} ready={d.ready}>
+        <div data-testid="approvals-page" />
         <div className="glass-frame" style={{ padding: "var(--space-4)", marginBottom: "var(--space-4)" }}>
           <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
             <Metric label="Pending" value={summary.pending} tone={summary.pending > 0 ? "attention" : "idle"} />
@@ -95,7 +96,7 @@ export default function ApprovalsPage() {
         )}
 
         {visible.length > 0 && (
-          <ul className="ws-grid" aria-label="Approvals" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          <ul className="ws-grid" aria-label="Approvals" data-testid="approvals-list" style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {visible.map((a) => (
               <li key={a.id}>
                 <div className={`glass-frame ${frameClass(a.signal)}`}>

@@ -1,0 +1,41 @@
+{
+  "mission": "UI-NEXT-2.2",
+  "title": "HYBRID COMMAND BROWSER + ACCESSIBILITY + VISUAL CERTIFICATION",
+  "certified_at": "2026-08-07T11:54:32.487591+00:00",
+  "terminal_verdict": "HYBRID_COMMAND_BROWSER_CERTIFIED_WITH_LIMITATIONS",
+  "production_readiness": "READY_FOR_PRODUCTION_COMMAND_IMPLEMENTATION_WITH_LIMITATIONS",
+  "base_sha": "d7b028d986ce7ab13973873e5b4d502304e6bd85",
+  "work_branch": "test/ui-next-2-2-hybrid-browser-certification",
+  "screenshots": [
+    "01-command-desktop.png",
+    "01b-command-1280.png",
+    "02-agents-desktop.png",
+    "03-investments-desktop.png",
+    "04-evidence-desktop.png",
+    "05-command-tablet.png",
+    "06-command-mobile.png",
+    "06b-agents-mobile.png",
+    "07-risk-warning.png",
+    "08-reconciliation-required.png",
+    "09-voice-listening.png",
+    "10-voice-speaking.png",
+    "11-voice-degraded.png",
+    "12-reduced-motion.png",
+    "13-zoom-150.png",
+    "14-long-content-stress.png"
+  ],
+  "axe": {
+    "critical": 0,
+    "serious": 0
+  },
+  "console_note": "CORS to localhost:8765 from shell layout \u2014 non-pageerror, classified env",
+  "cert_script": "saathi-os/scripts/ui_next_2_2_hybrid_browser_cert.mjs",
+  "non_actions": {
+    "command_replaced": false,
+    "pr38_pr39_merged": false,
+    "threejs": false,
+    "master_merge": false,
+    "t_next_3_started": false,
+    "ui_next_3_started": false
+  }
+}

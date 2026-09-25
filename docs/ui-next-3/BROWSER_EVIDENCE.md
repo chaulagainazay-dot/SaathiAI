@@ -1,0 +1,46 @@
+# BROWSER_EVIDENCE — UI-NEXT-3
+
+```json
+{
+  "mission": "UI-NEXT-3",
+  "base": "http://127.0.0.1:3133",
+  "screenshots": [
+    "01-command-desktop.png",
+    "02-agents-desktop.png",
+    "03-investments-desktop.png",
+    "04-evidence-desktop.png",
+    "05-proposal-ready.png",
+    "06-proposal-risk-blocked.png",
+    "07-reconciliation-required.png",
+    "08-risk-warning.png",
+    "09-voice-listening.png",
+    "10-voice-speaking.png",
+    "11-mobile-command.png",
+    "12-mobile-proposal.png",
+    "13-reduced-motion.png"
+  ],
+  "axe": [
+    {
+      "label": "command-desktop-healthy",
+      "critical": 0,
+      "serious": 0,
+      "violations": []
+    },
+    {
+      "label": "command-mobile",
+      "critical": 0,
+      "serious": 0,
+      "violations": []
+    }
+  ],
+  "axe_critical": 0,
+  "axe_serious": 0,
+  "findings": [
+    {
+      "id": "keyboard_tab",
+      "ok": true
+    }
+  ],
+  "verdict": "BROWSER_CERT_PASS"
+}
+```

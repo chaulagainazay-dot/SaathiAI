@@ -33,6 +33,12 @@ from pathlib import Path
 from typing import Any, Optional, Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
+# TEST-INFRA-2: evidence artifacts are written under the repository tree, which
+# means a test run rewrites tracked files. ``SAATHI_EVIDENCE_ROOT`` redirects the
+# evidence OUTPUT root only. ROOT itself stays the real repository root because it
+# is also used for source scanning, subprocess cwd, and relative_to().
+_EVIDENCE_ROOT_ENV = os.environ.get("SAATHI_EVIDENCE_ROOT", "").strip()
+EVIDENCE_ROOT = Path(_EVIDENCE_ROOT_ENV) if _EVIDENCE_ROOT_ENV else ROOT
 MANIFEST_PATH = ROOT / "docs" / "M21_3_RESIDUAL_EXCEPTION_MANIFEST.json"
 SCHEMA = "m21.4.runtime_gate.v1"
 MILESTONE = "M21.4"
@@ -1134,7 +1140,7 @@ def evaluate_runtime_gate(
         )
 
         env = discover_environment()
-        ev_path = ROOT / "docs" / "evidence" / "m25" / "LIVE_CERT_EVIDENCE.json"
+        ev_path = EVIDENCE_ROOT / "docs" / "evidence" / "m25" / "LIVE_CERT_EVIDENCE.json"
         ev: dict[str, Any] = {}
         if ev_path.is_file():
             try:
@@ -1153,7 +1159,8 @@ def evaluate_runtime_gate(
             "live_provider_certified": live_cert,
             "production_certified_field": prod_cert_field,
             "blockers": list(ev.get("blockers") or env.get("blockers") or []),
-            "evidence_path": str(ev_path.relative_to(ROOT)) if ev_path.is_file() else "",
+            "evidence_path": (str(ev_path.relative_to(EVIDENCE_ROOT))
+                              if ev_path.is_file() and ev_path.is_relative_to(EVIDENCE_ROOT) else ""),
             "environment": {
                 "binary_present": env.get("binary_present"),
                 "broken_symlink": env.get("broken_symlink"),

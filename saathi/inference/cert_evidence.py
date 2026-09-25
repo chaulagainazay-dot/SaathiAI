@@ -36,7 +36,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m25" / "cert"
+# TEST-INFRA-2: evidence artifacts are written under the repository tree, which
+# means a test run rewrites tracked files. ``SAATHI_EVIDENCE_ROOT`` redirects the
+# evidence OUTPUT root only. ROOT itself stays the real repository root because it
+# is also used for source scanning, subprocess cwd, and relative_to().
+_EVIDENCE_ROOT_ENV = os.environ.get("SAATHI_EVIDENCE_ROOT", "").strip()
+EVIDENCE_ROOT = Path(_EVIDENCE_ROOT_ENV) if _EVIDENCE_ROOT_ENV else ROOT
+EVIDENCE_DIR = EVIDENCE_ROOT / "docs" / "evidence" / "m25" / "cert"
 SCHEMA = "m25.cert_evidence.v1"
 PRODUCER_VERSION = "m25.cert_evidence.1"
 # Suite/scan/critical evidence stays valid for 14 days unless fingerprint mismatches
@@ -120,7 +126,7 @@ def package_fingerprint() -> str:
             h.update(p.read_bytes())
         h.update(b"\n")
     # Live model identity from last successful cert if present
-    live = ROOT / "docs" / "evidence" / "m25" / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
+    live = EVIDENCE_ROOT / "docs" / "evidence" / "m25" / "LAST_SUCCESSFUL_LIVE_CERTIFICATION.json"
     if live.is_file():
         try:
             data = json.loads(live.read_text(encoding="utf-8"))

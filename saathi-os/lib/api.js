@@ -1,7 +1,7 @@
 // Talks to the SaathiAI platform BFF (FastAPI, port 8765).
 // IMPORTANT: an explicitly-set empty string means "same origin" (relative URLs,
 // production behind Caddy). Only fall back to localhost when the var is truly
-// UNSET (local dev, UI on :3000 + API on :8765). Using `||` here was a bug —
+// UNSET (local dev, UI on :3100 + API on :8765). Using `||` here was a bug —
 // "" is falsy, so production silently called localhost from the browser/phone.
 const _RAW = process.env.NEXT_PUBLIC_SAATHI_API;
 export const API_BASE = (_RAW === undefined || _RAW === null) ? "http://localhost:8765" : _RAW;
@@ -13,15 +13,57 @@ export const API_BASE = (_RAW === undefined || _RAW === null) ? "http://localhos
 const _LOCAL = process.env.NEXT_PUBLIC_LOCAL_API;
 export const LOCAL_BASE = (_LOCAL === undefined || _LOCAL === null) ? API_BASE : _LOCAL;
 
-// ── cookie-independent session: token in localStorage + x-baadar-session header.
-// Works on every browser/device incl. Safari ITP + cross-origin, where cookies fail.
-const _tok = () => { try { return localStorage.getItem("saathi_session") || ""; } catch { return ""; } };
-export function setSessionToken(t) { try { if (t) localStorage.setItem("saathi_session", t); } catch {} }
-export function clearSessionToken() { try { localStorage.removeItem("saathi_session"); } catch {} }
+// ── Browser auth = first-party HttpOnly session cookie (M — cookie-auth).
+// Browser JS never reads or injects the session credential; the cookie rides
+// same-origin requests automatically via credentials:"include". The old
+// localStorage bearer ("saathi_session") is legacy: never written anymore, and
+// proactively cleared so no readable credential lingers.
+const LEGACY_TOKEN_KEY = "saathi_session";
+/** @deprecated cookie-based now — no-op; retained so callers don't break. */
+export function setSessionToken(_t) { try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch {} }
+/** Browser JS cannot read the HttpOnly cookie; auth is confirmed via /auth/session. */
+export function hasSessionToken() { return false; }
+/** Remove any legacy localStorage bearer left over from the pre-cookie era. */
+export function clearSessionToken() { try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch {} }
+// Auth endpoints manage their own 401s (wrong password, session probe) and must
+// NOT trigger stale-session recovery — otherwise a bad login would look like a
+// revoked session.
+function _isAuthEndpoint(url) {
+  const u = String(url);
+  return u.includes("/api/v1/auth/login")
+      || u.includes("/api/v1/auth/session")   // covers /session and /sessions*
+      || u.includes("/api/v1/auth/logout")
+      || u.includes("/api/v1/auth/reset")
+      || u.includes("/api/v1/auth/forgot")
+      || u.includes("/api/v1/auth/passkey");
+}
+
+// Central authenticated fetch. On a genuine auth 401 for a request that CARRIED
+// a token, clear the stale token and emit a RAW per-request signal
+// (`saathi:auth-401`) — no retry, no auto-replay. The canonical auth state
+// machine (lib/authState.js) listens to this raw signal and performs the
+// single AUTH_REQUIRED transition + emits exactly one canonical
+// `saathi:auth-required` event, deduplicating concurrent 401s. afetch itself
+// stays decoupled from authState (no import cycle) and behaves like a plain
+// fetch otherwise (backward compatible: still resolves to the Response).
 export function afetch(url, opts = {}) {
   const h = { ...(opts.headers || {}) };
-  const t = _tok(); if (t) h["x-baadar-session"] = t;
-  return fetch(url, { credentials: "include", ...opts, headers: h });
+  // No x-baadar-session injection: the HttpOnly cookie authenticates the browser
+  // (sent automatically for same-origin with credentials:"include").
+  return fetch(url, { credentials: "include", ...opts, headers: h }).then((res) => {
+    if (res.status === 401 && !_isAuthEndpoint(url)) {
+      // remove any legacy localStorage bearer; emit the raw per-request signal.
+      try { localStorage.removeItem("saathi_session"); } catch {}
+      try {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("saathi:auth-401", {
+            detail: { url: String(url), method: (opts.method || "GET").toUpperCase() },
+          }));
+        }
+      } catch {}
+    }
+    return res;   // caller still handles the response; no automatic retry
+  });
 }
 
 
@@ -695,7 +737,16 @@ export const platformCapabilities = () => _cj(`/api/v1/connectors/capabilities`)
 export const platformTools = (cap = "") => _cj(`/api/v1/connectors/tools${cap ? `?capability=${cap}` : ""}`);
 export const platformAccounts = (cid = "") => _cj(`/api/v1/connectors/accounts/list${cid ? `?connector_id=${cid}` : ""}`);
 export const platformExecutions = (limit = 50) => _cj(`/api/v1/connectors/executions/list?limit=${limit}`);
-export const platformPendingApprovals = () => _cj(`/api/v1/connectors/approvals/pending`);
+// Requires a Baadar session. Sending it without one is a guaranteed 401, and
+// that 401 lands in the browser console on every page load for every
+// signed-out visitor — the shell TopBar calls this on mount. Callers already
+// treat a rejection as "unavailable" rather than inventing a zero count, so
+// failing closed here is the same outcome without the wasted round trip and
+// the console noise.
+export const platformPendingApprovals = () =>
+  hasSessionToken()
+    ? _cj(`/api/v1/connectors/approvals/pending`)
+    : Promise.reject(new Error("connectors 401 (no session)"));
 export const platformDecideApproval = (aid, approved) =>
   _cj(`/api/v1/connectors/approvals/${aid}/decide?approved=${approved}`, { method: "POST" });
 export const platformExecute = (body) =>

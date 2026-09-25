@@ -18,6 +18,10 @@ from pathlib import Path
 _DIR = Path.home() / ".saathi"
 _AUDIT = _DIR / "auth_audit.log"
 _PBKDF2_ITERS = 600_000
+_SCRYPT_N = 2**14
+_SCRYPT_R = 8
+_SCRYPT_P = 1
+_SCRYPT_DKLEN = 32
 
 
 # ── password hashing (salted PBKDF2, backward compatible) ─────────────────────
@@ -30,6 +34,27 @@ def hash_password(pw: str) -> str:
 def verify_password(pw: str, stored: str) -> bool:
     if not stored:
         return False
+    if stored.startswith("scrypt$"):
+        try:
+            _, n, r, p, salt, want = stored.split("$")
+            params = (int(n), int(r), int(p))
+            if params != (_SCRYPT_N, _SCRYPT_R, _SCRYPT_P):
+                return False
+            salt_bytes = bytes.fromhex(salt)
+            want_bytes = bytes.fromhex(want)
+            if len(salt_bytes) != 16 or len(want_bytes) != _SCRYPT_DKLEN:
+                return False
+            dk = hashlib.scrypt(
+                pw.encode(),
+                salt=salt_bytes,
+                n=params[0],
+                r=params[1],
+                p=params[2],
+                dklen=_SCRYPT_DKLEN,
+            )
+            return hmac.compare_digest(dk, want_bytes)
+        except (TypeError, ValueError):
+            return False
     if stored.startswith("pbkdf2$"):
         try:
             _, algo, iters, salt, want = stored.split("$")

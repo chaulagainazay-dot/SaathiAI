@@ -3,12 +3,15 @@ import base64
 import json
 import re
 import secrets
+import threading
 import time
+import uuid
 from pathlib import Path
 import os as _os
 from fastapi import Body, Depends, FastAPI, File, Form, Request, UploadFile
 
 
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -27,13 +30,12 @@ from .cors_policy import (  # noqa: E402
 )
 
 _origins = resolve_cors_origins()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
-)
+# NOTE: CORSMiddleware is deliberately NOT registered here. Starlette builds the
+# middleware stack outermost-first from the reverse of the registration order, so
+# registering CORS at import time would bury it beneath the `_auth` gate defined
+# further down this module. It is registered at the bottom of the file instead —
+# see `_install_outermost_cors()` — so that CORS is the outermost layer and an
+# authentication rejection still leaves the origin correctly labelled.
 
 
 # ── Security Headers Middleware (Phase 7) ───────────────────────────────────
@@ -61,6 +63,68 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error_without_secrets(request, exc):
+    """422 responses must never echo the credential that was submitted.
+
+    FastAPI's default handler puts the offending `input` verbatim into the error
+    body. A login endpoint therefore answers a malformed request by REFLECTING
+    the password back to the caller, which then lands in terminal scrollback,
+    proxy logs, browser devtools and any error tracker in the path. This was
+    observed live: POSTing to /api/v1/platform/auth/login without the required
+    field returned the submitted password in the 422 body.
+
+    The fix is at the boundary, not per-endpoint. Every route that takes a body
+    inherits this handler, so a new endpoint cannot reintroduce the leak by
+    forgetting about it, and the field list is the repo's existing certified
+    secret detector rather than a second copy that would drift from it.
+
+    `loc` is kept: a field NAME is what makes the error actionable, and naming
+    "password" is not disclosing one.
+    """
+    from fastapi.encoders import jsonable_encoder
+
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key, redact
+
+    def _safe(value):
+        """Redacted AND serialisable.
+
+        A malformed body arrives here as raw BYTES, which json cannot encode. An
+        exception raised inside this handler does not become a 422 — it escapes
+        as an unhandled error, so a handler that can throw turns the bug it was
+        written to fix into a 500. Everything is coerced through
+        `jsonable_encoder`, and anything that still resists becomes its repr.
+        """
+        try:
+            return jsonable_encoder(redact(value))
+        except Exception:
+            try:
+                return repr(value)[:200]
+            except Exception:
+                return REDACTED
+
+    safe = []
+    for err in exc.errors():
+        e = dict(err)
+        loc = e.get("loc") or ()
+        # The value that failed validation, under a key that names a credential.
+        leaf = str(loc[-1]) if loc else ""
+        if "input" in e:
+            e["input"] = REDACTED if is_secret_key(leaf) else _safe(e["input"])
+        if "ctx" in e:
+            e["ctx"] = _safe(e["ctx"])
+        # Pydantic's url points at its docs; harmless, but nothing needs it.
+        e.pop("url", None)
+        try:
+            e["loc"] = [str(x) for x in loc]
+        except Exception:
+            e["loc"] = []
+        safe.append(e)
+    return JSONResponse({"detail": safe}, status_code=422)
+
+
 
 
 # ── BFF: one aggregated contract for the CEO Home screen (desktop + mobile) ──
@@ -166,6 +230,124 @@ async def human_test(request: Request):
     except Exception as e:
         return {"ok": False, "error": str(e), "execution_id": gov_exec_id, "governed": True,
                 "hint": "start the Mac Agent: bash ~/SaathiAI/run_human_agent.sh"}
+
+
+_SAATHIOS_BROWSER = None
+_SAATHIOS_BROWSER_LOCK = threading.Lock()
+
+
+def _saathios_browser():
+    """The browser behind the SaathiOS Browser surface.
+
+    Real network access is OPT-IN via SAATHI_BROWSER_LIVE=1. Without it this runs
+    the deterministic fake, so the surface, its policy denials and its UI are all
+    exercisable without a single outbound request. The process-wide
+    default_governed_browser() singleton is deliberately left alone: it defaults to
+    the fake, and every existing caller and test depends on that.
+    """
+    global _SAATHIOS_BROWSER
+    with _SAATHIOS_BROWSER_LOCK:
+        if _SAATHIOS_BROWSER is None:
+            from saathi.browser.governed import GovernedBrowser
+            from saathi.browser.policy import DEFAULT_ALLOWED_HOST_SUFFIXES
+            live = _os.getenv("SAATHI_BROWSER_LIVE", "").strip() in ("1", "true", "yes")
+            # The adapter re-checks the domain itself (defence in depth) with its
+            # OWN host list, which does not consult the environment. Pass the
+            # configured hosts explicitly or an allowlisted host is still refused
+            # at the second check. The deny list applies regardless of this list.
+            extra = [h.strip().lower() for h in
+                     _os.getenv("SAATHI_BROWSER_ALLOWED_DOMAINS", "").split(",") if h.strip()]
+            hosts = list(DEFAULT_ALLOWED_HOST_SUFFIXES) + extra
+            _SAATHIOS_BROWSER = GovernedBrowser(
+                mode="service" if live else "fake", allowed_hosts=hosts,
+            )
+        return _SAATHIOS_BROWSER
+
+
+class BrowserFetchIn(BaseModel):
+    url: str
+    action: str = "read"          # read | extract | navigate | screenshot
+    selector: str = ""
+    timeout: int = 30
+    actor: str = "user:api"
+
+
+@app.post("/api/v1/browser/fetch")
+async def browser_fetch(body: BrowserFetchIn):
+    """Read a page through the GOVERNED browser (SaathiOS Browser surface).
+
+    Every request passes domain policy, risk classification, approval and the
+    ExecutionGateway before any network call — this endpoint adds a surface, never
+    a bypass. Only non-side-effecting actions are accepted here: reading a page is
+    not the same authority as clicking or submitting on one, and mixing them behind
+    one endpoint is how a read surface quietly becomes an action surface.
+
+    Page text comes back marked UNTRUSTED. It is third-party content that reaches a
+    model and a browser, so injection hits are reported alongside it and the caller
+    is expected to treat it as data.
+    """
+    import asyncio
+
+    READ_ONLY = {"read", "extract", "navigate", "open", "screenshot"}
+    action = (body.action or "read").strip().lower()
+    if action not in READ_ONLY:
+        return {"ok": False, "error": "action_not_permitted",
+                "message": f"{action} can change a page; this endpoint is read-only",
+                "permitted": sorted(READ_ONLY)}
+
+    url = (body.url or "").strip()
+    if not url:
+        return {"ok": False, "error": "missing_url"}
+
+    try:
+        gb = _saathios_browser()
+        rec = await asyncio.to_thread(
+            gb.execute,
+            action=action,
+            url=url,
+            selector=(body.selector or "").strip(),
+            actor=body.actor or "user:api",
+            request_source="api",
+            mission_id="saathios_browser",
+            mission_run_id="browser-surface",
+            environment=_os.getenv("SAATHI_ENV", "dev"),
+            payload={"timeout": max(1, min(int(body.timeout or 30), 60))},
+            # Reads are not side-effecting, so re-reading a page is a legitimate
+            # act rather than a duplicate one. Without a fresh key the gateway's
+            # idempotency guard — which exists to stop a click or a submit being
+            # replayed — refuses the second read of the same URL.
+            idempotency_key=uuid.uuid4().hex,
+        )
+    except Exception as e:  # governance itself failed — never fall through to a raw fetch
+        return {"ok": False, "error": "governance_error", "detail": str(e)[:300]}
+
+    if rec.status not in ("succeeded", "completed", "ok"):
+        # A denial is an answer, not an error: say which rule refused and why.
+        return {
+            "ok": False,
+            "error": "denied",
+            "status": rec.status,
+            "failure_category": getattr(rec, "failure_category", "") or "",
+            "execution_id": rec.execution_id,
+            "url": url,
+            "governed": True,
+        }
+
+    body_out = gb.take_content(rec.execution_id) or {}
+    return {
+        "ok": True,
+        "governed": True,
+        "execution_id": rec.execution_id,
+        "url": url,
+        "action": action,
+        "final_origin": body_out.get("final_origin", ""),
+        "page_title": body_out.get("page_title", ""),
+        "content": body_out.get("content", ""),
+        "truncated": bool(body_out.get("truncated", False)),
+        "injection_hits": body_out.get("injection_hits", []),
+        "trust": "UNTRUSTED_EXTERNAL_CONTENT",
+        "summary": getattr(rec, "result_summary", "") or "",
+    }
 
 
 @app.get("/api/v1/human/automation")
@@ -374,11 +556,26 @@ async def connectors_account_add(request: Request):
     from saathi.connectors.accounts import default_store
     if not body.get("provider"):
         return {"ok": False, "error": "provider required"}
-    a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
-                            email=body.get("email", ""), scopes=body.get("scopes") or [],
-                            secret=body.get("secret") or None, status=body.get("status", "connected"))
+    # A caller registering an account cannot declare the provider accepted it.
+    # `status` is deliberately NOT read from the body: the store refuses
+    # CONNECTED at creation, and letting the request pick any other state would
+    # just move the same false claim one field along.
+    from saathi.connectors.accounts import AccountStatus
+    try:
+        a = default_store().add(provider=body["provider"], display_name=body.get("display_name", ""),
+                                email=body.get("email", ""), scopes=body.get("scopes") or [],
+                                secret=body.get("secret") or None)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
     a.pop("secret", None)
-    return {"ok": True, "account": a}
+    return {
+        "ok": True,
+        "account": a,
+        # Said outright so a UI cannot read a successful write as a live
+        # connection: storing a credential is configuration, not confirmation.
+        "verified": False,
+        "next": f"status is {AccountStatus.AUTH_REQUIRED.value} until the provider verifies it",
+    }
 
 
 @app.post("/api/v1/connectors/accounts/{aid}/mission")
@@ -1539,7 +1736,9 @@ async def events_stream(demo: int = 0):
     return StreamingResponse(
         sse_stream(demo=bool(demo)),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive",
+        # no-transform: the :3100 Next rewrite proxy otherwise gzip-compresses
+        # (and so buffers) this stream — browsers received nothing live.
+        headers={"Cache-Control": "no-cache, no-transform", "Connection": "keep-alive",
                  "X-Accel-Buffering": "no"})
 
 try:
@@ -1637,6 +1836,14 @@ try:
 except Exception as _e:
     print(f"[saathi] platform-m50 router unavailable: {_e}")
 
+# AI Company — visual organization layer over existing runtimes (authenticated,
+# read-mostly; missions run deterministic read-only probes, no execution authority).
+try:
+    from .organization.api import router as organization_router
+    app.include_router(organization_router)
+except Exception as _e:
+    print(f"[saathi] organization router unavailable: {_e}")
+
 # Simple access key for remote/tunnel use. Local requests (the Mac itself)
 # are always allowed; remote requests must send X-Saathi-Token.
 import os as _os
@@ -1685,26 +1892,63 @@ def _is_authed(request) -> bool:
     token = (cookies.get("baadar_session")
              or request.headers.get("x-baadar-session", ""))
     if token:
-        from saathi import sessions
-        if sessions.validate(token):
-            return True
+        # A session-store failure (e.g. SQLite lock) must not turn auth into a 500;
+        # the deterministic stateless token check below still authorizes.
+        try:
+            from saathi import sessions
+            if sessions.validate(token):
+                return True
+        except Exception:
+            pass
         if token == _session_token():
             return True
     # Token Registry: named, permissioned API tokens
     raw_api_token = request.headers.get("x-saathi-token", "")
     if raw_api_token:
-        from saathi.security.registry import get_registry
-        reg = get_registry()
-        rec = reg.verify(raw_api_token)
-        if rec:
-            return True
-        # Legacy SAATHI_TOKEN backward compat
+        # Legacy SAATHI_TOKEN backward compat FIRST — cheap, no DB, so a valid
+        # service token authorizes even if the registry store is momentarily
+        # unavailable (e.g. SQLite lock contention).
         if ACCESS_TOKEN and raw_api_token == ACCESS_TOKEN:
             return True
+        # Named, permissioned API tokens. A registry/store failure must never turn
+        # an auth check into a 500 — treat it as "not authorized via this path" and
+        # fall through to the final decision.
+        try:
+            from saathi.security.registry import get_registry
+            rec = get_registry().verify(raw_api_token)
+            if rec:
+                return True
+        except Exception:
+            pass
     # no password configured → trust genuine local callers
     if not _PASSWORD_HASH:
         return _is_local(request)
     return False
+
+
+_CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+
+def _csrf_ok(request) -> bool:
+    """CSRF defense for BROWSER cookie-auth mutations (defense-in-depth atop
+    SameSite=Lax). Same-origin Origin required on unsafe methods when the request
+    carries the session cookie. Non-browser callers are unaffected: service-token
+    (x-saathi-token) and header-only (x-baadar-session, no cookie) requests bypass,
+    as they carry no ambient-cookie CSRF surface. Absent Origin is allowed because
+    SameSite=Lax already blocks cross-site cookie POSTs."""
+    if request.method in _CSRF_SAFE_METHODS:
+        return True
+    if request.headers.get("x-saathi-token"):
+        return True
+    cookies = getattr(request, "cookies", None) or {}
+    if not cookies.get(_COOKIE_NAME):
+        return True
+    origin = request.headers.get("origin")
+    if not origin:
+        return True
+    from urllib.parse import urlparse
+    o = urlparse(origin).netloc.lower()
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").lower()
+    return bool(o) and o == host
 
 
 def _owner_id() -> str:
@@ -1719,9 +1963,19 @@ async def _auth(request, call_next):
     path = request.url.path
     # Always allow: login endpoint, OAuth callbacks, static assets, and
     # endpoints that enforce their own bearer auth (BAADAR_API_KEY).
+    #
+    # There is no `OPTIONS` bypass here. CORSMiddleware is the outermost layer
+    # (see `_install_outermost_cors()`), so a browser preflight is answered
+    # before it ever reaches this gate. An `OPTIONS` request that is not a
+    # preflight is an ordinary request and is authenticated like any other.
     if (path == "/api/v1/auth/login"
             or path == "/api/v1/auth/change-password"
             or path == "/api/v1/auth/logout"
+            # Session validity probe — must be reachable WITHOUT auth so the
+            # frontend can detect a stale/absent token cleanly (returns
+            # {authenticated:false}, never a 401, never token material). Exact
+            # match only: the plural /api/v1/auth/sessions* stays gated.
+            or path == "/api/v1/auth/session"
             or path == "/api/v1/auth/forgot"
             or path.startswith("/api/v1/auth/reset")
             or path.startswith("/api/v1/auth/passkey")
@@ -1766,6 +2020,15 @@ async def _auth(request, call_next):
             or path == "/api/v1/mission/complete"
             or path == "/api/v1/agent/chat"
             or path == "/api/v1/workspace"
+            # Voice auth policy (deliberate, not accidental): only the two
+            # stateless, ephemeral endpoints used by the always-on mic are
+            # exempt — /voice/command and /voice/transcribe. Everything else
+            # under /api/v1/voice/* stays gated: /voice/enroll writes a
+            # biometric voiceprint, and the voice_os router (/voice/sessions,
+            # /turns, /preferences, …) carries conversation + authority state.
+            # The frontend already authenticates those via afetch()
+            # (lib/api.js enrollVoice, components/chat/VoiceControl.jsx), so do
+            # NOT add them here — that would drop auth on sensitive operations.
             or path == "/api/v1/voice/command"
             or path == "/api/v1/code-memory/status"
             or path == "/api/v1/lab/prompts"
@@ -1808,6 +2071,8 @@ async def _auth(request, call_next):
                 pass  # fall through to session auth
     except Exception:
         pass
+    if not _csrf_ok(request):
+        return JSONResponse({"error": "bad origin"}, status_code=403)
     if not _is_authed(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return await call_next(request)
@@ -1816,10 +2081,33 @@ class LoginIn(BaseModel):
     password: str
     remember_me: bool = True
 
+
+# ── First-party HttpOnly session cookie (M — cookie-auth) ────────────────────
+# Env-aware attributes: Secure only over HTTPS (so the cookie actually works on
+# plain-http localhost:3100), SameSite=Lax (single-origin — Lax lets top-level
+# navigations carry it while blocking cross-site POST cookies for CSRF defense),
+# host-only (no Domain), Path=/. HttpOnly always — browser JS never reads it.
+_COOKIE_NAME = "baadar_session"
+
+def _req_https(request) -> bool:
+    proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip().lower()
+    if proto:
+        return proto == "https"
+    return (getattr(request.url, "scheme", "") or "").lower() == "https"
+
+def _set_session_cookie(resp, request, token: str, max_age: int) -> None:
+    resp.set_cookie(_COOKIE_NAME, token, httponly=True, samesite="lax",
+                    secure=_req_https(request), max_age=max_age, path="/")
+
+def _clear_session_cookie(resp, request) -> None:
+    resp.delete_cookie(_COOKIE_NAME, samesite="lax", secure=_req_https(request), path="/")
+
+
 @app.post("/api/v1/auth/login")
 def login(body: LoginIn, request: Request):
     from fastapi.responses import JSONResponse
     from saathi import sessions, authsec
+    from saathi.security.store import get_store
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
     ua = request.headers.get("user-agent", "")
     # rate-limit brute-force attempts
@@ -1827,9 +2115,16 @@ def login(body: LoginIn, request: Request):
     if not allowed:
         authsec.audit("login", ok=False, ip=ip, ua=ua, detail="rate_limited")
         return JSONResponse({"ok": False, "error": f"Too many attempts. Try again in {retry_after}s."}, status_code=429)
-    ok = (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or (ACCESS_TOKEN and body.password == ACCESS_TOKEN)
+    # Accept the canonical owner's stored credential through the security-store
+    # abstraction, while preserving legacy environment fallback credentials.
+    store = get_store()
+    has_stored_password = store.active_owner_has_password()
+    stored_owner_ok = store.verify_active_owner_password(body.password)
+    ok = (stored_owner_ok or
+          (_PASSWORD_HASH and authsec.verify_password(body.password, _PASSWORD_HASH)) or
+          (ACCESS_TOKEN and body.password == ACCESS_TOKEN))
     if not ok:
-        if not (_PASSWORD_HASH or ACCESS_TOKEN):
+        if not (_PASSWORD_HASH or ACCESS_TOKEN or has_stored_password):
             ok = True  # nothing configured — let the owner in
         else:
             authsec.rate_hit(f"{ip}:login")
@@ -1850,6 +2145,21 @@ def login(body: LoginIn, request: Request):
                             device_name=device_name, failed_attempts=0)
     token = sessions.create(ua=ua, ip=ip, kind="password", remember_me=body.remember_me)
     sid = sessions.session_id(token)
+    # Opportunistic lifecycle hygiene: drain expired + revoked rows on each
+    # login so the session table stays bounded without a background job.
+    try:
+        _p = sessions.prune()
+        _LAST_PRUNE.update({"at": time.time(), **_p})
+    except Exception:
+        pass
+    # Bounded concurrency: keep the newest N active sessions (LRU eviction),
+    # never the one just minted. Prevents hundreds of live owner sessions.
+    try:
+        _evicted = sessions.enforce_cap_if_migrated(keep_token=token)
+        if _evicted:
+            authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
+    except Exception:
+        pass
     authsec.audit("login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
     # Record security event
     from saathi.security.timeline import get_timeline
@@ -1860,7 +2170,7 @@ def login(body: LoginIn, request: Request):
         ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if body.remember_me else (24*3600)
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
+    _set_session_cookie(r, request, token, max_age)
     return r
 
 def _rp(request) -> tuple[str, str]:
@@ -1875,9 +2185,11 @@ def _rp(request) -> tuple[str, str]:
 def passkey_status(request: Request):
     """Auth setup status: is a password set, is a passkey registered, am I signed in. Whitelisted."""
     from saathi import passkey
+    from saathi.security.store import get_store
     rp_id, _ = _rp(request)
     return {"has_passkey": passkey.has_passkey(rp_id), "rp_id": rp_id,
-            "has_password": bool(_PASSWORD_HASH), "signed_in": _is_authed(request) or _is_local(request)}
+            "has_password": bool(_PASSWORD_HASH) or get_store().active_owner_has_password(),
+            "signed_in": _is_authed(request) or _is_local(request)}
 
 
 @app.post("/api/v1/auth/passkey/register/options")
@@ -1947,6 +2259,14 @@ async def passkey_login_verify(request: Request):
     risk_score = risk.score(_owner_id(), browser=browser, ip=ip, device_name=device_name)
     token = sessions.create(ua=ua, ip=ip, kind="passkey", remember_me=remember_me)
     sid = sessions.session_id(token)
+    # Same bounded-concurrency hygiene as password login.
+    try:
+        sessions.prune()
+        _evicted = sessions.enforce_cap_if_migrated(keep_token=token)
+        if _evicted:
+            authsec.audit("session_cap_evict", ok=True, ip=ip, ua=ua, detail=f"evicted_{_evicted}")
+    except Exception:
+        pass
     authsec.audit("passkey_login", ok=True, ip=ip, ua=ua, detail=f"session_{sid}")
     from saathi.security.timeline import get_timeline
     get_timeline().record(_owner_id(), "login_success",
@@ -1957,7 +2277,7 @@ async def passkey_login_verify(request: Request):
 
     r = JSONResponse({"ok": True, "token": token, "risk_score": risk_score})
     max_age = (30*24*3600) if remember_me else (24*3600)
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=max_age)
+    _set_session_cookie(r, request, token, max_age)
     return r
 
 
@@ -2011,7 +2331,7 @@ def change_password(body: ChangePasswordIn, request: Request):
         meta={"browser": _browser, "os": _os_name, "ip": ip},
         ip=ip, ua=ua)
     r = JSONResponse({"ok": True, "token": token})
-    r.set_cookie("baadar_session", token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    _set_session_cookie(r, request, token, 30*24*3600)
     return r
 
 @app.post("/api/v1/auth/logout")
@@ -2030,7 +2350,7 @@ def logout(request: Request):
         title="Signed out", ip=request.client.host if request.client else "",
         ua=request.headers.get("user-agent", ""))
     r = JSONResponse({"ok": True})
-    r.delete_cookie("baadar_session", samesite="none", secure=True)
+    _clear_session_cookie(r, request)
     return r
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2096,7 +2416,7 @@ def rotate_session(request: Request):
     new_token = sessions.rotate(token, ua=ua, ip=ip)
     authsec.audit("rotate_session", ok=True, ip=ip, ua=ua, detail=f"new_{sessions.session_id(new_token)}")
     r = JSONResponse({"ok": True, "token": new_token})
-    r.set_cookie("baadar_session", new_token, httponly=True, samesite="none", secure=True, max_age=30*24*3600)
+    _set_session_cookie(r, request, new_token, 30*24*3600)
     return r
 
 
@@ -2110,6 +2430,84 @@ async def rename_session(sid: str, request: Request):
     body = await request.json()
     label = (body.get("label") or "")[:60]
     return {"ok": sessions.rename(sid, label)}
+
+
+# ── Session lifecycle & auth recovery (M — session-lifecycle milestone) ──────
+def _bearer(request) -> str:
+    """The caller's session token from cookie or header (never logged)."""
+    cookies = getattr(request, "cookies", None) or {}
+    return cookies.get("baadar_session") or request.headers.get("x-baadar-session", "")
+
+
+# Tracks the last opportunistic/explicit prune result for owner diagnostics.
+_LAST_PRUNE: dict = {"at": 0.0, "expired": 0, "revoked": 0}
+
+
+@app.get("/api/v1/auth/session")
+def auth_session(request: Request):
+    """Validate the caller's current token and return NON-SECRET session metadata.
+
+    Whitelisted so the frontend can check auth state on startup WITHOUT tripping
+    the 401 gate. Returns `{authenticated: bool, session: {...}|null}` — an invalid
+    or stale token yields `authenticated: false` (a clean signal), never a 401 and
+    never any token material."""
+    return _sessions_mod().status(_bearer(request))
+
+
+def _sessions_mod():
+    from saathi import sessions
+    return sessions
+
+
+@app.get("/api/v1/auth/sessions/diagnostics")
+def sessions_diagnostics(request: Request):
+    """Owner-facing session diagnostics — counts + current session + last prune.
+
+    No raw tokens; `current.id` is a bounded irreversible fingerprint."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    st = sessions.status(_bearer(request))
+    return {
+        "counts": sessions.counts(),
+        "current": st.get("session"),
+        "last_prune": dict(_LAST_PRUNE),
+    }
+
+
+@app.post("/api/v1/auth/sessions/prune")
+def sessions_prune(request: Request):
+    """Owner-triggered hard prune of expired + revoked sessions."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    res = sessions.prune()
+    _LAST_PRUNE.update({"at": time.time(), **res})
+    from saathi import authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    authsec.audit("session_prune", ok=True, ip=ip, ua=request.headers.get("user-agent", ""),
+                  detail=f"expired_{res['expired']}_revoked_{res['revoked']}")
+    return {"ok": True, "pruned": res, "counts": sessions.counts()}
+
+
+@app.post("/api/v1/auth/sessions/revoke-all-including-current")
+def revoke_all_including_current(request: Request):
+    """Owner emergency: revoke EVERY session including the caller's own, then
+    clear the caller's cookie. The caller must sign in again afterwards."""
+    from fastapi.responses import JSONResponse
+    if not _is_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    sessions = _sessions_mod()
+    from saathi import authsec
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "")
+    count = sessions.revoke_all_including_current()
+    authsec.audit("revoke_all_including_current", ok=True, ip=ip,
+                  ua=request.headers.get("user-agent", ""), detail=f"revoked_{count}")
+    r = JSONResponse({"ok": True, "revoked": count})
+    _clear_session_cookie(r, request)
+    return r
 
 
 # ── Phase 2: Passkey Management ──────────────────────────────────────────────
@@ -2497,6 +2895,16 @@ class ChatIn(BaseModel):
 
 
 def _safe_respond(text: str, session_id: str, speaker_verified: bool) -> str:
+    # Research questions answer from the unified, evidence-backed intelligence
+    # snapshot (read-only) — never the LLM's memory. Non-research text falls
+    # through to the normal agent. Failure here never blocks a reply.
+    try:
+        from saathi.research_surface import maybe_answer_chat
+        r = maybe_answer_chat(text)
+        if r is not None:
+            return r["reply"]
+    except Exception:
+        pass
     try:
         return agent.respond(text, session_id, speaker_verified=speaker_verified)
     except Exception as e:
@@ -2528,12 +2936,105 @@ def _rate_ok(request: Request) -> bool:
     return True
 
 
+class NarrateIn(BaseModel):
+    """Facts block for chart-analysis narration. The CLIENT NEVER SUPPLIES THE SYSTEM
+    PROMPT — only the computed facts — so this endpoint cannot be repurposed as a
+    general 'run my prompt' hole."""
+
+    facts: str
+    question: str = ""
+
+
+# Fixed server-side. Not overridable by any caller.
+_NARRATE_SYSTEM = (
+    "You explain a chart analysis that has ALREADY been computed by a deterministic "
+    "engine. HARD RULES: (1) Every number you use must appear verbatim in the FACTS. "
+    "Never compute, round, extrapolate or invent a price, level, percentage or "
+    "indicator value. (2) If something is marked unavailable, say it is unavailable; "
+    "never estimate it. (3) Do not give investment advice, a buy/sell recommendation, "
+    "or a position size — explain what the chart shows and what would change it. "
+    "(4) Lead with what conflicts, not only what agrees. (5) If the verdict is AVOID "
+    "or WAIT, say so plainly rather than finding something encouraging to say. "
+    "Write 3-5 short paragraphs for an experienced swing trader."
+)
+
+_NARRATE_MAX_FACTS = 12000
+
+
+@app.post("/api/v1/analysis/narrate")
+def analysis_narrate(body: NarrateIn, request: Request):
+    """Narrate a computed chart analysis. Explanation only — never a new number."""
+    if not _rate_ok(request):
+        return {"ok": False, "reason": "RATE_LIMITED"}
+    facts = (body.facts or "").strip()
+    if not facts:
+        return {"ok": False, "reason": "NO_FACTS"}
+    if len(facts) > _NARRATE_MAX_FACTS:
+        return {"ok": False, "reason": "FACTS_TOO_LARGE"}
+
+    # Server routes reach the model INDIRECTLY, through the registered
+    # `tools_llm_helper` caller — the convention the `server_tools` caller policy
+    # states outright ("no direct provider from server routes"). The earlier
+    # version called the deprecated `llm.generate` facade with caller_id
+    # "analysis_narrate", which is not a registered caller, so preflight denied
+    # every request and this endpoint always answered LLM_UNAVAILABLE.
+    #
+    # RUNTIME-CONVERGENCE-1: the connectivity-governance branch resolved the same
+    # dead route through `chat_generate`, which is the ChatEngine adapter — it
+    # borrows caller_id "chat_engine" for a route that is not the chat engine,
+    # and it returns a DICT, so this function's `getattr(res, "text", "")` read
+    # the default and the endpoint answered ok:true with empty narration. The
+    # helper below returns an LLMResult carrying both .text and the .model the
+    # analysis UI displays.
+    from saathi.tools._llm_helper import ask_llm_result
+
+    prompt = facts if not body.question else f"{facts}\n\nQUESTION: {body.question}"
+    try:
+        res = ask_llm_result(prompt, _NARRATE_SYSTEM, timeout=60, max_tokens=900)
+        return {"ok": True, "text": getattr(res, "text", "") or "", "model": getattr(res, "model", "")}
+    except Exception as exc:  # narration is optional — never break the analysis
+        return {"ok": False, "reason": "LLM_UNAVAILABLE", "detail": str(exc)[:200]}
+
+
 @app.post("/api/v1/agent/chat")
 def chat(body: ChatIn, request: Request):
     if not _rate_ok(request):
         return {"reply": "I'm getting a lot of requests right now — give me a minute and try again."}
     reply = _safe_respond(body.text, body.session_id, body.speaker_verified)
     return {"reply": reply}
+
+
+# ── Research Intelligence surface (READ-ONLY) — projects the existing evidence
+# intelligence into Central Command / chat / voice. No trade/broker/portfolio/
+# market_data authority; follows the standard session auth (not whitelisted).
+@app.get("/api/v1/research/intelligence")
+def research_intelligence(request: Request):
+    from saathi import research_surface
+    return research_surface.intelligence()
+
+
+@app.get("/api/v1/research/events")
+def research_events(request: Request, limit: int = 50):
+    from saathi import research_surface
+    return research_surface.events(limit=limit)
+
+
+@app.get("/api/v1/research/events/{event_id}")
+def research_event_detail(event_id: str, request: Request):
+    from saathi import research_surface
+    return research_surface.event_detail(event_id)
+
+
+@app.get("/api/v1/research/brief")
+def research_brief(request: Request):
+    from saathi import research_surface
+    return research_surface.brief()
+
+
+@app.get("/api/v1/research/health")
+def research_health(request: Request):
+    from saathi import research_surface
+    return research_surface.health()
 
 
 @app.post("/api/v1/workspace")
@@ -2698,8 +3199,40 @@ def pielts_set_targets(body: TargetIn):
 
 @app.get("/api/v1/connections")
 def get_connections():
+    """Platform connection settings, with credential VALUES redacted.
+
+    This returned `connections.get_all()` verbatim, so an authenticated caller
+    received the Facebook page access token — 202 characters of live publishing
+    credential — in a 200 body, where it lands in browser devtools, proxy logs
+    and any client-side error reporting. The 422 redaction boundary does not
+    cover success responses; this one does.
+
+    PRESENCE is preserved. The UI has to show whether a platform is configured,
+    and `has_page_access_token: true` says that without disclosing the value.
+    Field names come from the repository's existing secret detector rather than
+    a second list that would drift from it.
+    """
+    from saathi.tool_runtime.secrets import REDACTED, is_secret_key
+
     from . import connections
-    return {"connections": connections.get_all()}
+
+    safe = {}
+    for platform, cfg in (connections.get_all() or {}).items():
+        if not isinstance(cfg, dict):
+            safe[platform] = cfg
+            continue
+        out = {}
+        for key, value in cfg.items():
+            if is_secret_key(key) and value not in (None, "", [], {}):
+                out[key] = REDACTED
+                out[f"has_{key}"] = True
+            elif is_secret_key(key):
+                out[key] = value
+                out[f"has_{key}"] = False
+            else:
+                out[key] = value
+        safe[platform] = out
+    return {"connections": safe}
 
 
 class ConnIn(BaseModel):
@@ -3229,7 +3762,7 @@ async def studio_voice(body: VoiceIn, request: Request):
     from pathlib import Path as _Path
     voices_dir = _Path.home() / "SaathiAI" / "voices_output"
     voices_dir.mkdir(exist_ok=True)
-    output_path = voices_dir / f"voice_{int(_time.time())}.mp3"
+    output_path = voices_dir / f"voice_{int(time.time())}.mp3"
     try:
         from gtts import gTTS
         tts = gTTS(text=body.text[:1000], lang="en", tld=body.accent, slow=False)
@@ -5310,13 +5843,48 @@ def _start_background():
         pass
 
 
+def _install_outermost_cors() -> None:
+    """Register CORSMiddleware as the outermost middleware.
+
+    Starlette applies `add_middleware` by prepending, so the last registration
+    wins the outermost position. Every other middleware in this module — the
+    security headers layer and the `_auth` gate — is registered above, which
+    makes this call the one that puts CORS on the outside.
+
+    Ordering matters beyond preflight. With CORS innermost, an authentication
+    rejection short-circuits before CORS can label the response, so the browser
+    reports a CORS failure for what is really a 401 and the real cause is
+    invisible in the console. With CORS outermost:
+
+      * an allowed-origin preflight is answered by CORS and never reaches
+        `_auth`, so no `OPTIONS` bypass is needed in the auth gate;
+      * an allowed-origin unauthenticated request still returns 401, and that
+        401 carries the correct `Access-Control-Allow-Origin`;
+      * a disallowed origin gets no `Access-Control-Allow-Origin` on anything,
+        and authentication is not consulted to decide that.
+    """
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=CORS_ALLOW_METHODS,
+        allow_headers=CORS_ALLOW_HEADERS,
+    )
+
+
+_install_outermost_cors()
+
+
 def main():
     import uvicorn
     uvicorn.run(app, host=config.HOST, port=config.PORT)
 
 
-if __name__ == "__main__":
-    main()
+# NOTE: the `if __name__ == "__main__": main()` entrypoint is intentionally at the
+# VERY END of this file. Route definitions continue for ~800 lines below; running
+# main() here would call the blocking uvicorn.run() before those routes (finance
+# providers, finance/browser/*, observation bridge, …) are registered, so a
+# `python -m saathi.server` launch would 404 them. Keep the entrypoint last.
 
 
 # ── M57 single-host heartbeat (localhost-only; advisory; no authority) ───────
@@ -5338,3 +5906,1482 @@ def _saathi_stop_local_heartbeat():
         stop_local_heartbeat()
     except Exception:
         pass
+
+
+@app.on_event("startup")
+async def _saathi_start_public_market_data():
+    """Start the public crypto feed ONLY when explicitly configured.
+
+    Off unless `SAATHI_PUBLIC_MARKET_DATA=1`. Booting the server must not open a
+    socket by default: a feed nobody asked for is an unannounced outbound
+    connection, and in test or offline contexts it would be a failure looking for
+    somewhere to happen. Public Binance spot market data only — no credentials
+    exist on this path and no account, order or user-data surface is reachable.
+    """
+    import os
+
+    if os.getenv("SAATHI_PUBLIC_MARKET_DATA", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from saathi.platform.crypto.runtime import (
+            PublicMarketDataConfig, reset_public_market_data_for_tests,
+        )
+
+        symbols = tuple(
+            s.strip().upper()
+            for s in os.getenv("SAATHI_PUBLIC_MARKET_DATA_SYMBOLS", "BTCUSDT,ETHUSDT").split(",")
+            if s.strip()
+        )
+        rt = reset_public_market_data_for_tests(
+            PublicMarketDataConfig(enabled=True, symbols=symbols))
+        # Async lifecycle: connect, subscribe, then start the single ingestion
+        # task. Without the reader the socket would be open and unread.
+        await rt.start_async()
+    except Exception:
+        # A feed that cannot start must not take the server down with it; the
+        # health surface reports the real state either way.
+        pass
+
+
+@app.on_event("shutdown")
+async def _saathi_stop_public_market_data():
+    """Close the public stream cleanly: reader cancelled, socket closed, queue released.
+
+    Order is load-bearing — the transport close is what frees a thread parked in
+    a blocking recv, so cancelling the reader alone would leave it waiting.
+    """
+    try:
+        from saathi.platform.crypto import runtime as _rt_mod
+
+        if _rt_mod._RUNTIME is not None:
+            await _rt_mod._RUNTIME.stop_async()
+    except Exception:
+        pass
+
+
+# ── M — LIVE_NEPSE_BROWSER_MARKET_DATA: read-only live market surface ──────────
+# Governed-browser observation of the OFFICIAL public NEPSE site (rendered DOM only;
+# no downloads, no XHR/token replay). LIVE_BROWSER_OBSERVED — never canonical history,
+# never a trade control. Handlers are sync `def` so FastAPI runs them in a threadpool
+# (sync Playwright cannot run on the asyncio loop).
+def _nepse_live_snapshot(force: bool = False):
+    from saathi.platform.market_data.nepse_live_service import get_default_service
+    svc = get_default_service()
+    snap = svc.snapshot()
+    if snap is None or force:
+        snap = svc.refresh(force=True)
+    return svc, snap
+
+
+@app.get("/api/v1/market/nepse/live")
+def nepse_live_tile(refresh: int = 0):
+    """Central-Command tile: index, breadth, turnover, top movers, freshness. No trade controls."""
+    try:
+        from saathi.platform.market_data.nepse_live_service import central_command_live_projection
+        _, snap = _nepse_live_snapshot(force=bool(refresh))
+        return central_command_live_projection(snap)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/full")
+def nepse_live_full(refresh: int = 0):
+    try:
+        _, snap = _nepse_live_snapshot(force=bool(refresh))
+        return snap.to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/health")
+def nepse_live_health():
+    try:
+        from saathi.platform.market_data.nepse_live_service import get_default_service
+        return get_default_service().health()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/nepse/live/chat")
+def nepse_live_chat(q: str = ""):
+    try:
+        from saathi.platform.market_data.nepse_live_service import chat_answer_live
+        _, snap = _nepse_live_snapshot(force=False)
+        return chat_answer_live(snap, q)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market/nepse", response_class=HTMLResponse, include_in_schema=False)
+def nepse_live_panel():
+    """Phase 19/20 — internal read-only NEPSE market panel. No trade controls; a source
+    link to the official public site only."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Live (observed)</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+.hdr{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.badge{padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px}
+.LIVE{background:#1f6f3f}.CLOSED,.MARKET_CLOSED{background:#5a3a12}.STALE,.RECENT{background:#6b5900}
+.PAGE_ERROR,.UNAVAILABLE,.SCHEMA_CHANGED{background:#7d2222}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px}
+.card b{display:block;font-size:20px}.muted{color:#8b949e;font-size:12px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #21262d;font-size:13px}
+th{color:#8b949e}a{color:#58a6ff}button{background:#238636;color:#fff;border:0;padding:6px 12px;border-radius:6px;cursor:pointer}
+</style></head><body><div class=wrap>
+<div class=hdr><h2 style="margin:0">NEPSE <span class=muted>live observed</span></h2>
+<span id=status class=badge>…</span><span id=fresh class=badge>…</span>
+<button onclick="load(1)">Refresh</button>
+<a href="https://www.nepalstock.com" target=_blank rel=noopener>Open official source ↗</a></div>
+<div class=muted id=obs></div>
+<div class=grid id=stats></div>
+<h3>Top by turnover <span class=muted>(observed)</span></h3>
+<table><thead><tr><th>Symbol</th><th>LTP</th><th>Change</th><th>%</th><th>Volume</th></tr></thead><tbody id=rows></tbody></table>
+<p class=muted>Source: Official NEPSE (nepalstock.com). Data class: LIVE_BROWSER_OBSERVED — current
+awareness only, not canonical historical data. Read-only; no trading controls.</p>
+</div><script>
+let _ver=-1;
+function render(d){
+ if(!d||d.error)return;
+ if(typeof d.version==='number'){ if(d.version<_ver)return; _ver=d.version; }
+ const s=document.getElementById('status');s.textContent=d.market_status;s.className='badge '+d.market_status;
+ const f=document.getElementById('fresh');f.textContent=d.freshness;f.className='badge '+d.freshness;
+ document.getElementById('obs').textContent='Observed: '+(d.source_as_of||new Date((d.observed_at||0)*1000).toLocaleString())+(d.version!=null?'  (v'+d.version+')':'');
+ document.getElementById('stats').innerHTML=[
+  ['Index',d.nepse_index],['Change',(d.index_change??'—')+' ('+(d.index_change_percent??'—')+'%)'],
+  ['Turnover Rs',d.total_turnover],['Traded shares',d.total_volume],
+  ['Advancers',d.advancers],['Decliners',d.decliners],['Unchanged',d.unchanged]]
+  .map(([k,v])=>'<div class=card><span class=muted>'+k+'</span><b>'+(v??'—')+'</b></div>').join('');
+ document.getElementById('rows').innerHTML=(d.watchlist||[]).map(o=>'<tr><td>'+o.symbol+'</td><td>'+
+  (o.ltp??'—')+'</td><td>'+(o.point_change??'—')+'</td><td>'+(o.percent_change??'—')+'</td><td>'+
+  (o.volume??'—')+'</td></tr>').join('');
+}
+async function load(refresh){
+ const s=document.getElementById('status');s.textContent='loading…';
+ try{const r=await fetch('/api/v1/market/nepse/live'+(refresh?'?refresh=1':''));render(await r.json());}
+ catch(e){s.textContent='error';}
+}
+// consume the shared snapshot over the EXISTING SSE stream — never triggers acquisition
+try{const es=new EventSource('/api/events/stream?demo=0');
+ es.onmessage=function(e){try{const ev=JSON.parse(e.data);
+  if(ev&&ev.name==='market.nepse.snapshot'&&ev.payload)render(ev.payload);}catch(_){}}; }catch(_){}
+load(0);</script></body></html>""")
+
+
+# ── M — TRACKER_MARKET_HISTORY_READMODEL: read-only THIRD-PARTY analytics ──────
+# Public REST (no creds/MCP/browser). THIRD_PARTY_STRUCTURED_MARKET_DATA; official
+# NEPSE remains current-market authority; never writes md_bars/md_quotes; no signals.
+# Sync `def` handlers → FastAPI threadpool (requests is blocking).
+@app.get("/api/v1/market/tracker/history")
+def tracker_history(symbol: str, range: str = "1Y"):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        series, st = get_provider().market_history(symbol, range)
+        if series is None:
+            return JSONResponse({"available": False, "status": st.value, "symbol": symbol.upper()},
+                                status_code=200)
+        return series.to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/chart")
+def tracker_chart(symbol: str, range: str = "1Y", indicators: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.chart import build_chart_model
+        which = [w.strip() for w in indicators.split(",") if w.strip()] or None
+        return build_chart_model(symbol, range, which_indicators=which)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/fundamentals")
+def tracker_fundamentals(symbol: str):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        f, st = get_provider().fundamentals(symbol)
+        return f.to_public() if f else JSONResponse({"available": False, "status": st.value}, status_code=200)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/dividends")
+def tracker_dividends(symbol: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.provider import get_provider
+        d, st = get_provider().dividends(symbol or None)
+        return {"status": st.value, "count": len(d), "dividends": [x.to_public() for x in d]}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/reconcile")
+def tracker_reconcile(symbol: str):
+    try:
+        from saathi.platform.market_data.tracker.chart import reconcile_current
+        return reconcile_current(symbol).to_public()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/analysis/technical")
+def market_technical_analysis(body: dict = Body(...)):
+    """Agent-assisted technical analysis for NEPSE / crypto. Research-only: deterministic
+    indicators from real OHLC, then a governed-agent synthesis. Never advice, never execution."""
+    try:
+        from saathi.platform.market_data.technical_analysis import analyze
+        market = str(body.get("market", "NEPSE"))
+        symbol = str(body.get("symbol", ""))
+        return analyze(market, symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/analysis/smc")
+def market_smc_analysis(body: dict = Body(...)):
+    """ICT / Smart Money Concepts structure (order blocks, FVG, BOS/CHoCH, liquidity,
+    premium/discount, inducement/IDM) from real OHLC. Descriptive research only."""
+    try:
+        from saathi.platform.market_data import smc
+        return smc.analyze(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/analysis/strategy")
+def market_strategy(body: dict = Body(...)):
+    """ICT/SMC trading PLAYBOOK: structure mapping (15m for crypto) + potential IDM +
+    entry/invalidation/target ideas. Education/research only — never advice/execution."""
+    try:
+        from saathi.platform.market_data.technical_analysis import strategy
+        return strategy(str(body.get("market", "CRYPTO")), str(body.get("symbol", "")),
+                        str(body.get("timeframe", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/strategies")
+def market_strategies_catalog():
+    """The owner's pro-trader strategy playbook (ported from crypto-signal-bot):
+    catalog of named rule sets. Research/education only, never advice."""
+    try:
+        from saathi.platform.market_data import strategy_playbook
+        return strategy_playbook.catalog()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/strategies/scan")
+def market_strategies_scan(body: dict = Body(...)):
+    """Scan one symbol (NEPSE or crypto) against every machine-scannable playbook
+    strategy; return matches with score, reasons and structural entry/stop/target.
+    Deterministic over real OHLC — research only, never advice or an order."""
+    try:
+        from saathi.platform.market_data import strategy_playbook
+        return strategy_playbook.scan(str(body.get("market", "NEPSE")),
+                                      str(body.get("symbol", "")),
+                                      str(body.get("timeframe", "1d")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/data/{dataset}")
+def market_tracker_data(dataset: str, limit: int = 0, status: str = "all"):
+    """NEPSE Portfolio Tracker web agent — every live dataset by name:
+    news · today · gainers · losers · sectors · indices · ipos · dividends ·
+    promoter-lockins · mergers · brokers · holidays · pulse · status · summary.
+    Observation-only, live from nepseportfoliotracker.app."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        m = {
+            "news": lambda: tracker_web.news(limit or 20),
+            "today": lambda: tracker_web.today_prices(limit or 3000),
+            "gainers": lambda: tracker_web.gainers(limit or 20),
+            "losers": lambda: tracker_web.losers(limit or 20),
+            "sectors": tracker_web.sectors,
+            "indices": tracker_web.subindices,
+            "ipos": lambda: tracker_web.ipos(limit or 50),
+            "dividends": lambda: tracker_web.dividends(limit or 100),
+            "promoter-lockins": lambda: tracker_web.promoter_lockins(status),
+            "mergers": lambda: tracker_web.mergers(limit or 50),
+            "brokers": tracker_web.brokers,
+            "holidays": tracker_web.holidays,
+            "pulse": tracker_web.market_pulse,
+            "status": tracker_web.market_status,
+            "summary": tracker_web.market_summary,
+        }
+        fn = m.get(dataset)
+        if not fn:
+            return JSONResponse({"error": f"unknown dataset '{dataset}'", "available_datasets": sorted(m)}, status_code=404)
+        return fn()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/index/chart")
+def market_index_chart(index: str = "NEPSE", range: str = "1Y"):
+    """NEPSE index / sub-index OHLC for charting (business_date + OHLC). Observation-only."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.index_history(index, range)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/crypto/chart")
+def market_crypto_chart(symbol: str, interval: str = "1h"):
+    """Crypto intraday/daily OHLC for charting (1m/5m/15m/1h/4h/1d/1w) via Binance public
+    market data. Shaped like the stock chart. Observation-only."""
+    try:
+        from saathi.platform.market_data import technical_analysis as ta
+        ohlc, source = ta._fetch_crypto_ohlc(symbol, (interval or "1h").lower())
+        if not ohlc:
+            return {"available": False, "symbol": symbol, "interval": interval, "error": source}
+        return {"available": True, "symbol": symbol.upper(), "interval": interval, "source": source,
+                "ohlc": [{"business_date": str(i), "open": o.get("open"), "high": o.get("high"),
+                          "low": o.get("low"), "close": o.get("close")} for i, o in enumerate(ohlc)],
+                "volume": [{"volume": o.get("volume")} for o in ohlc]}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/index/list")
+def market_index_list():
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.index_list()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/symbol/{symbol}")
+def market_tracker_symbol(symbol: str):
+    """All corporate data for one symbol: promoter lock-in/unlock, dividends, news, IPO/right."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.symbol_corporate(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/predict/swarm")
+def market_predict_swarm(body: dict = Body(...)):
+    """Swarm crowd-simulation prediction (MiroFish idea, ported deterministic, no external
+    deps): a crowd of investor-persona archetypes read real evidence and herd over rounds
+    into an emergent direction. Research/education only — never advice or an order."""
+    try:
+        from saathi.platform.finance import crowd_sim
+        return crowd_sim.simulate(str(body.get("market", "NEPSE")),
+                                  str(body.get("symbol", "")),
+                                  int(body.get("rounds", 6)))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/market/analysis/desk")
+def market_trade_desk(body: dict = Body(...)):
+    """Trade Desk bundle: trade setup (entry/SL/target/RR + loss%/profit%), volume strength
+    (buyer vs seller by period), and S/R zones. Deterministic, observation-only — not advice."""
+    try:
+        from saathi.platform.market_data import trade_desk
+        return trade_desk.desk(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/nepse")
+def market_free_nepse(force: int = 0):
+    """Full NEPSE market from a free public web source (no API key). Observation-only."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_market(force=bool(force))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/movers")
+def market_free_movers(top: int = 5):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.movers(top=min(int(top), 15))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/quote")
+def market_free_quote(symbol: str):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_quote(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/company")
+def market_free_company(symbol: str):
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_company(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/fundamentals")
+def market_free_fundamentals(symbol: str):
+    """Full fundamentals (EPS/PE/PB/book/market cap) scraped free, any listed symbol."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.nepse_fundamentals(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/free/ranges")
+def market_free_ranges(start: int = 0):
+    """Bulk 52-week ranges filled by a background job (kick off with ?start=1)."""
+    try:
+        from saathi.platform.market_data import free_sources
+        return free_sources.ranges(start=bool(start))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/portfolio/add")
+def portfolio_add(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.add_holding(str(body.get("symbol", "")), str(body.get("market", "NEPSE")),
+                              float(body.get("qty", 0) or 0), float(body.get("avg_cost", 0) or 0))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/portfolio/remove")
+def portfolio_remove(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.remove_holding(str(body.get("id", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/portfolio/sector-rotation")
+def portfolio_sector_rotation(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import sector_rotation
+        return sector_rotation.rotation()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/portfolio/analysis")
+def portfolio_analysis(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import portfolio_desk as pd
+        return pd.analysis()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/settings/keys")
+def settings_keys_status(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.settings import keys
+        return keys.status()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/settings/keys")
+def settings_keys_set(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.settings import keys
+        return keys.set_key(str(body.get("name", "")), str(body.get("value", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/fund/meeting")
+def fund_meeting(request: Request, body: dict = Body(...)):
+    """Convene the AI hedge-fund committee on a symbol → transcript + CEO decision."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.run_meeting(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/fund/meetings")
+def fund_meetings(request: Request, limit: int = 20):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.list_meetings(min(int(limit), 50))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/fund/meeting/{sid}")
+def fund_meeting_get(request: Request, sid: str):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance import fund_committee
+        return fund_committee.get_meeting(sid)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/vision/analyze")
+def vision_analyze(request: Request, body: dict = Body(...)):
+    """Analyse a screenshot with Gemini Vision (owner-only). Image used once, never stored."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.vision.screen_vision import analyze_image
+        return analyze_image(str(body.get("image_b64", "")), str(body.get("question", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/news")
+def market_news(request: Request, symbol: str | None = None, limit: int = 12):
+    """Research-event news, optionally filtered to a symbol, with catalyst flags
+    (dividend / promoter lock-in / bonus / rights / AGM). Observation-only."""
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.market_data import symbol_news
+        return symbol_news.symbol_news(symbol, limit)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/signals")
+def market_signals():
+    """Deterministic setup scan across a watchlist (observation-only). Reuses the paper-trade
+    setup gate — no orders, no advice; a list of where a clean ATR trend setup currently exists."""
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        watch = [("NEPSE", s) for s in ("NABIL", "HDL", "UPPER", "GBIME", "NRIC")] + \
+                [("CRYPTO", s) for s in ("BTC", "ETH", "SOL")]
+        out = []
+        for mk, sym in watch:
+            try:
+                p = pt.propose(mk, sym)
+            except Exception:
+                continue
+            if p.get("setup"):
+                out.append({"market": mk, "symbol": sym, "side": p["side"], "entry": p["entry"],
+                            "stop": p["stop"], "target": p["target"], "rr": p["planned_r"]})
+        return {"signals": out, "scanned": len(watch), "count": len(out),
+                "note": "Deterministic ATR trend setups · observation-only · not advice."}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# ── Paper trading agent (SIMULATION ONLY — no real orders / broker / execution) ──
+@app.post("/api/v1/trading/paper/propose")
+def paper_propose(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.propose(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/trading/paper/open")
+def paper_open(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.open_trade(str(body.get("market", "NEPSE")), str(body.get("symbol", "")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/trading/paper/evaluate")
+def paper_evaluate():
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.evaluate()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/trading/paper/journal")
+def paper_journal(limit: int = 30):
+    try:
+        from saathi.platform.finance import paper_trading as pt
+        return pt.journal(min(int(limit), 100))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market/chart", response_class=HTMLResponse, include_in_schema=False)
+def tracker_chart_panel():
+    """Native SaathiOS chart from tracker structured history. No TradingView, no iframe."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Chart</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+input,button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button.on{background:#238636;border-color:#238636}
+.badge{padding:2px 8px;border-radius:10px;font-size:12px;background:#1f3a5f}
+.muted{color:#8b949e;font-size:12px}svg{width:100%;height:auto;background:#0d1117;border:1px solid #21262d;border-radius:8px}
+.pit{color:#d29922;font-size:12px;margin-top:6px}
+</style></head><body><div class=wrap>
+<div class=row><b>NEPSE Chart</b>
+<input id=sym value="NABIL" size=8 onkeydown="if(event.key==='Enter')load()">
+<span id=ranges></span><button onclick="load()">Load</button>
+<span id=src class=badge>—</span></div>
+<div class=muted id=meta></div>
+<svg id=price viewBox="0 0 1000 340" preserveAspectRatio="none"></svg>
+<svg id=vol viewBox="0 0 1000 90" preserveAspectRatio="none" style="margin-top:6px"></svg>
+<div class=pit id=pit></div>
+<div class=muted id=funda style="margin-top:8px"></div>
+</div><script>
+let RANGE="1Y"; const RS=["1D","1W","1M","3M","6M","1Y","5Y"];
+document.getElementById('ranges').innerHTML=RS.map(r=>`<button data-r="${r}" onclick="setR('${r}')">${r}</button>`).join('');
+function setR(r){RANGE=r;paintRanges();load();}
+function paintRanges(){document.querySelectorAll('#ranges button').forEach(b=>b.className=b.dataset.r===RANGE?'on':'');}
+function px(v,min,max,w){return (max===min)?w/2:((v-min)/(max-min))*w;}
+async function load(){
+ paintRanges();
+ const sym=document.getElementById('sym').value.trim().toUpperCase();
+ document.getElementById('src').textContent='loading…';
+ try{
+  const r=await fetch(`/api/v1/market/tracker/chart?symbol=${sym}&range=${RANGE}&indicators=sma`);
+  const d=await r.json();
+  if(!d.available){document.getElementById('src').textContent=d.status||'unavailable';return;}
+  document.getElementById('src').textContent='NEPSE Portfolio Tracker · third-party';
+  document.getElementById('meta').textContent=`${sym} ${d.range} (${d.timeframe}) · ${d.first_date}→${d.last_date} · ${d.n_points} pts · latest ${d.latest_close}`;
+  document.getElementById('pit').textContent='⚠ '+d.point_in_time_capability+' — descriptive only, not canonical/backtest data. Current LTP authority: Official NEPSE.';
+  const o=d.ohlc, closes=o.map(p=>+p.close), vols=o.map(p=>+p.volume);
+  const W=1000,H=340,pad=6; const mn=Math.min(...o.map(p=>+p.low)),mx=Math.max(...o.map(p=>+p.high));
+  const X=i=>pad+ (o.length<2?W/2:(i/(o.length-1))*(W-2*pad));
+  const Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+  // candlesticks
+  let s='';const cw=Math.max(1,(W-2*pad)/o.length*0.6);
+  o.forEach((p,i)=>{const up=+p.close>=+p.open;const col=up?'#3fb950':'#f85149';
+   s+=`<line x1="${X(i)}" y1="${Y(+p.high)}" x2="${X(i)}" y2="${Y(+p.low)}" stroke="${col}" stroke-width="1"/>`;
+   const yo=Y(+p.open),yc=Y(+p.close);s+=`<rect x="${X(i)-cw/2}" y="${Math.min(yo,yc)}" width="${cw}" height="${Math.max(1,Math.abs(yc-yo))}" fill="${col}"/>`;});
+  // SMA overlay
+  const sma=(d.indicators.sma_20||{}).series; const smv=sma?sma['sma_20']:null;
+  if(smv){let path='';smv.forEach((v,i)=>{if(v==null)return;path+=(path?'L':'M')+X(i)+' '+Y(v)+' ';});
+   s+=`<path d="${path}" fill="none" stroke="#58a6ff" stroke-width="1.4"/>`;}
+  document.getElementById('price').innerHTML=s;
+  // volume
+  const vmx=Math.max(...vols,1);let vs='';
+  o.forEach((p,i)=>{const h=(+p.volume/vmx)*80;vs+=`<rect x="${X(i)-cw/2}" y="${90-h}" width="${cw}" height="${h}" fill="#30475e"/>`;});
+  document.getElementById('vol').innerHTML=vs;
+  const f=d.fundamentals||{};
+  document.getElementById('funda').textContent=f.eps?`EPS ${f.eps} · P/E ${f.pe_ratio} · P/B ${f.pb_ratio} · Div yield ${f.dividend_yield}% · ${f.sector||''} (third-party fundamentals)`:'';
+ }catch(e){document.getElementById('src').textContent='error';}
+}
+load();</script></body></html>""")
+
+
+# ── M — NATIVE_NEPSE_MARKET_INTELLIGENCE_WORKSPACE (read-only, combines sources) ─
+# Official NEPSE = current authority; tracker = third-party history/analytics; research
+# + catalyst from frozen surfaces. No portfolio MCP, no signals, zero authority.
+@app.get("/api/v1/market/workspace/overview")
+def mw_overview():
+    try:
+        from saathi.platform.market_data.tracker.workspace import overview
+        return overview()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/stocks")
+def mw_stocks(sort: str = "turnover", sector: str = "", limit: int = 50):
+    try:
+        from saathi.platform.market_data.tracker.workspace import stock_table
+        return stock_table(sort=sort, sector=sector or None, limit=min(max(limit, 1), 600))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/sectors")
+def mw_sectors(sort: str = "turnover"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import sectors
+        return sectors(sort=sort)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/compare")
+def mw_compare(symbols: str, range: str = "1Y", mode: str = "NORMALIZED_PERCENT"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import compare
+        syms = [s.strip() for s in symbols.split(",") if s.strip()][:4]
+        return compare(syms, range, mode=mode)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/panel")
+def mw_panel(symbol: str, range: str = "1Y"):
+    try:
+        from saathi.platform.market_data.tracker.workspace import symbol_panel
+        return symbol_panel(symbol, range)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/workspace/chat")
+def mw_chat(q: str = ""):
+    try:
+        from saathi.platform.market_data.tracker.workspace import workspace_chat
+        return workspace_chat(q)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/market", response_class=HTMLResponse, include_in_schema=False)
+def market_workspace_page():
+    """Native NEPSE Market Intelligence workspace. No iframe, no TradingView."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — NEPSE Market Intelligence</title>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+h2{margin:0 0 4px}.muted{color:#8b949e;font-size:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:6px 12px;cursor:pointer}
+.tabs button.on{background:#238636;border-color:#238636}
+.badge{padding:2px 8px;border-radius:10px;font-size:11px;background:#1f3a5f}
+.official{background:#1f6f3f}.third{background:#5a3a12}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid #21262d;text-align:right}
+th:first-child,td:first-child{text-align:left}th{color:#8b949e;cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px}.card b{display:block;font-size:18px}
+input,select{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 8px}
+svg{width:100%;height:auto;background:#0d1117;border:1px solid #21262d;border-radius:8px}
+.pit{color:#d29922;font-size:12px;margin:6px 0}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+section{display:none}section.on{display:block}
+</style></head><body><div class=wrap>
+<h2>NEPSE Market Intelligence</h2>
+<div class=muted>Current: <span class="badge official">Official NEPSE</span> · History/analytics: <span class="badge third">NEPSE Portfolio Tracker · third-party</span></div>
+<div class=tabs id=tabs></div>
+<section id=overview></section>
+<section id=stocks></section>
+<section id=compare></section>
+<section id=sectors></section>
+<section id=chart></section>
+<section id=panel></section>
+</div><script>
+const TABS=[["overview","Overview"],["stocks","Stocks"],["compare","Compare"],["sectors","Sectors"],["chart","Chart"],["panel","Fundamentals/Dividends/Research"]];
+let CUR="overview";
+document.getElementById('tabs').innerHTML=TABS.map(([id,l])=>`<button data-t="${id}" onclick="go('${id}')">${l}</button>`).join('');
+function go(t){CUR=t;document.querySelectorAll('.tabs button').forEach(b=>b.className=b.dataset.t===t?'on':'');
+ document.querySelectorAll('section').forEach(s=>s.className=s.id===t?'on':'');R[t]&&R[t]();}
+async function j(u){const r=await fetch(u);return r.json();}
+const num=v=>v==null?'—':(+v).toLocaleString();
+const R={};
+R.overview=async()=>{const d=await j('/api/v1/market/workspace/overview');const o=d.official||{};
+ document.getElementById('overview').innerHTML=`<div class=row><span class="badge official">Official NEPSE</span>
+ <span class=muted>${d.official_state}</span></div>
+ <div class=cards>${[['Index',o.nepse_index],['Change',(o.index_change??'—')+' ('+(o.index_change_percent??'—')+'%)'],
+ ['Turnover',num(o.total_turnover)],['Volume',num(o.total_volume)],['Advancers',o.advancers],['Decliners',o.decliners],
+ ['Unchanged',o.unchanged],['Status',o.market_status]].map(([k,v])=>`<div class=card><span class=muted>${k}</span><b>${v??'—'}</b></div>`).join('')}</div>
+ <div class=muted style="margin-top:6px">Observed: ${o.source_as_of||'—'} · freshness ${o.freshness||'—'}</div>`;};
+R.stocks=async()=>{const el=document.getElementById('stocks');
+ el.innerHTML=`<div class=row>Sort:<select id=ss onchange="R.stocks()">
+ ${['turnover','volume','gain','decline','pe','market_cap'].map(s=>`<option ${s==(window._ss||'turnover')?'selected':''}>${s}</option>`).join('')}</select>
+ <span class=muted>official LTP where observed; else tracker</span></div><div id=stbody>loading…</div>`;
+ window._ss=document.getElementById('ss').value;
+ const d=await j('/api/v1/market/workspace/stocks?limit=30&sort='+window._ss);
+ document.getElementById('stbody').innerHTML=`<div class=muted>${d.count} securities</div><table>
+ <tr><th>Symbol</th><th>LTP</th><th>%Chg</th><th>Volume</th><th>Turnover</th><th>Sector</th><th>P/E</th></tr>
+ ${(d.rows||[]).map(r=>`<tr><td>${r.symbol} ${r.ltp_source==='OFFICIAL_PAGE_OBSERVED'?'<span class="badge official">O</span>':''}</td>
+ <td>${num(r.ltp)}</td><td>${r.percent_change??'—'}</td><td>${num(r.volume)}</td><td>${num(r.turnover)}</td>
+ <td style="text-align:left">${r.sector||'—'}</td><td>${r.pe_ratio??'—'}</td></tr>`).join('')}</table>`;};
+R.sectors=async()=>{const d=await j('/api/v1/market/workspace/sectors?sort=change');
+ document.getElementById('sectors').innerHTML=`<div class=muted>Derived sector analytics (not an official sector index)</div>
+ <table><tr><th>Sector</th><th>%Chg</th><th>Turnover</th><th>Volume</th><th>Up</th><th>Down</th><th>Cos</th></tr>
+ ${(d.sectors||[]).map(s=>`<tr><td>${s.sector}</td><td>${s.sector_percentage_change??'—'}</td>
+ <td>${num(s.aggregate_turnover)}</td><td>${num(s.aggregate_volume)}</td><td>${s.advancers}</td>
+ <td>${s.decliners}</td><td>${s.company_count}</td></tr>`).join('')}</table>`;};
+R.compare=async()=>{const el=document.getElementById('compare');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row>
+ <input id=csyms value="NABIL,API,AKPL,HDL" size=24>
+ <select id=crange>${['1M','3M','1Y'].map(r=>`<option ${r==='1Y'?'selected':''}>${r}</option>`).join('')}</select>
+ <button onclick="drawCompare()">Compare</button></div><div id=cmeta class=muted></div><svg id=csvg viewBox="0 0 1000 320" preserveAspectRatio="none"></svg><div id=cleg></div>`;}
+ drawCompare();};
+async function drawCompare(){const s=document.getElementById('csyms').value,r=document.getElementById('crange').value;
+ const d=await j(`/api/v1/market/workspace/compare?symbols=${encodeURIComponent(s)}&range=${r}`);
+ if(!d.series||!d.series.length){document.getElementById('cmeta').textContent='no overlapping data';document.getElementById('csvg').innerHTML='';return;}
+ document.getElementById('cmeta').textContent=`Normalized % change · ${d.common_start}→${d.common_end} · ${d.series[0].points.length} pts`;
+ const cols=['#58a6ff','#3fb950','#f0883e','#db61a2'];const W=1000,H=320,pad=8;
+ let all=[];d.series.forEach(se=>se.points.forEach(p=>all.push(+p[1])));const mn=Math.min(...all),mx=Math.max(...all);
+ const n=d.series[0].points.length;const X=i=>pad+(n<2?W/2:i/(n-1)*(W-2*pad));const Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+ let svg=`<line x1=0 y1="${Y(0)}" x2="${W}" y2="${Y(0)}" stroke="#30363d"/>`;
+ d.series.forEach((se,k)=>{let path='';se.points.forEach((p,i)=>{path+=(i?'L':'M')+X(i)+' '+Y(+p[1])+' ';});
+  svg+=`<path d="${path}" fill=none stroke="${cols[k%4]}" stroke-width="1.5"/>`;});
+ document.getElementById('csvg').innerHTML=svg;
+ document.getElementById('cleg').innerHTML=d.series.map((se,k)=>`<span style="color:${cols[k%4]}">■ ${se.symbol} ${se.change_pct}%</span>`).join('  ');}
+R.chart=async()=>{const el=document.getElementById('chart');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row><input id=chsym value=NABIL size=8>
+ <select id=chr>${['1M','3M','6M','1Y','5Y'].map(r=>`<option ${r==='1Y'?'selected':''}>${r}</option>`).join('')}</select>
+ <button onclick="drawChart()">Load</button><span id=chbadge class="badge third"></span></div>
+ <div id=chmeta class=muted></div><svg id=chp viewBox="0 0 1000 300" preserveAspectRatio=none></svg>
+ <svg id=chv viewBox="0 0 1000 70" preserveAspectRatio=none style="margin-top:5px"></svg>
+ <div class=pit id=chpit></div>`;}drawChart();};
+async function drawChart(){const sym=document.getElementById('chsym').value.toUpperCase(),r=document.getElementById('chr').value;
+ const d=await j(`/api/v1/market/tracker/chart?symbol=${sym}&range=${r}&indicators=sma`);
+ if(!d.available){document.getElementById('chmeta').textContent=d.status||'unavailable';return;}
+ document.getElementById('chbadge').textContent='NEPSE Portfolio Tracker · third-party';
+ document.getElementById('chmeta').textContent=`${sym} ${d.range} ${d.first_date}→${d.last_date} · latest ${d.latest_close}`;
+ document.getElementById('chpit').textContent='⚠ '+d.point_in_time_capability+' — descriptive only; current LTP authority: Official NEPSE.';
+ const o=d.ohlc;const W=1000,H=300,pad=6;const mn=Math.min(...o.map(p=>+p.low)),mx=Math.max(...o.map(p=>+p.high));
+ const X=i=>pad+(o.length<2?W/2:i/(o.length-1)*(W-2*pad)),Y=v=>H-pad-((v-mn)/((mx-mn)||1))*(H-2*pad);
+ let s='';const cw=Math.max(1,(W-2*pad)/o.length*0.6);
+ o.forEach((p,i)=>{const up=+p.close>=+p.open,c=up?'#3fb950':'#f85149';
+  s+=`<line x1="${X(i)}" y1="${Y(+p.high)}" x2="${X(i)}" y2="${Y(+p.low)}" stroke="${c}"/>`;
+  const yo=Y(+p.open),yc=Y(+p.close);s+=`<rect x="${X(i)-cw/2}" y="${Math.min(yo,yc)}" width="${cw}" height="${Math.max(1,Math.abs(yc-yo))}" fill="${c}"/>`;});
+ const sm=(d.indicators.sma_20||{}).series;if(sm){let pa='';sm['sma_20'].forEach((v,i)=>{if(v==null)return;pa+=(pa?'L':'M')+X(i)+' '+Y(v)+' ';});s+=`<path d="${pa}" fill=none stroke="#58a6ff" stroke-width=1.3/>`;}
+ document.getElementById('chp').innerHTML=s;
+ const vmx=Math.max(...o.map(p=>+p.volume),1);let vs='';o.forEach((p,i)=>{const h=+p.volume/vmx*60;vs+=`<rect x="${X(i)-cw/2}" y="${70-h}" width="${cw}" height="${h}" fill="#30475e"/>`;});
+ document.getElementById('chv').innerHTML=vs;}
+R.panel=async()=>{const el=document.getElementById('panel');
+ if(!el.dataset.init){el.dataset.init=1;el.innerHTML=`<div class=row><input id=psym value=NABIL size=8><button onclick="loadPanel()">Load</button></div><div id=pbody></div>`;}loadPanel();};
+async function loadPanel(){const sym=document.getElementById('psym').value.toUpperCase();
+ const d=await j(`/api/v1/market/workspace/panel?symbol=${sym}&range=1Y`);const f=(d.chart||{}).fundamentals||{};const rec=d.reconciliation||{};
+ const divs=((d.chart||{}).dividends||[]);
+ document.getElementById('pbody').innerHTML=`
+ <h3>Reconciliation</h3><div class=card>Official ${rec.official_ltp??'—'} · Tracker ${rec.tracker_ltp??'—'} · <b>${rec.verdict||'—'}</b> <span class=muted>(official authority)</span></div>
+ <h3>Fundamentals <span class="badge third">third-party</span></h3><div class=cards>
+ ${[['EPS',f.eps],['P/E',f.pe_ratio],['P/B',f.pb_ratio],['Div yield',f.dividend_yield],['Mkt cap',num(f.market_cap)],['52w H',f.week52_high],['52w L',f.week52_low],['Sector',f.sector]].map(([k,v])=>`<div class=card><span class=muted>${k}</span><b>${v??'—'}</b></div>`).join('')}</div>
+ <h3>Dividends</h3><table><tr><th>FY</th><th>Cash</th><th>Bonus</th><th>Total</th></tr>
+ ${divs.slice(0,8).map(x=>`<tr><td>${x.fiscal_year||'—'}</td><td>${x.cash_dividend??'—'}</td><td>${x.bonus_share??'—'}</td><td>${x.total_dividend??'—'}</td></tr>`).join('')||'<tr><td colspan=4 class=muted>none</td></tr>'}</table>
+ <h3>Research</h3><div class=muted>${(d.research||{}).state} · ${((d.research||{}).events||[]).length} events (frozen Research Surface)</div>
+ <h3>Catalysts</h3><div class=muted>${(d.catalysts||{}).state} · ${((d.catalysts||{}).catalysts||[]).length} (Fusion; historical reaction = canonical/MD-1 only)</div>
+ <h3>Portfolio</h3><div class=card>${(d.portfolio||{}).message}</div>`;}
+go('overview');
+</script></body></html>""")
+
+
+# ── routing fix: keep the SPA catch-all StaticFiles mount at "/" LAST ──────────
+# Starlette matches routes in list order; a Mount at "/" matches every path, so any
+# route registered after it (the market/nepse/tracker/workspace HTML + API routes
+# above) would be shadowed and 404. Move root mounts to the end so explicit routes
+# resolve first and the SPA remains the final fallback. Idempotent.
+try:
+    from starlette.routing import Mount as _Mount
+    _rr = app.router.routes
+    _roots = [r for r in _rr if isinstance(r, _Mount) and getattr(r, "path", "") in ("", "/")]
+    for _m in _roots:
+        _rr.remove(_m)
+        _rr.append(_m)
+except Exception:
+    pass
+
+
+# ── M — SAATHIOS_FINANCIAL_BROWSER (security/capability shell; read-only) ───────
+# Owner interacts with financial sites; the agent gets only explicit READ capability.
+# Never an execution path. Auth-gated. Sync def → threadpool. No credentials handled here.
+@app.get("/api/v1/finance/providers")
+def fin_providers():
+    try:
+        from saathi.platform.finance.capability_matrix import matrix
+        from saathi.platform.finance.policy import POLICIES
+        m = matrix()
+        m["policies"] = {p.value: {"allowed_domains": list(pol.allowed_domains),
+                                   "default_mode": pol.default_interaction_mode.value,
+                                   "owner_only_regions": list(pol.owner_only_regions),
+                                   "readable_regions": list(pol.readable_regions),
+                                   "downloads": pol.allowed_downloads, "uploads": pol.allowed_uploads,
+                                   "navigation": pol.navigation_policy}
+                         for p, pol in POLICIES.items()}
+        return m
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/sessions")
+def fin_sessions():
+    try:
+        from saathi.platform.finance.session import get_manager
+        return {"sessions": get_manager().list()}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/sessions/open")
+def fin_open(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.session import get_manager
+        from saathi.platform.finance.policy import Provider
+        prov = str(body.get("provider", "")).upper()
+        if prov not in Provider.__members__:
+            return JSONResponse({"error": "unknown provider"}, status_code=400)
+        s = get_manager().open(Provider[prov])
+        # NOTE: opening a session does NOT authenticate; owner must authenticate in-browser.
+        return {"session": s.to_public(), "owner_action": "OWNER_AUTHENTICATION_REQUIRED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/sessions/kill")
+def fin_kill(body: dict = Body(...)):
+    try:
+        from saathi.platform.finance.session import get_manager
+        m = get_manager()
+        if body.get("all"):
+            return {"killed": m.kill_all()}
+        return {"killed": bool(m.kill(str(body.get("session_id", ""))))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/audit")
+def fin_audit(n: int = 50):
+    try:
+        from saathi.platform.finance.audit import tail
+        return {"audit": tail(min(max(n, 1), 500))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/finance/browser", response_class=HTMLResponse, include_in_schema=False)
+def finance_browser_page():
+    """Native Financial Browser shell — provider cards + policy. No trade controls, no
+    embedded financial account site, no credential handling in the page."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — Financial Browser</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}h2{margin:0}.muted{color:#8b949e;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px}
+.card h3{margin:0 0 6px}.k{color:#8b949e}.v{font-weight:600}
+.row{display:flex;justify-content:space-between;padding:2px 0;font-size:13px}
+.b{padding:1px 7px;border-radius:9px;font-size:11px}
+.ok{background:#1f6f3f}.warn{background:#5a3a12}.no{background:#7d2222}.un{background:#3a3f47}
+button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:8px}
+.kill{background:#7d2222;border-color:#7d2222}
+.note{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;margin-top:14px;font-size:12px;color:#8b949e}
+</style></head><body><div class=wrap>
+<h2>Financial Browser</h2>
+<div class=muted>Specialized read-only financial surface. You control the browser and enter all
+credentials yourself; SaathiOS receives only explicit read capabilities. No trading, no
+withdrawals, no order forms.</div>
+<div class=grid id=cards>loading…</div>
+<button class=kill onclick="killAll()">Kill switch — revoke all agent reads</button>
+<div class=note id=note></div>
+</div><script>
+const CAPBADGE={PUBLIC_MARKET_DATA:'ok',READ_ONLY_API:'ok',READ_ONLY_MCP:'warn',AGENT_READ_ALLOWED:'ok',
+ OWNER_BROWSER_SESSION:'warn',OWNER_ONLY_INTERACTION:'warn',PROHIBITED_AGENT_ACTION:'no',UNSUPPORTED:'no',UNKNOWN:'un'};
+function badge(v){return `<span class="b ${CAPBADGE[v]||'un'}">${v}</span>`;}
+async function load(){
+ const r=await fetch('/api/v1/finance/providers');const d=await r.json();
+ if(d.error){document.getElementById('cards').textContent=d.error;return;}
+ const P=d.providers;
+ document.getElementById('cards').innerHTML=Object.keys(P).map(name=>{const c=P[name];
+  return `<div class=card><h3>${name}</h3>
+  <div class=row><span class=k>Public market data</span>${badge(c.public_market_data)}</div>
+  <div class=row><span class=k>Read-only API</span>${badge(c.read_only_api)}</div>
+  <div class=row><span class=k>Read-only MCP</span>${badge(c.read_only_mcp)}</div>
+  <div class=row><span class=k>Account data</span>${badge(c.account_data)}</div>
+  <div class=row><span class=k>Agent read</span>${badge(c.agent_read)}</div>
+  <div class=row><span class=k>Agent actions</span>${badge(c.agent_actions)}</div>
+  <div class=row><span class=k>Embed</span><span class="b ${c.embed&&c.embed.includes('BLOCKED')?'no':'un'}">${c.embed}</span></div>
+  <div class=muted style="margin-top:6px">${c.note||''}</div>
+  <button onclick="openS('${name}')">Open (owner authenticates)</button></div>`;}).join('');
+ document.getElementById('note').innerHTML='Trading, withdrawals, transfers, leverage, API-key '+
+ 'management and order forms are structurally blocked for the agent (PROHIBITED_AGENT_ACTION). '+
+ 'Credentials/OTP/2FA are OWNER_PRIVATE_INPUT — never observed, logged, or sent to any model. '+
+ 'Portfolio MCP is deferred pending an owner-supplied key. Any future execution stays: proposal → '+
+ 'Trading Guardian → approval → ExecutionGateway.';
+}
+async function openS(p){const r=await fetch('/api/v1/finance/sessions/open',{method:'POST',
+ headers:{'content-type':'application/json'},body:JSON.stringify({provider:p})});const d=await r.json();
+ alert(p+': '+(d.owner_action||d.error||'opened')+' — enter your own credentials in the provider site; SaathiOS will not.');}
+async function killAll(){const r=await fetch('/api/v1/finance/sessions/kill',{method:'POST',
+ headers:{'content-type':'application/json'},body:JSON.stringify({all:true})});const d=await r.json();
+ alert('Killed '+(d.killed||0)+' session(s); agent read capability revoked.');}
+load();
+</script></body></html>""")
+
+
+# Re-assert SPA catch-all mount stays LAST (finance routes were added after the prior
+# reorder). Idempotent; keeps all explicit routes reachable.
+try:
+    from starlette.routing import Mount as _Mount2
+    _rr2 = app.router.routes
+    for _m2 in [r for r in _rr2 if isinstance(r, _Mount2) and getattr(r, "path", "") in ("", "/")]:
+        _rr2.remove(_m2)
+        _rr2.append(_m2)
+except Exception:
+    pass
+
+
+# ── M — BINANCE_READONLY_ACCOUNT_ADAPTER (read-only; no trading/withdraw path) ──
+@app.get("/api/v1/finance/binance/status")
+def binance_status():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        c = get_connection()
+        return {"provider": "BINANCE", "state": c.state.value, "read_only": True,
+                "note": "connect a read-only API key via the SaathiOS secret store (never in chat)"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/binance/portfolio")
+def binance_portfolio(refresh: int = 0):
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection, crypto_view
+        c = get_connection()
+        snap, st = c.snapshot(force=bool(refresh))
+        if snap is None:
+            return JSONResponse({"state": st.value, "available": False,
+                                 "owner_action": "OWNER_BINANCE_READONLY_CREDENTIAL_REQUIRED"
+                                 if st.value == "OWNER_ACTION_REQUIRED" else None}, status_code=200)
+        return {"state": st.value, "available": True, "view": crypto_view(snap)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/binance/disconnect")
+def binance_disconnect():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        get_connection().disconnect()
+        return {"state": "NOT_CONNECTED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/binance/kill")
+def binance_kill():
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection
+        get_connection().kill()
+        return {"state": "NOT_CONNECTED", "killed": True}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/binance/chat")
+def binance_chat(q: str = ""):
+    try:
+        from saathi.platform.finance.crypto_portfolio import get_connection, crypto_view, chat_answer
+        c = get_connection()
+        snap, st = c.snapshot()
+        view = crypto_view(snap) if snap is not None else None
+        return chat_answer(q, view=view)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/finance/crypto", response_class=HTMLResponse, include_in_schema=False)
+def finance_crypto_page():
+    """Native crypto portfolio view. Read-only. No Buy/Sell/Swap/Withdraw/Transfer controls."""
+    return HTMLResponse("""<!doctype html><html><head><meta charset=utf-8>
+<title>SaathiOS — Crypto Portfolio</title><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{font:14px system-ui;margin:0;background:#0d1117;color:#e6edf3}.wrap{max-width:900px;margin:0 auto;padding:16px}
+.muted{color:#8b949e;font-size:12px}.b{padding:2px 8px;border-radius:10px;font-size:11px;background:#1f3a5f}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px}.card b{display:block;font-size:18px}
+table{width:100%;border-collapse:collapse}th,td{padding:5px 8px;border-bottom:1px solid #21262d;text-align:right;font-size:13px}
+th:first-child,td:first-child{text-align:left}th{color:#8b949e}</style></head><body><div class=wrap>
+<h2>Crypto Portfolio <span class=b>Binance · read-only</span></h2>
+<div class=muted id=meta>loading…</div><div class=cards id=cards></div>
+<table><thead><tr><th>Asset</th><th>Qty</th><th>Available</th><th>Locked</th><th>Price</th><th>Value</th><th>Alloc</th></tr></thead><tbody id=rows></tbody></table>
+<p class=muted id=lims></p></div><script>
+async function load(){const r=await fetch('/api/v1/finance/binance/portfolio');const d=await r.json();
+ if(!d.available){document.getElementById('meta').textContent=(d.owner_action||d.state)+
+  ' — connect a read-only API key via the SaathiOS secret store (never in chat).';return;}
+ const v=d.view;document.getElementById('meta').textContent='State '+d.state+' · '+v.asset_count+' assets · '+v.freshness+
+  ' · cost basis '+v.cost_basis+' · P/L '+v.pnl;
+ document.getElementById('cards').innerHTML=[['Total ('+v.valuation_currency+')',v.total_value],
+  ['Stablecoin %',v.stablecoin_allocation_pct],['Crypto %',v.crypto_allocation_pct],['Locked %',v.locked_allocation_pct]]
+  .map(([k,x])=>'<div class=card><span class=muted>'+k+'</span><b>'+(x??'—')+'</b></div>').join('');
+ document.getElementById('rows').innerHTML=v.positions.map(p=>'<tr><td>'+p.asset+' <span class=muted>'+p.asset_type+'</span></td><td>'+
+  p.quantity+'</td><td>'+p.available+'</td><td>'+p.locked+'</td><td>'+(p.price??'—')+'</td><td>'+(p.market_value??'PRICE_UNAVAILABLE')+
+  '</td><td>'+(p.allocation_pct??'—')+'%</td></tr>').join('');
+ document.getElementById('lims').textContent='Limitations: '+(v.limitations||[]).join(' · ');}
+load();</script></body></html>""")
+
+
+# keep SPA catch-all mount LAST (binance routes added after prior reorder)
+try:
+    from starlette.routing import Mount as _Mount3
+    _rr3 = app.router.routes
+    for _m3 in [r for r in _rr3 if isinstance(r, _Mount3) and getattr(r, "path", "") in ("", "/")]:
+        _rr3.remove(_m3); _rr3.append(_m3)
+except Exception:
+    pass
+
+
+# ── M — BROWSER_AUTHENTICATED_FINANCIAL_PORTFOLIO_RUNTIME (owner login; read-only) ─
+# Owner drives a real provider browser + enters all credentials; agent only reads (after
+# owner enables Saathi Read) via a deterministic observer. No credential/DOM/screenshot to
+# any model. No agent click/type/navigate/submit. No execution. Auth-gated.
+def _fbr_authed(request) -> bool:
+    """Financial-browser routes are owner-only, authenticated loopback (Phase 3)."""
+    return _is_authed(request) or _is_local(request)
+
+
+@app.get("/api/v1/finance/browser/runtimes")
+def fbr_runtimes(request: Request):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        return {"runtimes": get_runtime_manager().list()}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/open")
+def fbr_open(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        from saathi.platform.finance.policy import Provider
+        prov = str(body.get("provider", "")).upper()
+        if prov not in Provider.__members__:
+            return JSONResponse({"error": "unknown provider"}, status_code=400)
+        rt = get_runtime_manager().open(Provider[prov])
+        return {"runtime": rt.to_public(),
+                "owner_action": "OWNER_FINANCIAL_LOGIN_REQUIRED",
+                "note": "log in yourself in the opened browser; SaathiOS never enters credentials"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/mark-authenticated")
+def fbr_mark_auth(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    # OWNER action: confirm they finished logging in (SaathiOS never reads credentials).
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        rt = get_runtime_manager().mark_owner_authenticated(str(body.get("runtime_id", "")))
+        return rt.to_public() if rt else JSONResponse({"error": "no runtime"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/saathi-read")
+def fbr_saathi_read(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        m = get_runtime_manager()
+        rid = str(body.get("runtime_id", "")); on = bool(body.get("on"))
+        rt = (m.set_saathi_read(rid, True) if on else m.set_saathi_read(rid, False))
+        return rt.to_public() if rt else JSONResponse({"error": "no runtime"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/close")
+def fbr_close(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        rid = str(body.get("runtime_id", ""))
+        closed = bool(get_runtime_manager().close(rid))
+        if closed:                                          # invalidate bridge cache on close
+            from saathi.platform.finance.observation_bridge import get_observation_service
+            rt = get_runtime_manager().get(rid)
+            get_observation_service().invalidate(rt.provider if rt else None)
+        return {"closed": closed}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/portfolio")
+def fbr_portfolio(request: Request, runtime_id: str):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        m = get_runtime_manager()
+        rt = m.get(runtime_id)
+        if rt is None:
+            return JSONResponse({"error": "no runtime"}, status_code=404)
+        # Deterministic read-only observation of the owner-authenticated live page.
+        from saathi.platform.finance.browser_portfolio import read_portfolio
+        out = read_portfolio(runtime_id, manager=m)
+        out["runtime"] = rt.to_public()
+        return out
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# ── Observation Bridge (Phase 24): normalized observations, never browser control ──
+@app.get("/api/v1/finance/browser/{provider}/status")
+def fbr_obs_status(request: Request, provider: str, runtime_id: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        return get_observation_service().status(provider, runtime_id)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+def _record_portfolio_memory(provider: str, env: dict) -> None:
+    """Record structured Financial Memory from a successful observation (never secrets/raw).
+    Best-effort: memory failures never break the read."""
+    try:
+        if not (env or {}).get("available") or not env.get("view"):
+            return
+        from saathi.platform.finance import financial_memory as fm
+        store = fm.get_memory_store()
+        view = env["view"]; rid = env.get("runtime_id", "")
+        store.record(fm.portfolio_evidence(view, provider=provider.upper(), runtime_id=rid,
+                                           session_id=rid))
+        for ev in fm.position_evidences(view, provider=provider.upper(), runtime_id=rid,
+                                        session_id=rid):
+            store.record(ev)
+        # market facts (current-price authority) for reconciled positions
+        for p in view.get("positions", []):
+            if p.get("current_price") and p.get("current_price_source"):
+                store.record(fm.market_evidence(
+                    provider=provider.upper(),
+                    instrument_id=p.get("instrument_id") or p.get("symbol", ""),
+                    ltp=p.get("current_price"), source_type=p.get("current_price_source")))
+    except Exception:
+        pass
+
+
+@app.post("/api/v1/finance/browser/{provider}/observe-portfolio")
+def fbr_obs_portfolio(request: Request, provider: str, body: dict = Body(default={})):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        env = get_observation_service().observe_portfolio(provider, (body or {}).get("runtime_id"))
+        _record_portfolio_memory(provider, env)     # structured memory (Milestone B)
+        return env
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/observe-structure")
+def fbr_obs_structure(request: Request, provider: str, body: dict = Body(default={})):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        b = body or {}
+        return get_observation_service().observe_structure(
+            provider, b.get("runtime_id"),
+            authorize_structure_inspection=bool(b.get("authorize_structure_inspection")))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/{provider}/evidence")
+def fbr_obs_evidence(request: Request, provider: str, runtime_id: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.observation_bridge import get_observation_service
+        return get_observation_service().evidence(provider, runtime_id)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# ── OWNER-ONLY embedded viewport (Plane 1 OWNER_VISUAL + Plane 2 OWNER_INPUT) ──────
+# These endpoints stream the owner's live provider page and forward the owner's own
+# mouse/keyboard/navigation. They are OWNER_INPUT, gated by owner session + loopback +
+# an existing REAL provider runtime. They are deliberately NOT agent tools: they appear
+# in no agent/LLM tool registry, no MCP surface, and grant no agent browser authority.
+def _viewport_gate(request, provider: str):
+    """Return (Provider, runtime, err_response). err_response set → stop.
+    Owner-authenticated only. The backend binds loopback (127.0.0.1) so it is already
+    local-only; requests arrive via the same-origin Next proxy (which stamps
+    x-forwarded-*), so we authenticate the owner session/token rather than requiring a
+    bare-loopback peer. OWNER_INPUT — never an agent path."""
+    if not _fbr_authed(request):
+        return None, None, JSONResponse({"error": "unauthorized"}, status_code=401)
+    from saathi.platform.finance.browser_runtime import get_runtime_manager
+    from saathi.platform.finance.policy import Provider
+    prov = str(provider).upper()
+    if prov not in Provider.__members__:
+        return None, None, JSONResponse({"error": "unknown provider"}, status_code=400)
+    p = Provider[prov]
+    m = get_runtime_manager()
+    rt = m.runtime_for_provider(p)
+    if rt is None:
+        return None, None, JSONResponse({"state": "BROWSER_NOT_OPEN"}, status_code=409)
+    if not m.is_real_runtime(p):
+        return None, None, JSONResponse({"state": "DISPLAY_UNAVAILABLE"}, status_code=409)
+    return p, rt, None
+
+
+# ── Financial Memory (structured, provenance-first; read + owner controls) ────────
+@app.get("/api/v1/finance/memory/latest")
+def fin_memory_latest(request: Request, provider: str | None = None,
+                      evidence_type: str | None = None, instrument_id: str | None = None,
+                      limit: int = 20):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        rows = get_memory_store().latest(provider=provider, evidence_type=evidence_type,
+                                         instrument_id=instrument_id, limit=min(int(limit), 100))
+        return {"evidence": rows, "count": len(rows)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/memory/history")
+def fin_memory_history(request: Request, instrument_id: str, limit: int = 50):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        return {"instrument_id": instrument_id,
+                "history": get_memory_store().history(instrument_id, limit=min(int(limit), 200))}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/memory/status")
+def fin_memory_status(request: Request, provider: str | None = None):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store, EvidenceType
+        st = get_memory_store()
+        latest = st.latest(provider=provider, evidence_type=EvidenceType.PORTFOLIO_SNAPSHOT.value, limit=1)
+        top = latest[0] if latest else None
+        return {"total": st.count(provider=provider),
+                "latest_portfolio": ({"observed_at": top["observed_at"], "provider": top["provider"],
+                                      "source_type": top["source_type"], "freshness": top["freshness"],
+                                      "canonical_ref": top["canonical_ref"]} if top else None)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/memory/clear-session")
+def fin_memory_clear_session(request: Request, body: dict = Body(...)):
+    if not _fbr_authed(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    try:
+        from saathi.platform.finance.financial_memory import get_memory_store
+        sid = str((body or {}).get("session_id", ""))
+        if not sid:
+            return JSONResponse({"error": "session_id required"}, status_code=400)
+        return {"cleared": get_memory_store().clear_session(sid)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/start")
+def fbr_vp_start(request: Request, provider: str, body: dict = Body(default={})):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        from saathi.platform.finance.browser_runtime import get_runtime_manager
+        s = vp.get_or_create(p, rt.runtime_id, get_runtime_manager())
+        return s.start()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/finance/browser/{provider}/viewport/frame")
+def fbr_vp_frame(request: Request, provider: str):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        return s.frame()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/input")
+def fbr_vp_input(request: Request, provider: str, body: dict = Body(...)):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        return s.owner_input(dict(body or {}))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/navigate")
+def fbr_vp_navigate(request: Request, provider: str, body: dict = Body(...)):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        s = vp.get(p)
+        if s is None:
+            return JSONResponse({"ok": False, "state": "BROWSER_NOT_OPEN"}, status_code=409)
+        b = body or {}
+        return s.navigate(str(b.get("action", "")), b.get("url"))
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.post("/api/v1/finance/browser/{provider}/viewport/stop")
+def fbr_vp_stop(request: Request, provider: str, body: dict = Body(default={})):
+    p, rt, err = _viewport_gate(request, provider)
+    if err:
+        return err
+    try:
+        from saathi.platform.finance import viewport as vp
+        vp.drop(p)
+        return {"ok": True, "state": "CLOSED"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+# keep SPA catch-all mount LAST
+try:
+    from starlette.routing import Mount as _Mount4
+    _rr4 = app.router.routes
+    for _m4 in [r for r in _rr4 if isinstance(r, _Mount4) and getattr(r, "path", "") in ("", "/")]:
+        _rr4.remove(_m4); _rr4.append(_m4)
+except Exception:
+    pass
+
+
+# Entrypoint MUST stay at the very end: all routes above are now registered before
+# main() calls the blocking uvicorn.run(). (Importing `saathi.server:app` never runs
+# this block; `python -m saathi.server` runs it after full module execution.)
+if __name__ == "__main__":
+    main()

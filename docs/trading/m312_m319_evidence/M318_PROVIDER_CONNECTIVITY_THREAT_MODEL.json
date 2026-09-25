@@ -1,0 +1,3213 @@
+{
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "approval_does_not_equal_activation": true,
+  "authority_does_not_implicitly_expand": true,
+  "current_maturity": "GOVERNANCE_ONLY",
+  "governance_only": true,
+  "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+  "no_account_access": true,
+  "no_balance_access": true,
+  "no_broker_login": true,
+  "no_canary_activation": true,
+  "no_credential_storage": true,
+  "no_live_trading": true,
+  "no_oauth": true,
+  "no_orders": true,
+  "no_position_access": true,
+  "no_provider_connection": true,
+  "offline_first": true,
+  "paper_only": true,
+  "raw_credentials_forbidden": true,
+  "research_only": true,
+  "risk_summary": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "approval_does_not_equal_activation": true,
+    "authority_does_not_implicitly_expand": true,
+    "by_category": {
+      "account": 8,
+      "credential": 10,
+      "execution": 12,
+      "governance": 10,
+      "identity_and_approval": 8,
+      "network": 10,
+      "provider": 10
+    },
+    "by_severity": {
+      "CRITICAL": 31,
+      "HIGH": 32,
+      "MODERATE": 5
+    },
+    "canary_blocked_by_unresolved_critical": false,
+    "critical_blockers": [
+      "THR-002",
+      "THR-003",
+      "THR-005",
+      "THR-007",
+      "THR-009",
+      "THR-010",
+      "THR-011",
+      "THR-012",
+      "THR-013",
+      "THR-014",
+      "THR-019",
+      "THR-021",
+      "THR-027",
+      "THR-031",
+      "THR-036",
+      "THR-037",
+      "THR-038",
+      "THR-039",
+      "THR-047",
+      "THR-048",
+      "THR-049",
+      "THR-050",
+      "THR-059",
+      "THR-060",
+      "THR-061",
+      "THR-062",
+      "THR-063",
+      "THR-064",
+      "THR-065",
+      "THR-067",
+      "THR-068"
+    ],
+    "current_maturity": "GOVERNANCE_ONLY",
+    "detective_controls_global": [
+      "secret_scanners",
+      "audit_trail",
+      "certification_gates",
+      "provider_isolation_scan"
+    ],
+    "governance_only": true,
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "preventive_controls_global": [
+      "no_connectivity_by_default",
+      "human_approval_required",
+      "maker_checker",
+      "raw_credentials_forbidden",
+      "emergency_shutdown_dominates",
+      "authority_does_not_implicitly_expand",
+      "approval_does_not_equal_activation"
+    ],
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "residual_risks": [
+      "Future milestones may introduce residual connectivity risk",
+      "Human process failures remain possible",
+      "Provider documentation drift"
+    ],
+    "sandbox_only": true,
+    "total_threats": 68,
+    "unresolved_critical": []
+  },
+  "sandbox_only": true,
+  "schema": "M318_PROVIDER_CONNECTIVITY_THREAT_MODEL",
+  "threats": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "approval_does_not_equal_activation": true,
+    "authority_does_not_implicitly_expand": true,
+    "blocks_canary_eligibility": false,
+    "count": 68,
+    "critical_count": 31,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "governance_only": true,
+    "high_count": 32,
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "risk_levels": [
+      "LOW",
+      "MODERATE",
+      "HIGH",
+      "CRITICAL",
+      "PROHIBITED"
+    ],
+    "sandbox_only": true,
+    "threats": [
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts impersonated requestor against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Attacker impersonates requestor",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "impersonated_requestor",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-001",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts self approval against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Requestor approves own request",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "self_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-002",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts forged approval against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Forged approval record",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "forged_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-003",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts expired approval reuse against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Reuse of expired approval",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "expired_approval_reuse",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-004",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts approval scope expansion against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Silent expansion of approved scope",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "approval_scope_expansion",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-005",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts missing human acknowledgment against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Approval without acknowledgements",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "missing_human_acknowledgment",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-006",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts llm generated approval against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "LLM issues approval",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "llm_generated_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-007",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts replayed approval against connectivity governance",
+        "category": "identity_and_approval",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Replay of prior approval",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "replayed_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-008",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential pasted into chat against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Secret pasted into chat",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_pasted_into_chat",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-009",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential logged against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Secret written to logs",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_logged",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-010",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential committed against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Secret committed to git",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_committed",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-011",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential stored in database against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Raw secret in DB",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_stored_in_database",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-012",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential exposed in browser against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Secret in browser/DOM",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_exposed_in_browser",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-013",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential included in evidence against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Secret in evidence pack",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "credential_included_in_evidence",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-014",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential reference substitution against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Reference swapped to privileged secret",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "credential_reference_substitution",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-015",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts credential reference reuse against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Reuse of disposable reference",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "credential_reference_reuse",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-016",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts expired credential use against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Use after expiry",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "expired_credential_use",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-017",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts privilege over scoping against connectivity governance",
+        "category": "credential",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Credential privileges exceed need",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "privilege_over_scoping",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-018",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts unofficial endpoint against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Call to unofficial host",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "unofficial_endpoint",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-019",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts dns manipulation against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "DNS points to attacker",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "dns_manipulation",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-020",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts provider impersonation against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Fake provider API",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "provider_impersonation",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-021",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts sdk compromise against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Compromised SDK",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "sdk_compromise",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-022",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts provider outage against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Provider unavailable",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "MODERATE",
+        "likelihood": "MODERATE",
+        "name": "provider_outage",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "MODERATE",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "MODERATE",
+        "threat_id": "THR-023",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts rate limit failure against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Rate limit mishandling",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "MODERATE",
+        "likelihood": "MODERATE",
+        "name": "rate_limit_failure",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "MODERATE",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "MODERATE",
+        "threat_id": "THR-024",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts undocumented capability against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Using undocumented API",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "undocumented_capability",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-025",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts account environment mismatch against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Wrong env/account",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "account_environment_mismatch",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-026",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts sandbox production confusion against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Sandbox vs production mix-up",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "sandbox_production_confusion",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-027",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts api version drift against connectivity governance",
+        "category": "provider",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unexpected API version",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "MODERATE",
+        "likelihood": "MODERATE",
+        "name": "api_version_drift",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "MODERATE",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "MODERATE",
+        "threat_id": "THR-028",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts wrong account against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Access wrong account",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "wrong_account",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-029",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts wrong subaccount against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Access wrong subaccount",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "wrong_subaccount",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-030",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts wrong environment against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Production vs paper confusion",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "wrong_environment",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-031",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts excessive account scope against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unbounded account scope",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "excessive_account_scope",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-032",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts balance leakage against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Balance data exposure",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "balance_leakage",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-033",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts position leakage against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Position data exposure",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "position_leakage",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-034",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts private activity leakage against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Activity leak",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "private_activity_leakage",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-035",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts account settings mutation against connectivity governance",
+        "category": "account",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized settings change",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "account_settings_mutation",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-036",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts hidden order submission against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Hidden order path",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "hidden_order_submission",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-037",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts paper live environment confusion against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Paper/live mix-up",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "paper_live_environment_confusion",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-038",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts order modification against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized modify",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "order_modification",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-039",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts order cancellation against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized cancel",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "order_cancellation",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-040",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts duplicate orders against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Duplicate submission",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "duplicate_orders",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-041",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts stale approval against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Order under stale approval",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "stale_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-042",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts unbounded notional against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "No notional bound",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "unbounded_notional",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-043",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts hidden leverage against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unexpected leverage",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "hidden_leverage",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-044",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts short selling against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized short",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "short_selling",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-045",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts options against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized options",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "options",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-046",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts transfer against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized transfer",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "transfer",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-047",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts withdrawal against connectivity governance",
+        "category": "execution",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Unauthorized withdrawal",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "withdrawal",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-048",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts unrestricted outbound traffic against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Open egress",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "unrestricted_outbound_traffic",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-049",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts domain wildcard against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Wildcard domain allow",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "domain_wildcard",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-050",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts redirect to unapproved host against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "HTTP redirect attack",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "redirect_to_unapproved_host",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-051",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts proxy bypass against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Bypass allowlist via proxy",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "proxy_bypass",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-052",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts certificate failure against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "TLS validation failure",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "certificate_failure",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-053",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts replay against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Request replay",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "replay",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-054",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts timeout ambiguity against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Ambiguous timeout",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "MODERATE",
+        "likelihood": "MODERATE",
+        "name": "timeout_ambiguity",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "MODERATE",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "MODERATE",
+        "threat_id": "THR-055",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts retry duplication against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Retry creates duplicates",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "retry_duplication",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-056",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts partial response handling against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Partial response misuse",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "MODERATE",
+        "likelihood": "MODERATE",
+        "name": "partial_response_handling",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "MODERATE",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "MODERATE",
+        "threat_id": "THR-057",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts provider response poisoning against connectivity governance",
+        "category": "network",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Poisoned response",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "provider_response_poisoning",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-058",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts authority drift against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Authority silently grows",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "authority_drift",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-059",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts milestone authority inheritance against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Higher authority inherited",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "milestone_authority_inheritance",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-060",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts emergency shutdown bypass against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Bypass kill switch",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "emergency_shutdown_bypass",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-061",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts evidence deletion against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Delete evidence",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "evidence_deletion",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-062",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts audit tampering against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Tamper with audit",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "audit_tampering",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-063",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts policy override against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Silent policy override",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "policy_override",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-064",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts human review bypass against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Skip human review",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "human_review_bypass",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-065",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts privilege accumulation against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Accumulate privileges",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "HIGH",
+        "likelihood": "MODERATE",
+        "name": "privilege_accumulation",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "HIGH",
+        "threat_id": "THR-066",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts silent default allow against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Default-allow posture",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "silent_default_allow",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-067",
+        "unresolved_critical": false
+      },
+      {
+        "affected_assets": [
+          "authority",
+          "approvals",
+          "credentials",
+          "providers",
+          "evidence"
+        ],
+        "attack_path": "Adversary attempts production deployment without approval against connectivity governance",
+        "category": "governance",
+        "containment": "emergency_shutdown_and_revoke",
+        "description": "Prod without approval",
+        "detective_controls": [
+          "audit_log",
+          "secret_scanners",
+          "approval_state_machine",
+          "security_scan"
+        ],
+        "evidence": "durable_audit_and_certification",
+        "impact": "CRITICAL",
+        "likelihood": "LOW",
+        "name": "production_deployment_without_approval",
+        "owner": "connectivity_governance_owner",
+        "preconditions": [
+          "future connectivity phase or governance bypass attempt"
+        ],
+        "preventive_controls": [
+          "no_connectivity_by_default",
+          "maker_checker",
+          "deny_overrides_allow",
+          "raw_credentials_forbidden",
+          "domain_allowlists",
+          "emergency_shutdown",
+          "llm_non_authoritative"
+        ],
+        "recovery": "human_review_required",
+        "residual_note": "Blocked by fail-closed governance; no provider path active",
+        "residual_risk": "LOW",
+        "review_date": "2026-07-30",
+        "revocation_action": "revoke_scope_and_approvals",
+        "severity": "CRITICAL",
+        "threat_id": "THR-068",
+        "unresolved_critical": false
+      }
+    ],
+    "total": 68,
+    "unresolved_critical": [],
+    "unresolved_critical_count": 0
+  }
+}

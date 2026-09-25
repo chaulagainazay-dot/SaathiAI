@@ -1,0 +1,50 @@
+{
+  "host": "Apple M2 8GB",
+  "nepali_gates": {
+    "intent_preservation_min": 0.6,
+    "first_span_preservation_min": 0.5,
+    "cer_max": 0.45,
+    "term_preservation_min": 0.4
+  },
+  "candidates": [
+    {
+      "name": "faster-whisper-small",
+      "error": null,
+      "nepali_gate_passed": false,
+      "by_language": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.17037037037037037,
+          "mean_cer": 0.029160382101558573,
+          "intent_rate": 0.9444444444444444,
+          "first_span_rate": 0.8333333333333334,
+          "term_preservation": 0.7727272727272727
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 0.9190476190476191,
+          "mean_cer": 0.7341658341658341,
+          "intent_rate": 0.0,
+          "first_span_rate": 0.14285714285714285,
+          "term_preservation": 0.0
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 0.5332010582010582,
+          "mean_cer": 0.24982842940933034,
+          "intent_rate": 0.5,
+          "first_span_rate": 0.5,
+          "term_preservation": 0.6153846153846154
+        }
+      },
+      "latency": {
+        "p50": 1.1288000830000016,
+        "p95": 2.099333166000001,
+        "worst": 18.470462166,
+        "n": 31
+      },
+      "peak_rss_mib": 1430.0625,
+      "cold_load_s": 1.101861583
+    }
+  ]
+}

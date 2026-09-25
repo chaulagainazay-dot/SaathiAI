@@ -67,6 +67,13 @@ function buildCommands(pathname, moduleNavigation) {
       route: "/settings",
       kind: "navigate",
     },
+    {
+      id: "act-voice-settings",
+      label: "Open Voice Settings",
+      group: "Actions",
+      route: "/settings/voice",
+      kind: "navigate",
+    },
     // M148+ SaathiOS Core unification destinations
     {
       id: "core-home",

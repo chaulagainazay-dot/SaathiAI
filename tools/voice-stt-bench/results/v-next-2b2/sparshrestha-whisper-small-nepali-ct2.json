@@ -1,0 +1,940 @@
+{
+  "candidate": "sparshrestha-whisper-small-nepali-ct2",
+  "model_path": "/Users/macbookpro/.saathi/stt-models/v-next-2b2/sparshrestha-whisper-small-nepali-ct2",
+  "language_mode": "ne",
+  "cold_load_s": 0.1900586670000024,
+  "peak_rss_mib": 1003.0,
+  "latency_decode_s": {
+    "p50": 1.292602875,
+    "p95": 1.4737057499999935,
+    "worst": 2.1086838340000043,
+    "n": 31
+  },
+  "by_language_raw": {
+    "en": {
+      "n": 18,
+      "mean_wer": 0.6033950617283951,
+      "mean_cer": 0.44667860249283986,
+      "intent_rate": 0.5,
+      "first_span_rate": 0.5555555555555556,
+      "term_preservation": 0.18181818181818182
+    },
+    "ne": {
+      "n": 7,
+      "mean_wer": 0.9666666666666667,
+      "mean_cer": 0.573521016021016,
+      "intent_rate": 0.2857142857142857,
+      "first_span_rate": 0.5714285714285714,
+      "term_preservation": 0.0
+    },
+    "mixed": {
+      "n": 6,
+      "mean_wer": 1.0,
+      "mean_cer": 0.9496471227262983,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    }
+  },
+  "by_language_normalized_domain": {
+    "en": {
+      "n": 18,
+      "mean_wer": 0.566358024691358,
+      "mean_cer": 0.44667860249283986,
+      "intent_rate": 0.5555555555555556,
+      "first_span_rate": 0.6111111111111112,
+      "term_preservation": 0.22727272727272727
+    },
+    "ne": {
+      "n": 7,
+      "mean_wer": 0.9666666666666667,
+      "mean_cer": 0.573521016021016,
+      "intent_rate": 0.2857142857142857,
+      "first_span_rate": 0.5714285714285714,
+      "term_preservation": 0.0
+    },
+    "mixed": {
+      "n": 6,
+      "mean_wer": 1.0,
+      "mean_cer": 0.9496471227262983,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    }
+  },
+  "by_category_raw": {
+    "EN_CMD": {
+      "n": 8,
+      "mean_wer": 0.4791666666666667,
+      "mean_cer": 0.3321677559912854,
+      "intent_rate": 0.625,
+      "first_span_rate": 0.75,
+      "term_preservation": 0.2222222222222222
+    },
+    "SHORT": {
+      "n": 4,
+      "mean_wer": 0.25,
+      "mean_cer": 0.0625,
+      "intent_rate": 1.0,
+      "first_span_rate": 1.0,
+      "term_preservation": null
+    },
+    "NE_CMD": {
+      "n": 6,
+      "mean_wer": 0.9611111111111111,
+      "mean_cer": 0.627441185357852,
+      "intent_rate": 0.16666666666666666,
+      "first_span_rate": 0.5,
+      "term_preservation": 0.0
+    },
+    "MIX": {
+      "n": 5,
+      "mean_wer": 1.0,
+      "mean_cer": 0.9395765472715579,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    },
+    "LONG": {
+      "n": 2,
+      "mean_wer": 0.5555555555555556,
+      "mean_cer": 0.5240963855421686,
+      "intent_rate": 0.5,
+      "first_span_rate": 0.5,
+      "term_preservation": 0.2857142857142857
+    },
+    "FIN": {
+      "n": 2,
+      "mean_wer": 1.3333333333333335,
+      "mean_cer": 1.0192307692307692,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    },
+    "SAATHI": {
+      "n": 2,
+      "mean_wer": 1.125,
+      "mean_cer": 0.5892857142857143,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    },
+    "NOISE": {
+      "n": 2,
+      "mean_wer": 1.0,
+      "mean_cer": 1.0588235294117647,
+      "intent_rate": 0.0,
+      "first_span_rate": 0.0,
+      "term_preservation": 0.0
+    }
+  },
+  "nepali_gate": {
+    "criteria": {
+      "intent_preservation_min": 0.6,
+      "first_span_preservation_min": 0.5,
+      "cer_max": 0.45,
+      "term_preservation_min": 0.4
+    },
+    "metrics_raw": {
+      "n": 13,
+      "mean_wer": 0.982051282051282,
+      "mean_cer": 0.7471176806542232,
+      "intent_rate": 0.15384615384615385,
+      "first_span_rate": 0.3076923076923077,
+      "term_preservation": 0.0
+    },
+    "metrics_normalized_domain_NOT_USED_FOR_GATE": {
+      "n": 13,
+      "mean_wer": 0.982051282051282,
+      "mean_cer": 0.7471176806542232,
+      "intent_rate": 0.15384615384615385,
+      "first_span_rate": 0.3076923076923077,
+      "term_preservation": 0.0
+    },
+    "result": {
+      "intent_ok": false,
+      "first_span_ok": false,
+      "cer_ok": false,
+      "term_ok": false,
+      "passed": false
+    },
+    "note": "Gate uses RAW metrics only. Normalized reported for analysis."
+  },
+  "rows": [
+    {
+      "id": "en_001",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Saathi, show my active missions.",
+      "hyp": "साथी शोमाय आक्तिवमिशेन्स ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.3508088339999986,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_002",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Open the command center.",
+      "hyp": "Open the command center.",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 1,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 1,
+        "term_total": 1
+      },
+      "decode_s": 1.096189041999999,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_003",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Stop.",
+      "hyp": "Stop!",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.0624317919999982,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_004",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Cancel that response.",
+      "hyp": "Cancel that response!",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.0960872080000001,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_005",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Show portfolio risk.",
+      "hyp": "शौपोर्ट फोलियो रिस्क!",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.0588235294117647,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.0588235294117647,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.292602875,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_006",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "What is Trading Guardian status?",
+      "hyp": "What is trading guardian status?",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 1,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 1,
+        "term_total": 1
+      },
+      "decode_s": 1.1105687920000022,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_007",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Is ExecutionGateway healthy?",
+      "hyp": "is execution gait way healthy?",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.08,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.08,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.1156409170000003,
+      "detected_language": "en"
+    },
+    {
+      "id": "en_008",
+      "category": "EN_CMD",
+      "lang": "en",
+      "ref": "Compare today's NAV and drawdown.",
+      "hyp": "Compare todays' नावन ड्राउडाउन्!",
+      "raw": {
+        "wer": 0.8333333333333334,
+        "cer": 0.5185185185185185,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 0.8333333333333334,
+        "cer": 0.5185185185185185,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.2996120410000032,
+      "detected_language": "en"
+    },
+    {
+      "id": "sh_001",
+      "category": "SHORT",
+      "lang": "en",
+      "ref": "Stop.",
+      "hyp": "Stop!",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.0651276250000024,
+      "detected_language": "en"
+    },
+    {
+      "id": "sh_002",
+      "category": "SHORT",
+      "lang": "en",
+      "ref": "Cancel.",
+      "hyp": "Cancel!",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.0751636669999982,
+      "detected_language": "en"
+    },
+    {
+      "id": "sh_003",
+      "category": "SHORT",
+      "lang": "en",
+      "ref": "Wait.",
+      "hyp": "Wait!",
+      "raw": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 0.0,
+        "cer": 0.0,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.0629761249999987,
+      "detected_language": "en"
+    },
+    {
+      "id": "ne_001",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "मेरो आजको portfolio risk देखाऊ।",
+      "hyp": "मेरो आजको फोर्ट फले ओरेस देखाउ ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.5185185185185185,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.5185185185185185,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.4120219170000041,
+      "detected_language": "ne"
+    },
+    {
+      "id": "ne_002",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "आजको market exposure कति छ?",
+      "hyp": "आजको मार्खेर यस तौशुर कति छ?",
+      "raw": {
+        "wer": 0.6,
+        "cer": 0.6363636363636364,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 0.6,
+        "cer": 0.6363636363636364,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.3759794589999998,
+      "detected_language": "ne"
+    },
+    {
+      "id": "ne_003",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "मेरो pending approvals के छन्?",
+      "hyp": "मेरु फ्यान्डिन अप्रोभावस्के छन् ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.84,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.84,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.431349707999999,
+      "detected_language": "ne"
+    },
+    {
+      "id": "ne_004",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "Trading Guardian को current status देखाऊ।",
+      "hyp": "ठ्वेरिङ द्वार्डियनको कर्मान स्टेटस देखाउ ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.8611111111111112,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.8611111111111112,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.5479003330000012,
+      "detected_language": "ne"
+    },
+    {
+      "id": "ne_005",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "आजको NAV र drawdown compare गर।",
+      "hyp": "आजको न्यार र ड्वाउडा अन खाम फेल बरा ।",
+      "raw": {
+        "wer": 1.1666666666666667,
+        "cer": 0.8461538461538461,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.1666666666666667,
+        "cer": 0.8461538461538461,
+        "intent_ok": false,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.4737057499999935,
+      "detected_language": "ne"
+    },
+    {
+      "id": "ne_006",
+      "category": "NE_CMD",
+      "lang": "ne",
+      "ref": "कमान्ड सेन्टर खोल।",
+      "hyp": "कमान्सेन्टर खोल ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.0625,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.0625,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.2268625419999992,
+      "detected_language": "ne"
+    },
+    {
+      "id": "mx_001",
+      "category": "MIX",
+      "lang": "mixed",
+      "ref": "Saathi, आजको portfolio मा सबैभन्दा ठूलो risk के हो?",
+      "hyp": "साफी पर्फोलियो रेस्क ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.9024390243902439,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 3
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.9024390243902439,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 3
+      },
+      "decode_s": 1.2875322500000053,
+      "detected_language": "ne"
+    },
+    {
+      "id": "mx_002",
+      "category": "MIX",
+      "lang": "mixed",
+      "ref": "Portfolio rebalance proposal देखाऊ।",
+      "hyp": "पर्फोलिय रिबालन्स प्रपोशल ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.96875,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.96875,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.3731143340000074,
+      "detected_language": "ne"
+    },
+    {
+      "id": "mx_003",
+      "category": "MIX",
+      "lang": "mixed",
+      "ref": "ExecutionGateway healthy छ कि छैन?",
+      "hyp": "एक्सिकुषण गेइट वै हाल्थि ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.9655172413793104,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.9655172413793104,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.3717009589999947,
+      "detected_language": "ne"
+    },
+    {
+      "id": "mx_004",
+      "category": "MIX",
+      "lang": "mixed",
+      "ref": "Show my missions र approvals।",
+      "hyp": "शोमा इमिशन्ट प्रुभल्स ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.92,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.92,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.3347353750000082,
+      "detected_language": "ne"
+    },
+    {
+      "id": "mx_005",
+      "category": "MIX",
+      "lang": "mixed",
+      "ref": "Drawdown कति छ today?",
+      "hyp": "ट्राडाउन तदै ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.9411764705882353,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.9411764705882353,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.230926041999993,
+      "detected_language": "ne"
+    },
+    {
+      "id": "lg_001",
+      "category": "LONG",
+      "lang": "en",
+      "ref": "Can you explain the largest risk in my portfolio today and what I should review before any rebalance?",
+      "hyp": "Can you explain the largest risk in my court fallio today and what I should review before any rebalance?",
+      "raw": {
+        "wer": 0.1111111111111111,
+        "cer": 0.04819277108433735,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 2,
+        "term_total": 3
+      },
+      "normalized_domain": {
+        "wer": 0.1111111111111111,
+        "cer": 0.04819277108433735,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 2,
+        "term_total": 3
+      },
+      "decode_s": 1.2769324580000045,
+      "detected_language": "en"
+    },
+    {
+      "id": "lg_002",
+      "category": "LONG",
+      "lang": "mixed",
+      "ref": "Saathi, summarize active missions, pending approvals, and Trading Guardian status in one short brief.",
+      "hyp": "साफी समराइज आक्टव मिशन्स प्यान्डिङ प्रूवल्स यान्त्रैडिङ गार्डियन स्टाटस यन वान शोर्ट ब्रिफ",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 4
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 4
+      },
+      "decode_s": 2.1086838340000043,
+      "detected_language": "ne"
+    },
+    {
+      "id": "fn_001",
+      "category": "FIN",
+      "lang": "en",
+      "ref": "Show current NAV and drawdown.",
+      "hyp": "शोकरण्ड नाभन ड्राउडाउन्!",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.3597325830000102,
+      "detected_language": "en"
+    },
+    {
+      "id": "fn_002",
+      "category": "FIN",
+      "lang": "en",
+      "ref": "Portfolio rebalance proposal.",
+      "hyp": "पोर्ट फोलियो रिभालन्स प्रपोजल ।",
+      "raw": {
+        "wer": 1.6666666666666667,
+        "cer": 1.0384615384615385,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.6666666666666667,
+        "cer": 1.0384615384615385,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.4129727910000014,
+      "detected_language": "en"
+    },
+    {
+      "id": "sa_001",
+      "category": "SAATHI",
+      "lang": "en",
+      "ref": "Trading Guardian current status.",
+      "hyp": "ट्रैडिङ गार्डियन कुरण्च स्टाटस ।",
+      "raw": {
+        "wer": 1.25,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 1.25,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "decode_s": 1.440770624999999,
+      "detected_language": "en"
+    },
+    {
+      "id": "sa_002",
+      "category": "SAATHI",
+      "lang": "en",
+      "ref": "ExecutionGateway healthy check.",
+      "hyp": "Execution Gateway healthy च्याक!",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.17857142857142858,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 1
+      },
+      "normalized_domain": {
+        "wer": 0.3333333333333333,
+        "cer": 0.17857142857142858,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 1,
+        "term_total": 1
+      },
+      "decode_s": 1.1580825839999989,
+      "detected_language": "en"
+    },
+    {
+      "id": "bc_001",
+      "category": "SHORT",
+      "lang": "ne",
+      "ref": "हजुर",
+      "hyp": "हजुर ।",
+      "raw": {
+        "wer": 1.0,
+        "cer": 0.25,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 0.25,
+        "intent_ok": true,
+        "first_span_ok": true,
+        "term_hits": 0,
+        "term_total": 0
+      },
+      "decode_s": 1.125871165999996,
+      "detected_language": "ne"
+    },
+    {
+      "id": "nz_001",
+      "category": "NOISE",
+      "lang": "en",
+      "ref": "Saathi, show my active missions.",
+      "hyp": "सके शो मायाक्तिब मिशन्!",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.0,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.2835739170000124,
+      "detected_language": "en"
+    },
+    {
+      "id": "nz_002",
+      "category": "NOISE",
+      "lang": "en",
+      "ref": "Show portfolio risk.",
+      "hyp": "�ेलफोर्ट प्रोमियो ग्रे!",
+      "raw": {
+        "wer": 1.0,
+        "cer": 1.1176470588235294,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "normalized_domain": {
+        "wer": 1.0,
+        "cer": 1.1176470588235294,
+        "intent_ok": false,
+        "first_span_ok": false,
+        "term_hits": 0,
+        "term_total": 2
+      },
+      "decode_s": 1.2985118749999884,
+      "detected_language": "en"
+    }
+  ]
+}

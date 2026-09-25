@@ -1,0 +1,48 @@
+{
+  "schema": "m17.concurrency_repair.root_cause.v1",
+  "failing_ci_run_id": "31080359121",
+  "failing_ci_url": "https://github.com/chaulagainazay-dot/SaathiAI/actions/runs/31080359121",
+  "workflow": "reliability",
+  "job": "critical-regressions",
+  "check_id": "scheduled_graph.concurrency_dedup",
+  "test": "tests/test_m17_17_scheduled_graph_recovery.py::test_concurrent_recover_creates_one_resumed_graph",
+  "failure_signature": "AssertionError: assert 'failed' == 'succeeded' (led.inspect_occurrence(oid)['state'])",
+  "head_sha_at_failure": "855c5e8c502597e00a2211653080ad2d98f943ca",
+  "branch_at_failure": "milestone/m344-m351-multi-agent-development-foundation",
+  "classification": [
+    "check_then_act_race",
+    "stale_read_after_competing_resume",
+    "exception_handler_converts_contention_into_failure",
+    "loser_settles_recovered_mission_from_mid_flight_graph_state",
+    "loser_settles_occurrence_from_original_failed_mission_after_recovery_terminal"
+  ],
+  "call_flow": [
+    "test_concurrent_recover_creates_one_resumed_graph",
+    "ScheduledGraphCoordinator.recover",
+    "MissionEngine.resume_graph_mission",
+    "GraphPipelineRunner.resume",
+    "RunLedger.claim_recovery (BEGIN IMMEDIATE)",
+    "reopen_pipeline + _execute (winner only)",
+    "MissionEngine.settle_recovered",
+    "MissionScheduler.settle_occurrence_from_mission / finish_occurrence"
+  ],
+  "race_window": {
+    "description": "Two threads call recover() on the same OCC_RETRY_WAIT occurrence after a retryable graph failure. Exactly one wins claim_recovery and reopens the pipeline to RUNNING. The loser previously continued past resume() failures other than recovery_claimed (notably not_resumable:running), inspected a still-RUNNING graph, computed graph_ok=False, and settled the deterministic recovered mission as MISSION_FAILED/GRAPH_FAILED. Separately, a loser that returned resume_in_progress with the ORIGINAL mission_id caused recover() to settle the occurrence from the immutable failed source mission; once recovery was RECOVERED (terminal), _graph_retryable became false and finish_occurrence wrote OCC_FAILED. The winner could not overwrite a terminal OCC_FAILED.",
+    "shared_mutable_state": [
+      "pipeline_run.state",
+      "pipeline_recovery.claim_owner/lease/state",
+      "deterministic recovered mission ms_rec_* lifecycle",
+      "mission_occurrence.state"
+    ],
+    "reproduction": {
+      "method": "local multi-thread recover with mild stagger; deterministic gated _execute barrier in tests",
+      "pre_fix_probe": "occurrence ended failed while pipeline_state succeeded and recovered mission state failed with GRAPH_FAILED and steps_run=0"
+    }
+  },
+  "not_root_cause": [
+    "missing uniqueness of recovered mission id (id is already deterministic)",
+    "missing recovery claim (claim_recovery is atomic; only one winner)",
+    "test assertion alone incorrect — occurrence should succeed when recovery succeeds",
+    "M369-M376 qualification code"
+  ]
+}

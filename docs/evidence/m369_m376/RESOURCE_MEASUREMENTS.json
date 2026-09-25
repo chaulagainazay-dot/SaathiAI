@@ -1,0 +1,583 @@
+{
+  "measurements": "agentdev.m369_m376.resources.v1",
+  "thresholds": {
+    "max_model_size_fraction_of_ram": 0.5,
+    "min_free_swap_mib": 512.0,
+    "min_available_memory_mib": 1024.0,
+    "min_free_disk_gib": 10.0,
+    "min_free_memory_percent": 20,
+    "max_resident_models": 1,
+    "max_concurrent_evaluations": 1,
+    "rationale": "Apple M2, 8 GiB unified memory, single SSD. Unified memory means a model competes with every other process for one pool, so the size ceiling is a fraction of physical RAM rather than of free RAM."
+  },
+  "log": [
+    {
+      "model": "qwen2.5-coder:3b",
+      "phase": "before",
+      "at": 1785934659.297489,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36847616,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63207960576,
+          "load_average": [
+            1.81,
+            1.69,
+            2.25
+          ],
+          "measured_at": 1785934659.287682,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.87,
+          "peak_process_memory_mib": 35.1,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2506421698,
+          "free_bytes": 714803773,
+          "total_mib": 3072.0,
+          "used_mib": 2390.3,
+          "free_mib": 681.7,
+          "used_fraction": 0.7781
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 9057,
+            "pages_active": 163758,
+            "pages_inactive": 160620,
+            "pages_speculative": 2299,
+            "pages_throttled": 0,
+            "pages_wired_down": 84277,
+            "pages_purgeable": 4092,
+            "pages_copy-on-write": 914350,
+            "pages_zero_filled": 16079995,
+            "pages_reactivated": 17987965,
+            "pages_purged": 761947,
+            "file-backed_pages": 140526,
+            "anonymous_pages": 186151,
+            "pages_stored_in_compressor": 414570,
+            "pages_occupied_by_compressor": 67788,
+            "decompressions": 16497476,
+            "compressions": 18765975,
+            "pageins": 6919500,
+            "pageouts": 138502,
+            "swapins": 394910,
+            "swapouts": 605959
+          },
+          "free_bytes": 148389888,
+          "available_bytes": 2817654784,
+          "available_mib": 2687.1,
+          "wired_bytes": 1380794368,
+          "active_bytes": 2683011072,
+          "compressor_bytes": 1110638592,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 68,
+          "used_percent": 32,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {},
+        "resident_count": 0,
+        "measured_at": 1785934659.297461
+      },
+      "safety": {
+        "safe": true,
+        "breaches": [],
+        "measurements": {
+          "free_swap_mib": 681.7,
+          "available_memory_mib": 2687.1,
+          "free_memory_percent": 68,
+          "free_disk_gib": 58.87,
+          "resident_models": [],
+          "candidate": "qwen2.5-coder:3b",
+          "candidate_expected_memory_gib": 0.0
+        },
+        "verdict": "proceed"
+      }
+    },
+    {
+      "model": "qwen2.5-coder:3b",
+      "phase": "after",
+      "at": 1785934816.485257,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36864000,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63123865600,
+          "load_average": [
+            1.39,
+            1.69,
+            2.16
+          ],
+          "measured_at": 1785934816.470398,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.79,
+          "peak_process_memory_mib": 35.2,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2481255874,
+          "free_bytes": 739969597,
+          "total_mib": 3072.0,
+          "used_mib": 2366.3,
+          "free_mib": 705.7,
+          "used_fraction": 0.7703
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 4043,
+            "pages_active": 92720,
+            "pages_inactive": 90719,
+            "pages_speculative": 1390,
+            "pages_throttled": 0,
+            "pages_wired_down": 210528,
+            "pages_purgeable": 819,
+            "pages_copy-on-write": 957223,
+            "pages_zero_filled": 16440773,
+            "pages_reactivated": 18535196,
+            "pages_purged": 780374,
+            "file-backed_pages": 54738,
+            "anonymous_pages": 130091,
+            "pages_stored_in_compressor": 476636,
+            "pages_occupied_by_compressor": 88350,
+            "decompressions": 16887109,
+            "compressions": 19257627,
+            "pageins": 7194140,
+            "pageouts": 138897,
+            "swapins": 396019,
+            "swapouts": 605959
+          },
+          "free_bytes": 66240512,
+          "available_bytes": 1575354368,
+          "available_mib": 1502.4,
+          "wired_bytes": 3449290752,
+          "active_bytes": 1519124480,
+          "compressor_bytes": 1447526400,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 38,
+          "used_percent": 62,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {
+          "qwen2.5-coder:3b": 2155169709
+        },
+        "resident_count": 1,
+        "measured_at": 1785934816.485253
+      },
+      "safety": {
+        "safe": true,
+        "breaches": [],
+        "measurements": {
+          "free_swap_mib": 705.7,
+          "available_memory_mib": 1502.4,
+          "free_memory_percent": 38,
+          "free_disk_gib": 58.79,
+          "resident_models": [
+            "qwen2.5-coder:3b"
+          ]
+        },
+        "verdict": "proceed"
+      }
+    },
+    {
+      "model": "qwen2.5:1.5b",
+      "phase": "before",
+      "at": 1785934819.5602062,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36864000,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63123845120,
+          "load_average": [
+            1.36,
+            1.68,
+            2.16
+          ],
+          "measured_at": 1785934819.54396,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.79,
+          "peak_process_memory_mib": 35.2,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2481255874,
+          "free_bytes": 739969597,
+          "total_mib": 3072.0,
+          "used_mib": 2366.3,
+          "free_mib": 705.7,
+          "used_fraction": 0.7703
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 31232,
+            "pages_active": 131595,
+            "pages_inactive": 166786,
+            "pages_speculative": 1765,
+            "pages_throttled": 0,
+            "pages_wired_down": 70397,
+            "pages_purgeable": 835,
+            "pages_copy-on-write": 957617,
+            "pages_zero_filled": 16441022,
+            "pages_reactivated": 18535196,
+            "pages_purged": 780374,
+            "file-backed_pages": 172696,
+            "anonymous_pages": 127450,
+            "pages_stored_in_compressor": 473030,
+            "pages_occupied_by_compressor": 86006,
+            "decompressions": 16887591,
+            "compressions": 19257627,
+            "pageins": 7194555,
+            "pageouts": 138897,
+            "swapins": 396023,
+            "swapouts": 605959
+          },
+          "free_bytes": 511705088,
+          "available_bytes": 3273244672,
+          "available_mib": 3121.6,
+          "wired_bytes": 1153384448,
+          "active_bytes": 2156052480,
+          "compressor_bytes": 1409122304,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 67,
+          "used_percent": 33,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {},
+        "resident_count": 0,
+        "measured_at": 1785934819.560144
+      },
+      "safety": {
+        "safe": true,
+        "breaches": [],
+        "measurements": {
+          "free_swap_mib": 705.7,
+          "available_memory_mib": 3121.6,
+          "free_memory_percent": 67,
+          "free_disk_gib": 58.79,
+          "resident_models": [],
+          "candidate": "qwen2.5:1.5b",
+          "candidate_expected_memory_gib": 0.0
+        },
+        "verdict": "proceed"
+      }
+    },
+    {
+      "model": "qwen2.5:1.5b",
+      "phase": "after",
+      "at": 1785934935.404691,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36864000,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63123218432,
+          "load_average": [
+            1.27,
+            1.56,
+            2.05
+          ],
+          "measured_at": 1785934935.391718,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.79,
+          "peak_process_memory_mib": 35.2,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2472867266,
+          "free_bytes": 748358205,
+          "total_mib": 3072.0,
+          "used_mib": 2358.3,
+          "free_mib": 713.7,
+          "used_fraction": 0.7677
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 7746,
+            "pages_active": 123744,
+            "pages_inactive": 126310,
+            "pages_speculative": 679,
+            "pages_throttled": 0,
+            "pages_wired_down": 150234,
+            "pages_purgeable": 1108,
+            "pages_copy-on-write": 960267,
+            "pages_zero_filled": 16500573,
+            "pages_reactivated": 18559368,
+            "pages_purged": 780982,
+            "file-backed_pages": 110507,
+            "anonymous_pages": 140226,
+            "pages_stored_in_compressor": 456315,
+            "pages_occupied_by_compressor": 79071,
+            "decompressions": 16906359,
+            "compressions": 19265873,
+            "pageins": 7270694,
+            "pageouts": 138938,
+            "swapins": 396543,
+            "swapouts": 605959
+          },
+          "free_bytes": 126910464,
+          "available_bytes": 2207498240,
+          "available_mib": 2105.2,
+          "wired_bytes": 2461433856,
+          "active_bytes": 2027421696,
+          "compressor_bytes": 1295499264,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 52,
+          "used_percent": 48,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {
+          "qwen2.5:1.5b": 1163080498
+        },
+        "resident_count": 1,
+        "measured_at": 1785934935.4046872
+      },
+      "safety": {
+        "safe": true,
+        "breaches": [],
+        "measurements": {
+          "free_swap_mib": 713.7,
+          "available_memory_mib": 2105.2,
+          "free_memory_percent": 52,
+          "free_disk_gib": 58.79,
+          "resident_models": [
+            "qwen2.5:1.5b"
+          ]
+        },
+        "verdict": "proceed"
+      }
+    },
+    {
+      "model": "qwen3:4b",
+      "phase": "before",
+      "at": 1785934938.488021,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36864000,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63123206144,
+          "load_average": [
+            1.25,
+            1.55,
+            2.04
+          ],
+          "measured_at": 1785934938.471476,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.79,
+          "peak_process_memory_mib": 35.2,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2472867266,
+          "free_bytes": 748358205,
+          "total_mib": 3072.0,
+          "used_mib": 2358.3,
+          "free_mib": 713.7,
+          "used_fraction": 0.7677
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 33284,
+            "pages_active": 179450,
+            "pages_inactive": 123890,
+            "pages_speculative": 1134,
+            "pages_throttled": 0,
+            "pages_wired_down": 70830,
+            "pages_purgeable": 1108,
+            "pages_copy-on-write": 960666,
+            "pages_zero_filled": 16500755,
+            "pages_reactivated": 18559368,
+            "pages_purged": 780982,
+            "file-backed_pages": 170313,
+            "anonymous_pages": 134161,
+            "pages_stored_in_compressor": 456301,
+            "pages_occupied_by_compressor": 79072,
+            "decompressions": 16906388,
+            "compressions": 19265873,
+            "pageins": 7270710,
+            "pageouts": 138938,
+            "swapins": 396551,
+            "swapouts": 605959
+          },
+          "free_bytes": 545325056,
+          "available_bytes": 2593718272,
+          "available_mib": 2473.6,
+          "wired_bytes": 1160478720,
+          "active_bytes": 2940108800,
+          "compressor_bytes": 1295515648,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 69,
+          "used_percent": 31,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {},
+        "resident_count": 0,
+        "measured_at": 1785934938.4879591
+      },
+      "safety": {
+        "safe": true,
+        "breaches": [],
+        "measurements": {
+          "free_swap_mib": 713.7,
+          "available_memory_mib": 2473.6,
+          "free_memory_percent": 69,
+          "free_disk_gib": 58.79,
+          "resident_models": [],
+          "candidate": "qwen3:4b",
+          "candidate_expected_memory_gib": 0.0
+        },
+        "verdict": "proceed"
+      }
+    },
+    {
+      "model": "qwen3:4b",
+      "phase": "after",
+      "at": 1785935315.8221812,
+      "baseline": {
+        "host": {
+          "system": "Darwin",
+          "machine": "arm64",
+          "cpu_count": 8,
+          "total_memory_bytes": 8589934592,
+          "peak_process_memory_bytes": 36864000,
+          "disk_total_bytes": 245107195904,
+          "disk_free_bytes": 63113912320,
+          "load_average": [
+            1.8,
+            1.63,
+            1.89
+          ],
+          "measured_at": 1785935315.807331,
+          "total_memory_gib": 8.0,
+          "disk_free_gib": 58.78,
+          "peak_process_memory_mib": 35.2,
+          "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+        },
+        "swap": {
+          "available": true,
+          "total_bytes": 3221225472,
+          "used_bytes": 2691568762,
+          "free_bytes": 529656709,
+          "total_mib": 3072.0,
+          "used_mib": 2566.9,
+          "free_mib": 505.1,
+          "used_fraction": 0.8356
+        },
+        "pages": {
+          "available": true,
+          "page_size_bytes": 16384,
+          "pages": {
+            "pages_free": 3966,
+            "pages_active": 44905,
+            "pages_inactive": 42545,
+            "pages_speculative": 1555,
+            "pages_throttled": 0,
+            "pages_wired_down": 283812,
+            "pages_purgeable": 2,
+            "pages_copy-on-write": 1005087,
+            "pages_zero_filled": 17181006,
+            "pages_reactivated": 20083094,
+            "pages_purged": 848391,
+            "file-backed_pages": 32058,
+            "anonymous_pages": 56947,
+            "pages_stored_in_compressor": 519226,
+            "pages_occupied_by_compressor": 110984,
+            "decompressions": 18070392,
+            "compressions": 20615218,
+            "pageins": 7791766,
+            "pageouts": 140664,
+            "swapins": 400043,
+            "swapouts": 622891
+          },
+          "free_bytes": 64978944,
+          "available_bytes": 787513344,
+          "available_mib": 751.0,
+          "wired_bytes": 4649975808,
+          "active_bytes": 735723520,
+          "compressor_bytes": 1818361856,
+          "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+        },
+        "pressure": {
+          "available": true,
+          "free_percent": 18,
+          "used_percent": 82,
+          "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+        },
+        "resident_models": {
+          "qwen3:4b": 3169761361
+        },
+        "resident_count": 1,
+        "measured_at": 1785935315.822176
+      },
+      "safety": {
+        "safe": false,
+        "breaches": [
+          "free swap 505.1 MiB is below the 512.0 MiB floor; the host is already paging",
+          "reclaimable memory 751.0 MiB is below the 1024.0 MiB floor",
+          "free memory 18% is below the 20% floor"
+        ],
+        "measurements": {
+          "free_swap_mib": 505.1,
+          "available_memory_mib": 751.0,
+          "free_memory_percent": 18,
+          "free_disk_gib": 58.78,
+          "resident_models": [
+            "qwen3:4b"
+          ]
+        },
+        "verdict": "RESOURCE_LIMIT_EXCEEDED"
+      }
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "mission": "T-NEXT-4 Canonical Trading Chain Integration & Execution Integrity",
+  "date": "2026-08-30",
+  "verdict": "T_NEXT_4_EXECUTION_INTEGRITY_CERTIFIED_WITH_LIMITATIONS",
+  "scope": "PAPER only. No shadow, no live.",
+  "repo": {
+    "worktree": "/Users/macbookpro/SaathiAI-tnext4",
+    "branch": "feature/t-next-4-execution-integrity",
+    "base_branch": "integration/saathios-trunk-v3",
+    "base_sha": "4756ecedf43ade292ca37dc3d2a768bfa26e0906"
+  },
+  "canonical_lineage": {
+    "chain": [
+      "feature/ui-next-1-central-command",
+      "feature/t-next-1-canonical-paper-ledger",
+      "feature/t-next-1-1-paper-ledger-cutover",
+      "feature/t-next-2-independent-risk-engine",
+      "feature/t-next-3-portfolio-construction",
+      "feature/t-next-4-performance-attribution",
+      "integration/saathios-trunk-v3"
+    ],
+    "all_links_linear": true,
+    "prs": {
+      "35": "KEEP",
+      "36": "KEEP",
+      "37": "KEEP",
+      "41": "KEEP",
+      "43": "KEEP (rename - name collision)",
+      "45": "KEEP - canonical trunk"
+    },
+    "m312_m319": "MERGE_LATER (251 commits behind trunk; lacks fund_ledger and portfolio_construction)"
+  },
+  "production_changes": [
+    {
+      "id": "D1",
+      "file": "saathi/platform/paper_trading/broker.py",
+      "defect": "order admitted against non-positive reference price",
+      "fix": "validate_new_order rejects ref_price <= 0",
+      "found_by": "F12b"
+    },
+    {
+      "id": "D2",
+      "file": "saathi/platform/paper_trading/service.py",
+      "defect": "supplied-but-invalid approval_id silently ignored when approval not otherwise required (fail-open)",
+      "fix": "always verify a supplied approval reference",
+      "found_by": "F13"
+    }
+  ],
+  "review_findings": [
+    {
+      "id": "R1",
+      "severity": "HIGH",
+      "defect": "may_submit short-circuited before consulting the reconciliation table",
+      "status": "FIXED + regression test"
+    },
+    {
+      "id": "R2",
+      "severity": "HIGH",
+      "defect": "dict merge let external order state mask an OMS UNKNOWN, allowing fall-through to RECONCILED",
+      "status": "FIXED + 2 regression tests"
+    },
+    {
+      "id": "R3",
+      "severity": "MEDIUM",
+      "defect": "record() check-then-insert race on request_id raised IntegrityError instead of idempotent return",
+      "status": "FIXED + regression test"
+    }
+  ],
+  "tests": {
+    "baseline_before_change": {
+      "passed": 146,
+      "failed": 0
+    },
+    "new_execution_integrity_suite": {
+      "passed": 82,
+      "failed": 0
+    },
+    "final_targeted_regression": {
+      "passed": 340,
+      "failed": 0,
+      "seconds": 4.02
+    },
+    "full_repository_suite": {
+      "status": "PARTIAL - terminated by deadline, not completed",
+      "progress_reached": "84%",
+      "failed_or_error_markers": 0,
+      "attempts": 3,
+      "note": "two unfiltered runs stalled at ~0.1% CPU (network/IO-bound test); third bounded run with 900s deadline reached 84% with zero failure markers and no summary line",
+      "claimed_pass": false
+    },
+    "fresh_context_review": {
+      "performed": true,
+      "defects_found": 3,
+      "all_fixed": true
+    }
+  },
+  "failure_matrix": {
+    "covered": 18,
+    "unreachable_by_construction": [
+      "F15",
+      "F16",
+      "fill-during-cancel race"
+    ],
+    "total_specified": 21
+  },
+  "authority": {
+    "NO_LIVE_TRADING": true,
+    "NO_REAL_BROKER": true,
+    "NO_WITHDRAWAL": true,
+    "NO_LEVERAGE": true,
+    "NO_LLM_EXECUTION_AUTHORITY": true,
+    "NO_TRADINGAGENTS_RUNTIME_DEPENDENCY": true,
+    "canonical_authorities_modified": 0
+  },
+  "resource": {
+    "new_dependencies": 0,
+    "new_processes": 0,
+    "storage": "SQLite + stdlib only"
+  },
+  "documents": [
+    {
+      "file": "ARCHITECTURE.md",
+      "sha256": "ea254c3109bd8a8f7c52ad75a0a5c4c72aae274646865055538bd69ab1b8d881",
+      "bytes": 4848
+    },
+    {
+      "file": "CANONICAL_LINEAGE.md",
+      "sha256": "323792b1fa45680fbe933df0a720505567d8b6e62365497f34579eb6bc79f0f9",
+      "bytes": 4222
+    },
+    {
+      "file": "EXECUTIONGATEWAY_CONTRACT.md",
+      "sha256": "4a4c8cc55058c9ab19e4c54b907e810d7d76d0462b99e3116e9e38c21970afd0",
+      "bytes": 3743
+    },
+    {
+      "file": "FAILURE_MATRIX.md",
+      "sha256": "20fb6564736bd1b0641e19ffb70ffbe6ab006e4100649586f26e35a104e51655",
+      "bytes": 4106
+    },
+    {
+      "file": "FILL_CONTRACT.md",
+      "sha256": "a9818cff1329e2aab5987241e3b027de9051877c24fe0218336f08ab4b833c35",
+      "bytes": 2528
+    },
+    {
+      "file": "FINAL_CERTIFICATION.md",
+      "sha256": "ee79d0cc5e3f2183f877acdc34a06320ab85ced8c406cb00cb154c8addf0921d",
+      "bytes": 4902
+    },
+    {
+      "file": "IDEMPOTENCY_CONTRACT.md",
+      "sha256": "d2278829af97978a8015e5aaf4afdbbb01da7b4867e21db89311b5fe895d5618",
+      "bytes": 4015
+    },
+    {
+      "file": "LEDGER_POSTING_CONTRACT.md",
+      "sha256": "e70dca2ec854c61b3831ee2b47d4670cb06ca7a5e9b18afdbe808ba00057e638",
+      "bytes": 2786
+    },
+    {
+      "file": "LIMITATIONS.md",
+      "sha256": "142e2e67474686703dfb70ac0eb58970d78ac17f3bfe709860724c72d5b11cc3",
+      "bytes": 5378
+    },
+    {
+      "file": "OMS_STATE_MACHINE.md",
+      "sha256": "624020caa6498e4465a4c55ad723064a7b1d9314db5e3edb4f2234a120196c1b",
+      "bytes": 3304
+    },
+    {
+      "file": "RECONCILIATION_AUTHORITY.md",
+      "sha256": "4b890d2c9504367a7431b600a4dbefc322f0d742b996be06191cd164a5d8740f",
+      "bytes": 3745
+    },
+    {
+      "file": "SECURITY_AUTHORITY_AUDIT.md",
+      "sha256": "8090cce6982a4a5279a236fc5f71d7af20a6b78cd125ba2b6929dd075759f3ec",
+      "bytes": 4217
+    },
+    {
+      "file": "STARTUP_RECOVERY.md",
+      "sha256": "a6fc9eade8a57f41d3ff4acca419b4f3a0df1ea325294cc14a8af47f36000a9d",
+      "bytes": 3260
+    },
+    {
+      "file": "TEST_REPORT.md",
+      "sha256": "98eb4b2e8eeb679caf875395f8bdd312978712939670ef0ba7d7631ac6175458",
+      "bytes": 5619
+    },
+    {
+      "file": "UNKNOWN_STATE_HANDLING.md",
+      "sha256": "a7d260a63264a284654b9870d3b55859e9b8d8a8c96707505f75f37529d125e1",
+      "bytes": 3283
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "mission": "T-NEXT-2",
+  "title": "INDEPENDENT PORTFOLIO RISK ENGINE + RISK BUDGETS",
+  "certified_at": "2026-08-07T11:20:12.963462+00:00",
+  "terminal_verdict": "INDEPENDENT_PORTFOLIO_RISK_ENGINE_CERTIFIED_WITH_LIMITATIONS",
+  "base_branch": "feature/t-next-1-1-paper-ledger-cutover",
+  "base_sha": "ca42ab6be529c373f31a069936f57a9967e2b3e4",
+  "work_branch": "feature/t-next-2-independent-risk-engine",
+  "budget_version": "paper-risk-budget/v1",
+  "tests": {
+    "portfolio_risk_engine": "17 passed",
+    "chain": "45 passed"
+  },
+  "non_actions": {
+    "live_trading": false,
+    "agent_risk_override": false,
+    "ledger_mutation_from_risk": false,
+    "tg_weakened": false,
+    "eg_bypass": false,
+    "leverage": false,
+    "master_merge": false,
+    "pr35_pr36_auto_merge": false
+  }
+}

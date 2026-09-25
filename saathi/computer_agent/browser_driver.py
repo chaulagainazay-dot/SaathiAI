@@ -172,9 +172,12 @@ class LiveBrowserDriver:
         self._ws = _WS(ws_url)
         self._cmd("Page.enable")
         self._cmd("Runtime.enable")
+        # CDP endpoint readiness ≠ document ready (esp. file:// on slower Linux runners).
+        ready = self.wait_dom_ready(timeout=5.0)
         return BrowserEvidence("launch", True,
                                {"pid": self.proc.pid, "port": self.port,
-                                "profile_isolated": True, "loopback_only": True})
+                                "profile_isolated": True, "loopback_only": True,
+                                "dom_ready": ready})
 
     def _cmd(self, method: str, params: dict | None = None) -> dict:
         self._msg_id += 1
@@ -187,11 +190,42 @@ class LiveBrowserDriver:
                 return msg.get("result", {})
         return {}
 
+    def wait_dom_ready(self, timeout: float = 5.0) -> bool:
+        """Bounded poll until document.readyState is complete (or interactive with body)."""
+        deadline = time.monotonic() + float(timeout)
+        while time.monotonic() < deadline:
+            r = self._cmd(
+                "Runtime.evaluate",
+                {
+                    "expression": (
+                        "({state: document.readyState, "
+                        "hasBody: !!document.body, "
+                        "ready: document.readyState === 'complete' || "
+                        "(document.readyState === 'interactive' && !!document.body)})"
+                    ),
+                    "returnByValue": True,
+                },
+            )
+            val = (r.get("result") or {}).get("value") or {}
+            if isinstance(val, dict) and val.get("ready"):
+                return True
+            time.sleep(0.05)
+        return False
+
+    def wait_for_selector(self, selector: str, timeout: float = 5.0) -> bool:
+        """Bounded poll until querySelector matches. No unbounded retry."""
+        deadline = time.monotonic() + float(timeout)
+        while time.monotonic() < deadline:
+            if self.query_exists(selector):
+                return True
+            time.sleep(0.05)
+        return False
+
     def navigate(self, url: str) -> BrowserEvidence:
         self._cmd("Page.navigate", {"url": url})
-        time.sleep(0.4)
+        ready = self.wait_dom_ready(timeout=5.0)
         cur = self.current_url()
-        return BrowserEvidence("navigate", True, {"url": cur})
+        return BrowserEvidence("navigate", True, {"url": cur, "dom_ready": ready})
 
     def current_url(self) -> str:
         r = self._cmd("Runtime.evaluate",

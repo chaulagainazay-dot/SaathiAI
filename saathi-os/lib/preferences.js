@@ -12,7 +12,7 @@ export const PREF_KEYS = {
 };
 
 export const DEFAULTS = {
-  theme: "dark", // dark | light | system
+  theme: "light", // dark | light | system — premium light-blue is the default surface
   density: "standard", // compact | standard | comfortable
   experience: "expert", // beginner | expert
   sidebarExpanded: true,
@@ -67,7 +67,7 @@ export function savePreference(key, value) {
 export function applyDocumentPreferences({ theme, density }) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  let resolved = theme || "dark";
+  let resolved = theme || DEFAULTS.theme;
   if (resolved === "system") {
     const dark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
     resolved = dark === false ? "light" : "dark";
@@ -88,7 +88,7 @@ export function applyDocumentPreferences({ theme, density }) {
 export function applyAllPreferences(prefs) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  let resolved = prefs.theme || "dark";
+  let resolved = prefs.theme || DEFAULTS.theme;
   if (resolved === "system") {
     const dark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
     resolved = dark === false ? "light" : "dark";

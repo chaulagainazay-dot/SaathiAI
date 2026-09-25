@@ -26,12 +26,19 @@ export const ACTIVE_VOICE_STATES = new Set([
 ]);
 const VOICE_STATE_SET = new Set(VOICE_STATES);
 const SAFE_PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/;
+const SAFE_VOICE_URI = /^[^\u0000-\u001F\u007F]{0,240}$/;
+const SAFE_LOCALE = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,2}$/;
 
 export const DEFAULT_VOICE_PREFERENCES = Object.freeze({
   version: 1,
   enabled: true,
   profileId: "saathi_default",
   speakingRate: 1,
+  volume: 1,
+  browserVoiceURI: "",
+  locale: "en-US",
+  inputEnabled: true,
+  interruptionMode: "PUSH_TO_INTERRUPT",
 });
 
 export function normalizeVoicePreferences(value) {
@@ -45,6 +52,19 @@ export function normalizeVoicePreferences(value) {
     SAFE_PROFILE_ID.test(candidate.profileId)
       ? candidate.profileId
       : DEFAULT_VOICE_PREFERENCES.profileId;
+  const rawVolume = Number(candidate.volume);
+  const volume = Number.isFinite(rawVolume)
+    ? Math.min(1, Math.max(0, rawVolume))
+    : DEFAULT_VOICE_PREFERENCES.volume;
+  const browserVoiceURI =
+    typeof candidate.browserVoiceURI === "string" &&
+    SAFE_VOICE_URI.test(candidate.browserVoiceURI)
+      ? candidate.browserVoiceURI
+      : DEFAULT_VOICE_PREFERENCES.browserVoiceURI;
+  const locale =
+    typeof candidate.locale === "string" && SAFE_LOCALE.test(candidate.locale)
+      ? candidate.locale
+      : DEFAULT_VOICE_PREFERENCES.locale;
   return {
     version: 1,
     enabled:
@@ -53,6 +73,14 @@ export function normalizeVoicePreferences(value) {
         : DEFAULT_VOICE_PREFERENCES.enabled,
     profileId,
     speakingRate,
+    volume,
+    browserVoiceURI,
+    locale,
+    inputEnabled:
+      typeof candidate.inputEnabled === "boolean"
+        ? candidate.inputEnabled
+        : DEFAULT_VOICE_PREFERENCES.inputEnabled,
+    interruptionMode: "PUSH_TO_INTERRUPT",
   };
 }
 

@@ -1,0 +1,5 @@
+# VOICE_INTEGRATION
+
+States: IDLE READY LISTENING TRANSCRIBING THINKING SPEAKING INTERRUPTING DEGRADED ERROR CLOSED
+
+Navigation intents change UI context only — never authorize finance.

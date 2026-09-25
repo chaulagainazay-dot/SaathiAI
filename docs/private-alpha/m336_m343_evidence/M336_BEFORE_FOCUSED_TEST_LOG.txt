@@ -1,0 +1,145 @@
+.........F..F.F.F.F...F....F.......................F...                  [100%]
+=================================== FAILURES ===================================
+____________ test_start_fails_closed_on_unhealthy_external_frontend ____________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_start_fails_closed_on_unh0')
+dummy_process = <Popen: returncode: None args: ['sleep', '60']>
+
+    def test_start_fails_closed_on_unhealthy_external_frontend(tmp_path, dummy_process):
+        home = tmp_path / "saathi-home"
+        r = _run(["start"], home, extra_env=_env_backend_healthy_frontend_unhealthy(dummy_process.pid))
+        # 1. non-zero exit (fail-closed)
+        assert r.returncode != 0
+        # 2. accurate message: never claims ready; names the frontend blocker
+        assert "is ready" not in r.stdout
+>       assert "BLOCKER" in r.stdout and "NOT ready" in r.stdout
+E       AssertionError: assert ('BLOCKER' in '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n')
+E        +  where '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n' = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').stdout
+
+tests/test_m57_local.py:211: AssertionError
+_______________ test_start_reports_ready_only_when_both_healthy ________________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_start_reports_ready_only_0')
+
+    def test_start_reports_ready_only_when_both_healthy(tmp_path):
+        home = tmp_path / "saathi-home"
+        r = _run(
+            ["start"], home,
+            extra_env={
+                "SAATHI_LOCAL_ASSESS_BACKEND": "external-healthy 1782",
+                "SAATHI_LOCAL_ASSESS_FRONTEND": "external-healthy 48062",
+            },
+        )
+>       assert r.returncode == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').returncode
+
+tests/test_m57_local.py:262: AssertionError
+____________ test_start_fails_closed_on_unrelated_backend_occupant _____________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_start_fails_closed_on_unr0')
+
+    def test_start_fails_closed_on_unrelated_backend_occupant(tmp_path):
+        home = tmp_path / "saathi-home"
+        r = _run(
+            ["start"], home,
+            extra_env={"SAATHI_LOCAL_ASSESS_BACKEND": "unrelated 99999"},
+        )
+        assert r.returncode != 0
+>       assert "UNRELATED PID 99999" in r.stdout
+E       AssertionError: assert 'UNRELATED PID 99999' in '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n'
+E        +  where '  ! python venv missing at .venv (run: python -m venv .venv && pip install -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n' = CompletedProcess(args=['bash', '/private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratch...l -e .)\n  ! frontend deps missing (run: cd saathi-os && npm install)\nenvironment not ready; see doctor\n', stderr='').stdout
+
+tests/test_m57_local.py:282: AssertionError
+____________________ test_prepare_idempotent_and_no_secrets ____________________
+
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_prepare_idempotent_and_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bc14e00>
+
+    def test_prepare_idempotent_and_no_secrets(tmp_path, monkeypatch):
+        # use real repo dirs but ensure prepare is re-runnable
+        r1 = prepare(install_deps=False)
+        r2 = prepare(install_deps=False)
+>       assert r1["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:103: AssertionError
+___________________________ test_init_with_platform ____________________________
+
+env = (<saathi.platform.service.PlatformService object at 0x10bc41a30>, 'Teom2ei7nMEHGe_E--MXj01eIhCx9CULDagc5kVt1G0', Platf...th('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_init_with_platform0'))
+
+    def test_init_with_platform(env):
+        platform, token, ctx, core, tmp = env
+        r = init_first_run(
+            acknowledge_local_only=True,
+            platform=platform,
+            enable_hcg_demo=False,
+            enable_ielts_demo=False,
+        )
+>       assert r["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:125: AssertionError
+___________________ test_upgrade_preflight_and_local_fixture ___________________
+
+env = (<saathi.platform.service.PlatformService object at 0x10bac5220>, '1xeaVc_aHChgSFtyAhTK7tSgkDfZ7C1-rxfh1VAxE5M', Platf...ivate/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_upgrade_preflight_and_loc0'))
+tmp_path = PosixPath('/private/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_upgrade_preflight_and_loc0')
+
+    def test_upgrade_preflight_and_local_fixture(env, tmp_path):
+        pre = upgrade_preflight()
+        assert pre["remote_fetch"] is False
+        assert pre["production_authorized"] is False
+        fix = tmp_path / "fixture"
+        fix.mkdir()
+        (fix / "release_fixture.json").write_text(
+            json.dumps({"target_version": "0.1.0-private-alpha.1-fixture"}),
+            encoding="utf-8",
+        )
+        db = tmp_path / "upgrade.db"
+        r = apply_local_upgrade(fixture_dir=fix, work_db=db)
+>       assert r["ok"] is True
+E       assert False is True
+
+tests/test_m157_private_alpha.py:211: AssertionError
+____________________ test_private_alpha_certification_gate _____________________
+
+env = (<saathi.platform.service.PlatformService object at 0x10c14a6c0>, 'CsAHHS_opmMRBiyrHp4Nyvu0xVjzEjPhZWQ5xswKdJM', Platf...ivate/var/folders/jd/y72wd18x7tn3g0_sh72kcl0w0000gn/T/pytest-of-macbookpro/pytest-35/test_private_alpha_certificati0'))
+
+    def test_private_alpha_certification_gate(env):
+        platform, token, ctx, core, tmp = env
+        report = run_private_alpha_certification(
+            platform=platform, token=token, write_evidence=False
+        )
+        assert report["production_authorized"] is False
+        assert report["public_exposure_authorized"] is False
+>       assert report["fail_count"] == 0
+E       assert 1 == 0
+
+tests/test_m157_private_alpha.py:372: AssertionError
+______________________ test_release_gate_passes_baseline _______________________
+
+    def test_release_gate_passes_baseline():
+        # real run of the safe gates (storage/config/db/backup/secret) — should pass
+        code, report = RG.release_check(strict_dirty=False)
+>       assert code in (RG.EXIT_READY, RG.EXIT_WARN)
+E       assert 3 in (0, 1)
+
+tests/test_ops.py:210: AssertionError
+=============================== warnings summary ===============================
+tests/test_ops.py::test_real_backup_and_restore_roundtrip
+tests/test_ops.py::test_verify_restore_detects_checksum_mismatch
+tests/test_ops.py::test_release_gate_passes_baseline
+  /private/tmp/claude-501/-Users-macbookpro/8448d22c-1ee1-4b08-ae21-aee38773ea9c/scratchpad/baseline-wt/saathi/ops/backup.py:112: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    tar.extractall(target)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_m57_local.py::test_start_fails_closed_on_unhealthy_external_frontend
+FAILED tests/test_m57_local.py::test_start_reports_ready_only_when_both_healthy
+FAILED tests/test_m57_local.py::test_start_fails_closed_on_unrelated_backend_occupant
+FAILED tests/test_m157_private_alpha.py::test_prepare_idempotent_and_no_secrets
+FAILED tests/test_m157_private_alpha.py::test_init_with_platform - assert Fal...
+FAILED tests/test_m157_private_alpha.py::test_upgrade_preflight_and_local_fixture
+FAILED tests/test_m157_private_alpha.py::test_private_alpha_certification_gate
+FAILED tests/test_ops.py::test_release_gate_passes_baseline - assert 3 in (0, 1)
+8 failed, 47 passed, 3 warnings in 11.61s

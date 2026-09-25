@@ -1,0 +1,16 @@
+COMMAND: python -m pytest -q -p no:randomly tests/ --ignore=tests/evaluation
+RESULT: PASS WITH PRE-EXISTING FAILURES
+TOTAL: 5945 passed, 8 failed, 1 skipped (931s)
+
+PREDECESSOR SUITES (all green):
+  tests/test_m320_m327_provider_contracts.py + tests/test_m312_m319_connectivity_governance.py
+    -> 112 passed
+  tests/test_m240..m247, m248..m255, m256..m263, m264..m271, m272..m279 -> 84 passed
+  tests/test_m280..m287, m288..m295, m296..m303, m304..m311 -> 37 passed
+
+THE 8 FAILURES ARE PRE-EXISTING AND UNRELATED TO M328-M335.
+Reproduced on a clean clone at the base SHA 5b505f1a119989ec78856f969cb9fe3184bc784f:
+  tests/test_m157_private_alpha.py (4 failures at base SHA)
+  tests/test_m57_local.py (3 failures at base SHA)
+  tests/test_ops.py::test_release_gate_passes_baseline (1 failure at base SHA)
+They are environment/port/bootstrap-state dependent and predate this branch.

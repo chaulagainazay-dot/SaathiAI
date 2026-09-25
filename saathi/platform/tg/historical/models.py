@@ -16,6 +16,8 @@ from typing import Any
 
 
 SCHEMA_VERSION = "m184.tg.historical.v1"
+LEGACY_NEPSE_CALENDAR_VERSION = "NEPSE_CALENDAR_V1_LEGACY_INVALID"
+LEGACY_NEPSE_CALENDAR_POLICY = "LEGACY_MON_FRI_INVALID"
 
 
 def _id(prefix: str) -> str:
@@ -128,6 +130,10 @@ class MarketCalendarSpec:
     timezone: str
     session: TradingSession
     holidays: list[str] = field(default_factory=list)  # YYYY-MM-DD
+    calendar_version: str = ""
+    calendar_source_version: str = ""
+    calendar_coverage_status: str = "UNKNOWN"
+    calendar_policy: str = ""
     notes: list[str] = field(default_factory=list)
 
     def to_public(self) -> dict[str, Any]:
@@ -136,6 +142,10 @@ class MarketCalendarSpec:
             "timezone": self.timezone,
             "session": self.session.to_public(),
             "holidays": list(self.holidays),
+            "calendar_version": self.calendar_version,
+            "calendar_source_version": self.calendar_source_version,
+            "calendar_coverage_status": self.calendar_coverage_status,
+            "calendar_policy": self.calendar_policy,
             "notes": list(self.notes),
         }
 
@@ -220,6 +230,10 @@ class DatasetCoverage:
     instruments: list[str] = field(default_factory=list)
     missing_sessions: int = 0
     coverage_ratio: float = 0.0
+    calendar_coverage_status: str = "UNKNOWN"
+    confirmed_open_sessions: int = 0
+    potential_open_sessions: int = 0
+    confirmed_closed_sessions: int = 0
 
     def to_public(self) -> dict[str, Any]:
         return {
@@ -230,6 +244,10 @@ class DatasetCoverage:
             "instruments": list(self.instruments),
             "missing_sessions": self.missing_sessions,
             "coverage_ratio": self.coverage_ratio,
+            "calendar_coverage_status": self.calendar_coverage_status,
+            "confirmed_open_sessions": self.confirmed_open_sessions,
+            "potential_open_sessions": self.potential_open_sessions,
+            "confirmed_closed_sessions": self.confirmed_closed_sessions,
         }
 
 
@@ -344,11 +362,22 @@ class DatasetManifest:
     classification: DatasetClassification = DatasetClassification.INCOMPLETE
     adjustment_methodology: AdjustmentMethodology = AdjustmentMethodology.NONE
     calendar_name: str = "DEFAULT_24_5"
+    calendar_version: str = ""
+    calendar_source_version: str = ""
+    calendar_coverage_status: str = "UNKNOWN"
+    calendar_policy: str = ""
     corporate_actions: list[CorporateAction] = field(default_factory=list)
     source: DatasetSource | None = None
     notes: list[str] = field(default_factory=list)
 
     def to_public(self) -> dict[str, Any]:
+        calendar_version = self.calendar_version
+        calendar_policy = self.calendar_policy
+        if self.calendar_name == "NEPSE" and not calendar_version:
+            # Backward-compatible read path: absence of metadata must never
+            # relabel a pre-migration NEPSE artifact as canonical.
+            calendar_version = LEGACY_NEPSE_CALENDAR_VERSION
+            calendar_policy = calendar_policy or LEGACY_NEPSE_CALENDAR_POLICY
         return {
             "schema_version": self.schema_version,
             "dataset_id": self.dataset_id,
@@ -361,6 +390,10 @@ class DatasetManifest:
             "classification": self.classification.value,
             "adjustment_methodology": self.adjustment_methodology.value,
             "calendar_name": self.calendar_name,
+            "calendar_version": calendar_version or "UNSPECIFIED",
+            "calendar_source_version": self.calendar_source_version,
+            "calendar_coverage_status": self.calendar_coverage_status,
+            "calendar_policy": calendar_policy or "UNSPECIFIED",
             "corporate_actions": [c.to_public() for c in self.corporate_actions],
             "source": self.source.to_public() if self.source else None,
             "notes": list(self.notes),
@@ -429,6 +462,10 @@ class DatasetVersion:
 
     @property
     def promotable(self) -> bool:
+        calendar_covered = (
+            self.manifest.calendar_name != "NEPSE"
+            or self.manifest.calendar_coverage_status == "COMPLETE"
+        )
         return (
             self.immutable
             and self.status in (ImportStatus.ACCEPTED, ImportStatus.ACCEPTED_WITH_WARNINGS)
@@ -439,6 +476,7 @@ class DatasetVersion:
             )
             and self.quality.verdict
             in (DataQualityVerdict.ACCEPTED, DataQualityVerdict.ACCEPTED_WITH_WARNINGS)
+            and calendar_covered
         )
 
     def to_public(self, *, include_bars: bool = False) -> dict[str, Any]:

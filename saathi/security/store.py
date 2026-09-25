@@ -10,6 +10,7 @@ never needs changing when users are added.
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import sqlite3
 import time
@@ -205,6 +206,13 @@ VALUES
     ('role-admin',  'Admin',  '["read","write","delete","invite"]', 1750963200),
     ('role-member', 'Member', '["read","write"]', 1750963200),
     ('role-viewer', 'Viewer', '["read"]', 1750963200);
+
+-- Generic local key/value settings (e.g. one-time session-policy migration marker).
+CREATE TABLE IF NOT EXISTS app_kv (
+    key         TEXT PRIMARY KEY,
+    value       TEXT,
+    updated_at  REAL
+);
 """
 
 _INDEXES = """
@@ -230,9 +238,18 @@ class SecurityStore:
     from the async event loop (single thread).
     """
 
+    # Operators (and the test suite) can redirect the default store away from the
+    # real home directory. An explicit ``db_path`` still wins; when neither is
+    # given the historical ``~/.saathi/security.db`` default is unchanged.
+    _ENV_DB_PATH = "SAATHI_SECURITY_DB"
+
     def __init__(self, db_path: "str | Path | None" = None,
                  now: Callable[[], float] = time.time):
-        self.path = Path(db_path) if db_path else (Path.home() / ".saathi" / "security.db")
+        if db_path:
+            self.path = Path(db_path)
+        else:
+            override = os.environ.get(self._ENV_DB_PATH, "").strip()
+            self.path = Path(override) if override else (Path.home() / ".saathi" / "security.db")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._now = now
         self.db = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -281,6 +298,40 @@ class SecurityStore:
             (user_id,),
         ).fetchone()
         return dict(row) if row else None
+
+    def active_owner_has_password(self) -> bool:
+        """Return whether an active canonical owner has a stored password.
+
+        This deliberately returns only a boolean so callers such as the unlock
+        status endpoint never need to handle credential material.
+        """
+        row = self.db.execute(
+            "SELECT 1 FROM users u "
+            "JOIN user_roles ur ON ur.user_id=u.id AND ur.role_id='role-owner' "
+            "JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' AND LENGTH(p.hash) > 0 LIMIT 1"
+        ).fetchone()
+        return row is not None
+
+    def verify_active_owner_password(self, password: str) -> bool:
+        """Verify a password against the active canonical owner's latest credential.
+
+        Credential material stays inside the security-store boundary; callers only
+        receive a boolean result.
+        """
+        if not password:
+            return False
+        row = self.db.execute(
+            "SELECT p.hash FROM users u "
+            "JOIN user_roles ur ON ur.user_id=u.id AND ur.role_id='role-owner' "
+            "JOIN passwords p ON p.user_id=u.id "
+            "WHERE u.status='active' AND LENGTH(p.hash) > 0 "
+            "ORDER BY p.created_at DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return False
+        from saathi import authsec
+        return authsec.verify_password(password, row["hash"])
 
     def password_history(self, user_id: str, limit: int = 10) -> list[dict]:
         rows = self.db.execute(
@@ -351,6 +402,87 @@ class SecurityStore:
         )
         self.db.commit()
         return cur.rowcount
+
+    def session_prune(self, user_id: str) -> dict:
+        """Hard-delete expired AND revoked sessions. Returns {expired, revoked}.
+
+        Live sessions (not expired, not revoked) are never touched. Safe to run
+        opportunistically (e.g. on each login) for a private single-owner install.
+        """
+        now = self._now()
+        exp = self.db.execute(
+            "DELETE FROM sessions WHERE user_id=? AND revoked=0 AND expires_at <= ?",
+            (user_id, now),
+        ).rowcount
+        rev = self.db.execute(
+            "DELETE FROM sessions WHERE user_id=? AND revoked=1",
+            (user_id,),
+        ).rowcount
+        self.db.commit()
+        return {"expired": exp, "revoked": rev}
+
+    # ── generic kv (local settings / migration markers) ──────────────────────
+    def kv_get(self, key: str) -> "str | None":
+        row = self.db.execute("SELECT value FROM app_kv WHERE key=?", (key,)).fetchone()
+        return row["value"] if row else None
+
+    def kv_set(self, key: str, value: str) -> None:
+        self.db.execute(
+            "INSERT INTO app_kv (key, value, updated_at) VALUES (?,?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            (key, value, self._now()),
+        )
+        self.db.commit()
+
+    def session_enforce_cap(self, user_id: str, cap: int, keep_hash: str = "") -> int:
+        """Bound active sessions to `cap` via LRU eviction (revoke oldest by
+        last_seen). Never revokes `keep_hash` (the current/just-minted session)
+        and never touches expired/revoked rows. Soft-revoke (audit-friendly);
+        opportunistic prune hard-deletes them later. Returns count revoked."""
+        if cap <= 0:
+            return 0
+        now = self._now()
+        rows = self.db.execute(
+            "SELECT token_hash FROM sessions WHERE user_id=? AND revoked=0 AND expires_at>?"
+            " ORDER BY last_seen DESC",
+            (user_id, now),
+        ).fetchall()
+        active = [r["token_hash"] for r in rows]
+        # keep the `cap` most-recently-used; revoke the rest, never the current one
+        to_revoke = [h for h in active[cap:] if h != keep_hash]
+        for h in to_revoke:
+            self.db.execute("UPDATE sessions SET revoked=1 WHERE token_hash=?", (h,))
+        if to_revoke:
+            self.db.commit()
+        return len(to_revoke)
+
+    def session_counts(self, user_id: str) -> dict:
+        """Non-secret session metadata for owner diagnostics — no tokens leaked."""
+        now = self._now()
+        rows = self.db.execute(
+            "SELECT revoked, expires_at, first_seen FROM sessions WHERE user_id=?",
+            (user_id,),
+        ).fetchall()
+        active = expired = revoked = 0
+        oldest_active = None
+        for r in rows:
+            d = dict(r)
+            if d.get("revoked"):
+                revoked += 1
+            elif (d.get("expires_at") or 0) <= now:
+                expired += 1
+            else:
+                active += 1
+                fs = d.get("first_seen") or now
+                if oldest_active is None or fs < oldest_active:
+                    oldest_active = fs
+        return {
+            "active": active,
+            "expired": expired,
+            "revoked": revoked,
+            "total": len(rows),
+            "oldest_active_age_seconds": (int(now - oldest_active) if oldest_active else 0),
+        }
 
     def session_rename(self, session_id: str, label: str) -> bool:
         cur = self.db.execute("UPDATE sessions SET label=? WHERE id=?",

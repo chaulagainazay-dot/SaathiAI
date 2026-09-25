@@ -5,6 +5,7 @@ Exit codes are the documented contract (docs/RELEASE_GATES.md).
 """
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -23,6 +24,35 @@ EXIT_STORAGE = 9
 EXIT_VERSION = 10
 EXIT_DIRTY = 11
 EXIT_INTERNAL = 12
+
+
+# M336–M343 — private-key detector precision.
+#
+# The `private_key_block` scanner rule matches the PEM *header* alone, with no
+# requirement for key material. Security-control modules legitimately embed that
+# header as non-secret material — a rejection sample proving the payload
+# sanitiser refuses private keys, and a detector's own pattern definition — so
+# the gate was blocking every release on its own safety machinery.
+#
+# The fix raises precision instead of widening exclusions: a private_key_block
+# hit counts as a strong credential only when real key material follows the
+# header. A genuine PEM private key always carries a base64 body; a bare marker
+# never does. No file is allowlisted and no path exclusion is broadened.
+_PEM_HEADER = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")
+_PEM_WITH_BODY = re.compile(
+    r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----"
+    r"[\r\n\\n\s]*[A-Za-z0-9+/=\r\n\\n\s]{100,}"
+)
+
+
+def pem_carries_key_material(text: str) -> bool:
+    """True when a PEM private-key header is followed by actual key material.
+
+    A bare `-----BEGIN … PRIVATE KEY-----` marker with no base64 body is a
+    non-material marker (test fixture, rejection sample, pattern definition),
+    not a leaked credential.
+    """
+    return bool(_PEM_WITH_BODY.search(text))
 
 
 def _git_dirty() -> list[str]:
@@ -101,10 +131,32 @@ def release_check(*, run_secret_scan: bool = True, run_db: bool = True,
             strong = {f: [h for h in r.hits if h.rule in _STRONG]
                       for f, r in raw.items()}
             strong = {f: hs for f, hs in strong.items() if hs}
+            # Split private_key_block hits into credential-bearing (blocking) and
+            # non-material markers (reported, not blocking). Every other strong
+            # rule blocks unchanged.
+            markers = []
+            material = {}
+            for f, hs in strong.items():
+                try:
+                    text = Path(f).read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    text = ""
+                keep = []
+                for h in hs:
+                    if h.rule == "private_key_block" and not pem_carries_key_material(text):
+                        markers.append({"file": str(Path(f).relative_to(ROOT)),
+                                        "rule": h.rule, "reason": "PEM header without key material"})
+                        continue
+                    keep.append(h)
+                if keep:
+                    material[f] = keep
             report["gates"]["secret_scan"] = {
-                "clean": not strong, "strong_hits": sum(len(v) for v in strong.values()),
-                "note": "counts strong-credential rules only; test/doc excluded"}
-            if strong:
+                "clean": not material,
+                "strong_hits": sum(len(v) for v in material.values()),
+                "non_material_markers": markers,
+                "note": ("counts strong-credential rules only; test/doc excluded; "
+                         "private-key hits require actual key material")}
+            if material:
                 return EXIT_SECURITY, report
         except Exception as exc:
             report["gates"]["secret_scan"] = {"error": repr(exc)[:120]}

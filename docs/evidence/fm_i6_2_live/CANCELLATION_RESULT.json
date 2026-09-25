@@ -1,0 +1,7 @@
+{
+  "evidence": "fm_i6_2_live.cancellation_result.v1",
+  "status": "SKIPPED",
+  "reason": "Live Tests A/B not run because memory gate denied admission",
+  "process_kill": false,
+  "inference_attempted": false
+}

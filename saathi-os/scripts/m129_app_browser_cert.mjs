@@ -187,10 +187,10 @@ reset_skill_runtime_for_tests(platform)
     spawnLogged(process.execPath, [nextBin, "dev", "-p", String(uiPort), "-H", "127.0.0.1"], {
       cwd: UI_ROOT,
     });
-    await waitHttp(`${UI}/apps`, 90000).catch(() => null);
+    await waitHttp(`${UI}/app-launcher`, 90000).catch(() => null);
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    await page.goto(`${UI}/apps`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.goto(`${UI}/app-launcher`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.evaluate((token) => {
       try {
         localStorage.setItem("saathi_platform_token", token);

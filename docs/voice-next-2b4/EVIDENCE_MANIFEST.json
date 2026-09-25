@@ -1,0 +1,48 @@
+{
+  "mission": "V-NEXT-2B.4",
+  "verdict": "WHISPER_CS_REMAINS_BEST_LOCAL_CANDIDATE",
+  "source_sha": "1a83d539e558b88f72e2219b7f7d9495b26c14b9",
+  "source_pr": 31,
+  "gates_lowered": false,
+  "head_to_head": {
+    "en_intent": {
+      "whisper": 0.8,
+      "omni": 0.03333333333333333
+    },
+    "ne_intent": {
+      "whisper": 0.5714285714285714,
+      "omni": 0.0
+    },
+    "mix_intent": {
+      "whisper": 0.5217391304347826,
+      "omni": 0.06666666666666667
+    },
+    "numeric": {
+      "whisper": 0.3976190476190476,
+      "omni": 0.0
+    },
+    "rss": {
+      "whisper": 1433.46875,
+      "omni": 1623.75
+    }
+  },
+  "omni_universal": false,
+  "owner_completion": {
+    "total": 17,
+    "speech_detected": 15,
+    "ambient_or_silent": 2,
+    "failed": 0,
+    "complete_for_tooling": true,
+    "complete_for_intentional_owner_accent": false,
+    "rms_threshold": 0.01
+  },
+  "product_primary": "browser_speech_recognition",
+  "best_local": "bijay-small-ne-en-v3.1",
+  "fine_tuning_performed": false,
+  "router_implemented": false,
+  "tip_sha": "1f351435462dfffeedd01326f9551b4b284cb71e",
+  "draft_pr": 32,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/32",
+  "branch": "qualification/v-next-2b4-omnilingual-asr",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b4"
+}

@@ -1,0 +1,80 @@
+{
+  "mission": "NEPSE-TXN-1",
+  "starting_commit": "13485618a7df776bbf2935c85597c6c020bf6696",
+  "status": "CERTIFIED_WITH_LIMITATIONS",
+  "verdict": "NEPSE_TRANSACTION_IMPORT_CONTRACT_CERTIFIED_WITH_LIMITATIONS",
+  "source_schema_status": "SOURCE_SCHEMA_UNVERIFIED",
+  "real_source_compatibility_certified": false,
+  "transaction_quantity_convention": "UNSIGNED_POSITIVE_WHOLE_SHARES",
+  "currency_policy": "NPR_ONLY_UNTIL_SOURCE_PROVES_OTHERWISE",
+  "focused_tests": [
+    {
+      "scope": "nepse_transaction_import",
+      "passed": 52,
+      "failed": 0
+    },
+    {
+      "scope": "nepse_md1_calendar_historical_market_data",
+      "passed": 284,
+      "failed": 0
+    },
+    {
+      "scope": "fund_ledger_and_trading_authority",
+      "passed": 327,
+      "failed": 0
+    }
+  ],
+  "full_offline_regression": {
+    "command": "pytest tests -m \"not browser and not live and not external and not network\" -q",
+    "passed": 7844,
+    "skipped": 8,
+    "deselected": 12,
+    "failed": 0,
+    "warnings": 324,
+    "elapsed_seconds": 584.90
+  },
+  "storage_gate": {
+    "preferred_floor_gb": 10.0,
+    "free_before_gb": 14.4,
+    "free_after_gb": 11.3,
+    "blocked": false
+  },
+  "fresh_context_review": {
+    "complete": true,
+    "findings_fixed_test_first": 5,
+    "categories": [
+      "numeric_overflow",
+      "duplicate_availability_conflict",
+      "formula_header",
+      "transaction_misclassification",
+      "untrusted_error_detail"
+    ]
+  },
+  "authority": {
+    "ledger_mutations": 0,
+    "position_mutations": 0,
+    "cash_mutations": 0,
+    "oms_orders": 0,
+    "execution_gateway_calls": 0,
+    "trading_guardian_calls": 0,
+    "portfolio_construction_calls": 0,
+    "portfolio_risk_calls": 0,
+    "network_calls": 0,
+    "broker_connections": 0,
+    "live_orders": 0
+  },
+  "safety_status": [
+    "NO_LIVE_TRADING",
+    "NO_REAL_BROKER",
+    "NO_LEDGER_MUTATION_FROM_IMPORT",
+    "NO_WITHDRAWAL",
+    "NO_LEVERAGE",
+    "NO_LLM_EXECUTION_AUTHORITY"
+  ],
+  "working_tree_committed_at_evidence_generation": false,
+  "next_dependency_recommendation": [
+    "MD-1.1_VENUE_CONSISTENCY",
+    "NEPSE-SCHEMA-1_WHEN_GENUINE_HEADERS_EXIST",
+    "NEPSE-LEDGER-1_CONTRACT_DESIGN_ONLY_IF_HEADERS_REMAIN_UNAVAILABLE"
+  ]
+}

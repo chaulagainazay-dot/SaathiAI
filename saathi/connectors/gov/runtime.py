@@ -31,9 +31,18 @@ from saathi.connectors.gov.side_effects import (
     evaluate_side_effect,
 )
 
+from saathi.runtime_paths import committed_evidence_dir, runtime_evidence_dir
+
 ROOT = Path(__file__).resolve().parents[3]
-EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m27"
-M28_EVIDENCE_DIR = ROOT / "docs" / "evidence" / "m28"
+
+# Runtime logs (connector_events.jsonl, incidents.json, per-request evidence
+# blobs) are produced continuously by ordinary operation, so they must not land
+# in the committed evidence tree — see saathi/runtime_paths.py. The committed
+# directories remain the historical record and are still read from.
+EVIDENCE_DIR = runtime_evidence_dir("m27")
+M28_EVIDENCE_DIR = runtime_evidence_dir("m28")
+COMMITTED_EVIDENCE_DIR = committed_evidence_dir("m27")
+COMMITTED_M28_EVIDENCE_DIR = committed_evidence_dir("m28")
 
 # Reuse M26 rollout modes
 try:

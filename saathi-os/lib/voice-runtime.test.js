@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import fs from "node:fs";
 import {
   INITIAL_VOICE_RUNTIME,
   micButtonLabel,
@@ -94,5 +95,17 @@ describe("voice-runtime client", () => {
       },
     });
     assert.equal(state.interrupted, true);
+  });
+
+  it("uses one provider-owned session creation flight and one recognition owner", () => {
+    const source = fs.readFileSync(
+      new URL("../components/voice/VoiceRuntimeProvider.jsx", import.meta.url),
+      "utf8",
+    );
+    assert.match(source, /sessionCreateRef/);
+    assert.match(source, /if \(sessionCreateRef\.current\) return sessionCreateRef\.current\.promise/);
+    assert.match(source, /startPipeline: false/);
+    assert.match(source, /epoch !== sessionEpochRef\.current/);
+    assert.match(source, /voiceRuntimeActions\.finish/);
   });
 });

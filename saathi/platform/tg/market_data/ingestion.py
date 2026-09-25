@@ -91,8 +91,10 @@ class IngestionEngine:
 
         defaults = {
             "symbol": symbol_default or "",
-            "exchange": ds.get("exchange") or "",
+            "exchange": "" if str(ds.get("exchange") or "").upper() == "UNKNOWN" else (ds.get("exchange") or ""),
+            "market": ds.get("market") or "",
             "asset_class": ds.get("asset_class") or "equity",
+            "is_synthetic": bool(ds.get("is_synthetic")),
             "timezone": ds.get("timezone") or "UTC",
             "currency": ds.get("currency") or "USD",
             "frequency": ds.get("frequency") or "1d",

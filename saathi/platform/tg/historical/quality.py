@@ -4,6 +4,7 @@ Fail-closed. Quarantined/rejected datasets cannot promote strategies.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 from typing import Any
 
@@ -13,7 +14,17 @@ from saathi.platform.tg.historical.models import (
     DataQualityVerdict,
     DatasetCoverage,
 )
-from saathi.platform.tg.historical.calendars import expected_sessions, get_market_calendar
+from saathi.platform.nepse.calendar import (
+    NEPAL_TZ,
+    CalendarCoverageStatus,
+    NepseCalendar,
+    SessionClassification,
+)
+from saathi.platform.tg.historical.calendars import (
+    expected_session_audit,
+    expected_sessions,
+    get_market_calendar,
+)
 
 
 MAX_JUMP = Decimal("0.50")
@@ -31,10 +42,12 @@ def evaluate_dataset_quality(
     benchmark_present: bool = False,
     sector_coverage_ratio: float = 1.0,
     corporate_action_status: str = "NONE",
+    nepse_calendar: NepseCalendar | None = None,
 ) -> DataQualityReport:
     findings: list[dict[str, Any]] = []
     warnings: list[str] = []
     missing = duplicates = outliers = invalid_ohlc = zero_px = neg_vol = 0
+    confirmed_closed_bars = 0
 
     if not bars:
         return DataQualityReport(
@@ -85,7 +98,38 @@ def evaluate_dataset_quality(
     instruments = sorted({b.instrument for b in bars})
     times = [b.ts for b in bars]
     start, end = min(times), max(times)
-    expected = expected_sessions(calendar_name, start, end, timeframe=timeframe)
+    session_audit = expected_session_audit(
+        calendar_name,
+        start,
+        end,
+        timeframe=timeframe,
+        nepse_calendar=nepse_calendar,
+    )
+    expected = (
+        [item.session_start_epoch for item in session_audit.sessions if item.is_expected]
+        if calendar_name == "NEPSE"
+        else expected_sessions(calendar_name, start, end, timeframe=timeframe)
+    )
+    if calendar_name == "NEPSE":
+        if session_audit.coverage_status is CalendarCoverageStatus.HOLIDAY_COVERAGE_UNKNOWN:
+            warnings.append("nepse_holiday_coverage_unknown")
+            findings.append(
+                {
+                    "code": "HOLIDAY_COVERAGE_UNKNOWN",
+                    "detail": "weekly candidates retained; certified backtest coverage unavailable",
+                }
+            )
+        classification_by_day = {item.day: item.classification for item in session_audit.sessions}
+        for bar in bars:
+            local_day = datetime.fromtimestamp(bar.ts, tz=dt_timezone.utc).astimezone(NEPAL_TZ).date()
+            if classification_by_day.get(local_day) is SessionClassification.CONFIRMED_CLOSED:
+                confirmed_closed_bars += 1
+                findings.append(
+                    {
+                        "code": "CONFIRMED_CLOSED_SESSION_BAR",
+                        "detail": f"{bar.instrument}@{local_day.isoformat()}",
+                    }
+                )
     # multi-instrument: estimate missing as expected * n_inst - unique keys for primary
     primary = instruments[0]
     primary_ts = {b.ts for b in bars if b.instrument == primary}
@@ -118,6 +162,7 @@ def evaluate_dataset_quality(
     # Critical failures → REJECTED / QUARANTINED
     critical = invalid_ohlc > 0 or neg_vol > 0 or zero_px > 0 or out_of_order > 0
     critical = critical or (duplicates > max(2, int(0.05 * len(bars))))
+    critical = critical or confirmed_closed_bars > 0
     if get_market_calendar(calendar_name) is None:
         critical = True
 
@@ -190,13 +235,25 @@ def build_coverage(
     *,
     calendar_name: str = "DEFAULT_24_5",
     timeframe: str = "1d",
+    nepse_calendar: NepseCalendar | None = None,
 ) -> DatasetCoverage:
     if not bars:
         return DatasetCoverage()
     times = [b.ts for b in bars]
     instruments = sorted({b.instrument for b in bars})
     start, end = min(times), max(times)
-    expected = expected_sessions(calendar_name, start, end, timeframe=timeframe)
+    session_audit = expected_session_audit(
+        calendar_name,
+        start,
+        end,
+        timeframe=timeframe,
+        nepse_calendar=nepse_calendar,
+    )
+    expected = (
+        [item.session_start_epoch for item in session_audit.sessions if item.is_expected]
+        if calendar_name == "NEPSE"
+        else expected_sessions(calendar_name, start, end, timeframe=timeframe)
+    )
     primary = instruments[0]
     primary_ts = {b.ts for b in bars if b.instrument == primary}
     missing = max(0, len(expected) - len(primary_ts)) if expected else 0
@@ -209,4 +266,8 @@ def build_coverage(
         instruments=instruments,
         missing_sessions=missing,
         coverage_ratio=min(1.0, ratio),
+        calendar_coverage_status=session_audit.coverage_status.value,
+        confirmed_open_sessions=session_audit.confirmed_open_count,
+        potential_open_sessions=session_audit.potential_open_count,
+        confirmed_closed_sessions=session_audit.confirmed_closed_count,
     )

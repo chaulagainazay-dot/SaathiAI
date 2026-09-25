@@ -1,0 +1,150 @@
+{
+  "record": "SAATHIOS_FINAL_SECURITY_AUDIT",
+  "api": "http://127.0.0.1:8766",
+  "findings": [
+    {
+      "check": "passwordless login rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "empty password rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "wrong password rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "auth error does not enumerate accounts",
+      "ok": true,
+      "detail": "{\"detail\": {\"code\": \"AUTH_FAILED\", \"message\": \"auth_failed\"}}"
+    },
+    {
+      "check": "correct password authenticates",
+      "ok": true,
+      "detail": "http 200"
+    },
+    {
+      "check": "forged token rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "no token rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "revoked session rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "logged-out token rejected",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "each login mints a distinct session token",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "viewer cannot create a project",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "operator cannot invite (no role escalation)",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "operator cannot change roles",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "cross-tenant read requires a valid session",
+      "ok": true,
+      "detail": "http 401"
+    },
+    {
+      "check": "unknown workspace refused",
+      "ok": true,
+      "detail": "http 403 WORKSPACE_ISOLATION"
+    },
+    {
+      "check": "cross-organization workspace refused",
+      "ok": true,
+      "detail": "http 403 MEMBERSHIP_REVOKED"
+    },
+    {
+      "check": "duplicate mission returns a conflict, not a 500",
+      "ok": true,
+      "detail": "http 409"
+    },
+    {
+      "check": "contradictory approval scope refused at request time",
+      "ok": true,
+      "detail": "http 400"
+    },
+    {
+      "check": "self-approval refused",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "viewer cannot decide an approval",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "approval is single-use",
+      "ok": true,
+      "detail": "http 403"
+    },
+    {
+      "check": "execution without approval fails closed",
+      "ok": true,
+      "detail": "http 409 "
+    },
+    {
+      "check": "no traceback, path or hash leaked in error bodies",
+      "ok": true,
+      "detail": "none"
+    },
+    {
+      "check": "all hard authorities remain false",
+      "ok": true,
+      "detail": "none true"
+    },
+    {
+      "check": "no public registration endpoint",
+      "ok": true,
+      "detail": "http 405"
+    },
+    {
+      "check": "no public SaathiOS listener",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "totals": {
+    "checks": 26,
+    "passed": 26,
+    "failed": 0
+  },
+  "assertions": {
+    "PASSWORDLESS_LOGIN_REJECTED": true,
+    "PUBLIC_LISTENER_DETECTED": false,
+    "CROSS_WORKSPACE_ACCESS": false,
+    "SELF_APPROVAL_ALLOWED": false,
+    "RAW_TRACEBACK_EXPOSED": false,
+    "HARD_AUTHORITIES_TRUE": 0
+  },
+  "verdict": "SECURITY_AUDIT_PASSED"
+}

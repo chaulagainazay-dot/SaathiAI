@@ -1,0 +1,15 @@
+{
+  "security_ok": true,
+  "provider_isolation": true,
+  "llm_authority_scan": {
+    "llm_may_approve": false,
+    "llm_may_activate": false
+  },
+  "schema_ok": true,
+  "refuse_connect": true,
+  "refuse_account": true,
+  "refuse_order": true,
+  "refuse_canary": true,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "external_domains_called": []
+}

@@ -12,21 +12,87 @@ ExecutionGateway (see docs/trading/AUTHORITY_MODEL.md).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from decimal import Decimal, InvalidOperation
 from enum import Enum
 from typing import Any
 
 
+class InvalidFinancialValue(ValueError):
+    """A value that cannot be a price, quantity, fee or amount.
+
+    Raised instead of substituting zero. A parser answers "is this a valid numeric
+    representation?"; whether ABSENCE means zero is the caller's policy and must be
+    written at the caller, not decided here.
+    """
+
+
+# Mirrors saathi.platform.fund_ledger.money — kept in step by a test that asserts
+# both parsers agree on every case.
+MAX_NUMERIC_CHARS = 128
+
+# A financial string is a plain number: optional sign, digits, optional fraction,
+# optional exponent. Decimal itself is far more permissive — it accepts PEP-515
+# underscores ("1_000"), leading/trailing whitespace and special words — and this
+# parser is reachable from provider and model output, where an unexpected accepted
+# syntax is an unexpected accepted VALUE.
+# \Z not $ — Python's $ also matches BEFORE a trailing newline, so "1\n" slipped
+# through an otherwise strict pattern.
+_NUMERIC_RE = re.compile(r"\A[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\Z")
+
+MAX_ADJUSTED_EXPONENT = 30
+
+
 def D(value: Any, default: str = "0") -> Decimal:
-    """Coerce to Decimal via str (avoids binary-float contamination)."""
+    """Coerce to Decimal via str (avoids binary-float contamination).
+
+    FAIL CLOSED. This helper previously swallowed every parse failure and returned
+    zero, so ``"abc"``, ``object()`` and ``True`` all became ``Decimal("0")`` — a
+    valid-looking amount produced from garbage, on a path that reaches cash
+    reservation, safety metrics and Guardian risk inputs. It now raises.
+
+    ``None`` and ``""`` still yield ``default``: that is the documented optional
+    path callers rely on, and it is a declared policy rather than a parse result.
+    """
+    # bool BEFORE anything numeric — isinstance(True, int) is True in Python, so an
+    # unguarded parser turns True into 1 and False into 0. Neither is money.
+    if isinstance(value, bool):
+        raise InvalidFinancialValue(f"bool is not a financial value: {value!r}")
     try:
         if isinstance(value, Decimal):
-            return value
+            return _finite(value, value)
         if value is None or value == "":
             return Decimal(default)
-        return Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
-        return Decimal(default)
+        text = str(value)
+        if not _NUMERIC_RE.match(text):
+            raise InvalidFinancialValue(f"not a plain numeric representation: {value!r}")
+        if len(text) > MAX_NUMERIC_CHARS:
+            raise InvalidFinancialValue(f"numeric input too long ({len(text)} chars)")
+        return _finite(Decimal(text), value)
+    except (InvalidOperation, ValueError, TypeError) as e:
+        if isinstance(e, InvalidFinancialValue):
+            raise
+        raise InvalidFinancialValue(f"invalid decimal: {value!r}") from e
+
+
+def _finite(value: Decimal, original: Any) -> Decimal:
+    """NaN and Infinity must never enter financial state.
+
+    Python's Decimal does not fail loudly where it matters most. NaN PROPAGATES
+    silently through arithmetic (``nan + 1`` is NaN), compares equal-to-nothing
+    (``nan == 0`` is False) and is TRUTHY, so ``if amount:`` passes; it only
+    raises later on an ordering comparison, far from whatever produced it.
+    Infinity compares silently and simply returns the wrong answer for a limit.
+
+    Refusing both at the parser is the one place this is catchable at the source.
+    """
+    if value.is_nan():
+        raise InvalidFinancialValue(f"NaN is not a financial value: {original!r}")
+    if not value.is_finite():
+        raise InvalidFinancialValue(f"infinity is not a financial value: {original!r}")
+    if value != 0 and abs(value.adjusted()) > MAX_ADJUSTED_EXPONENT:
+        raise InvalidFinancialValue(f"value out of financial range: {original!r}")
+    return value
 
 
 # ── enums ───────────────────────────────────────────────────────────────────

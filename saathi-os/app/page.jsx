@@ -12,6 +12,7 @@ import {
   LoadingState,
   EmptyState,
   ErrorState,
+  Counter,
 } from "@/components/ui";
 import MobileHome from "@/components/mobile/MobileHome";
 import { useAttentionHome } from "@/lib/useAttentionHome";
@@ -30,12 +31,19 @@ function MetricTile({ label, metric, href }) {
       </Link>
     );
   }
+  const num = typeof metric.value === "number"
+    ? metric.value
+    : (typeof metric.value === "string" && /^\d+$/.test(metric.value) ? Number(metric.value) : null);
   return (
     <Link href={href || "#"} className="home-metric">
       <Text tone="muted" size="xs" mono>
         {label}
       </Text>
-      <div className="home-metric-value">{metric.value}</div>
+      <div className="home-metric-value">
+        {num != null
+          ? <Counter to={num} format={(v) => Math.round(v).toString()} />
+          : metric.value}
+      </div>
     </Link>
   );
 }

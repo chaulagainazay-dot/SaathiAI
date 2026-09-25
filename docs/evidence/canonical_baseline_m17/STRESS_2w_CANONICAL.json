@@ -1,0 +1,10 @@
+{
+  "workers": 2,
+  "iterations": 100,
+  "successes": 100,
+  "failures": 0,
+  "duplicate_graphs": 0,
+  "orphan_states": 0,
+  "ok": true,
+  "duration_s": 8.245
+}

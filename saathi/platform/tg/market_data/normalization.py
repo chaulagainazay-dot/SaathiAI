@@ -13,6 +13,7 @@ from saathi.platform.tg.market_data.models import (
     INGESTION_VERSION,
     RowStatus,
 )
+from saathi.platform.market_data.identity import IdentityValidationError, resolve_market_identity
 
 
 def map_columns(headers: list[str]) -> dict[str, str]:
@@ -144,11 +145,35 @@ def normalize_ohlcv_row(
     if vol is not None and vol < 0:
         return None, RowStatus.REJECTED.value, ["negative_volume"]
 
-    instrument_id = str(mapped.get("instrument_id") or f"{defaults.get('exchange', 'XNAS')}:{symbol}")
+    supplied_instrument = str(mapped.get("instrument_id") or "").strip() or None
+    exchange = str(mapped.get("exchange") or defaults.get("exchange") or "").strip()
+    if not supplied_instrument and not exchange and str(defaults.get("market") or "").strip().upper() != "NEPSE":
+        if defaults.get("is_synthetic"):
+            exchange = "SIM"
+        else:
+            return None, RowStatus.REJECTED.value, ["missing_instrument_identity"]
+    try:
+        identity = resolve_market_identity(
+            instrument_id=supplied_instrument,
+            venue=exchange,
+            market=defaults.get("market"),
+            asset_class=defaults.get("asset_class"),
+        )
+        exchange = identity.venue
+        instrument_id = identity.instrument_id or f"{exchange}:{symbol}"
+        # A generated identity must pass the same canonical prefix check.
+        resolve_market_identity(
+            instrument_id=instrument_id,
+            venue=exchange,
+            market=defaults.get("market"),
+            asset_class=defaults.get("asset_class"),
+        )
+    except IdentityValidationError as exc:
+        return None, RowStatus.REJECTED.value, [exc.code]
     row = {
         "instrument_id": instrument_id,
         "symbol": symbol,
-        "exchange": str(mapped.get("exchange") or defaults.get("exchange") or ""),
+        "exchange": exchange,
         "asset_class": str(mapped.get("asset_class") or defaults.get("asset_class") or "equity"),
         "timestamp": ts,
         "timezone": str(defaults.get("timezone") or "UTC"),

@@ -1,4 +1,9 @@
-# SaathiOS Capability Maturity Matrix (as of M311 certification)
+# SaathiOS Capability Maturity Matrix (as of NEPSE-TXN-1 certification)
+
+MD-1.1 venue consistency was certified with limitations on 2026-08-31; generic
+market-data registration is now venue-neutral and contradiction-validated.
+
+| Normalized NEPSE transaction import (NEPSE-TXN-1) | deterministic-tested; certified-with-limitations; **proposal only; source schemas unverified; no ledger mutation or execution** | `saathi/platform/nepse/transactions/`; 52 focused + 284 related + 327 authority + 7844 offline; `docs/trading/nepse/txn-1/`; no real broker/live/order/account authority |
 
 | Read-only market observation (M304–M311) | deterministic-tested; browser-certified-with-limitations; **validation not trading; offline fixtures; no broker login/oauth/credentials/orders/accounts** | `saathi/platform/tg/market_observation/`; snapshots+quotes+history+metadata+exchange status+CA+benchmarks; `/trading/market-observation`; `cert:m311`; live trading not authorized |
 | Institutional portfolio & risk intelligence (M296–M303) | deterministic-tested; browser-certified-with-limitations; **paper/research only; not regulatory capital; not investment advice** | `saathi/platform/tg/portfolio_risk/`; analytics+limits+optimiser V2+scenarios+committee V2; `/trading/portfolio-risk`; `cert:m303`; live/connectivity not authorized |
@@ -14,6 +19,8 @@ Levels: implemented < deterministic-tested < security/red-team-tested < live-tes
 
 | capability | maturity | evidence |
 |-----------|----------|----------|
+| AgentHarness internal multi-turn driver (FM-I1–I4) | deterministic-tested; **internal non-production proof only** | `saathi/agent_runtime/harness/`; FakeInMemoryHarness + controller + EG bridge + durable store + governor; `PRODUCTION_CERTIFIED=False`; no commercial CLIs |
+| LocalModelHarness (FM-I5–I6.2 + MG-FIX + LIVE attempt) | deterministic-tested (mock); combined gate **implemented** and **evaluated live** — admission **denied** for model headroom (~2380 MiB reclaimable &lt; ~4022 MiB required); no inference; **not role-qualified**; production not authorized | `local_model_memory_gate.py`; PR #22; `docs/evidence/fm_i6_2_live/`; `FM_I6_2_LIVE_MEMORY_GATE_DENIED`; `PRODUCTION_CERTIFIED=False` |
 | Read-only broker readiness & credential lifecycle simulation (M224–M231) | deterministic-tested; browser-certified-with-limitations; **simulation-only; no real connection; no real credentials** | `saathi/platform/tg/broker_readiness/`; adapter contract SIMULATED_NOT_CONNECTED; policy engine deny write/real; lifecycle refs only; scope least-privilege; transport guard REAL_PROVIDER_TRANSPORT_FORBIDDEN; snapshots+recon recommendations only; M230 fail-closed drills; `/trading/broker-readiness`; `cert:m231` PASS_WITH_LIMITATIONS; 21 focused + 154 TG M166–M231 + 246 FE; production/live/read-only-prod not authorized |
 | Clean-clone reproducibility, supply-chain assurance & RO authorization planning (M232–M239) | deterministic-tested; browser-certified-with-limitations; **planning-only; no real connectivity; no credentials** | `saathi/platform/tg/integration_assurance/`; source audit ALL_REQUIRED_SOURCE_COMMITTED; clean-clone WITH_LIMITATIONS; env preflight fail-closed; dep inventory+lock gates; CycloneDX SBOM unsigned; provenance; threat model+gates; auth max READ_ONLY_CANARY_PLANNING_ELIGIBLE with real_connectivity=false; owner sign-off automation forbidden; `/trading/integration-assurance`; `cert:m239`; 17 focused + 39 M216–M231 + 246 FE; live/connectivity not authorized |
 | Broker sandbox architecture & trust framework (M216–M223) | deterministic-tested; browser-certified-with-limitations; **sandbox-only; no live broker** | `saathi/platform/tg/broker_sandbox/`; catalog brokers NOT_CONNECTED; metadata credential refs; in-process emulator only; trust pipeline sandbox-scoped; `/trading/broker-sandbox`; `cert:m223` |
@@ -101,3 +108,68 @@ permissions (macOS TCC actuation), or credentials (authenticated cloud/browser).
 | M21.2 provider availability / cost / failover / circuit | deterministic-tested | descriptors; availability; Decimal cost; failure taxonomy; circuit (durable as of M24); cheap_ask proxy blocked; `tests/test_m21_2_*`; live Ollama blocked; not production |
 | M24 durable circuit/cost + engine consolidation | deterministic-tested | `governance_store`/`governance_service`; reservation protocol; recovery; cloud+openai_compat CANONICAL; `tests/test_m24_*`; residual exceptions=0 |
 | PRODUCT/IELTSAlert revenue (pielts M21.x) | product-repo pilot (out of band) | Separate repo `/Users/macbookpro/Saathi/apps/pielts`; **not** platform M21 |
+
+## Connectivity Governance (M312–M319)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Connectivity charter | GOVERNANCE_ONLY | v1.0.0 finalized |
+| Authority lattice | GOVERNANCE_ONLY | no implicit expand |
+| Provider registry | GOVERNANCE_ONLY | docs/mock only, not connected |
+| Approval framework | GOVERNANCE_ONLY | APPROVED_NOT_ACTIVE max |
+| Credential policy | GOVERNANCE_ONLY | synthetic refs only |
+| Emergency shutdown | GOVERNANCE_ONLY | dominates authority |
+| Threat model | GOVERNANCE_ONLY | 68 threats catalogued |
+| Provider connection | PROHIBITED | not started |
+| Live trading | PROHIBITED | not authorized |
+
+## Credentialless Provider Contracts (M320–M327)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Provider contract charter | MOCK_CONNECTIVITY_ONLY | offline and credentialless |
+| Provider-neutral interfaces | MOCK_CONNECTIVITY_ONLY | contracts grant no authority |
+| Quotes | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Candles | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Trades | SUPPORTED_OFFLINE | deterministic paginated fixtures |
+| Order books | SUPPORTED_OFFLINE | deterministic synthetic fixtures |
+| Symbols | SUPPORTED_OFFLINE | deterministic paginated fixtures |
+| Market status | SUPPORTED_OFFLINE | fixed synthetic venue state |
+| Replay transport | MOCK_CONNECTIVITY_ONLY | integrity-checked fixtures |
+| HTTP / WebSocket / socket transport | PROHIBITED | absent and isolated |
+| Provider SDKs | PROHIBITED | absent; no dynamic imports |
+| Balances | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Positions | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Orders | FORBIDDEN_BY_GOVERNANCE | no implementation or execution |
+| Transfers / withdrawals | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Real provider connection | PROHIBITED | not started |
+
+## Private-Alpha Launch Readiness (M336–M343)
+
+| Capability | Maturity | Notes |
+|------------|----------|-------|
+| Private-alpha contract | PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY | audience, environment, journey, exclusions |
+| Invitation-only access | SUPPORTED_OFFLINE | owner-issued, single-use, email-bound |
+| Public self-registration | PROHIBITED | `PUBLIC_REGISTRATION_AUTHORIZED=false` |
+| Authentication | SUPPORTED_OFFLINE | invalid credentials fail closed |
+| Session expiry and revocation | SUPPORTED_OFFLINE | both proven to stop authenticating immediately |
+| RBAC | SUPPORTED_OFFLINE | viewer, operator, owner separation certified |
+| Workspace isolation | SUPPORTED_OFFLINE | `WORKSPACE_ISOLATION` / `PROJECT_ISOLATION` |
+| Organization isolation | SUPPORTED_OFFLINE | `MEMBERSHIP_REVOKED` on cross-org switch |
+| Mission lifecycle | SUPPORTED_OFFLINE | create, validate, approve, execute, cancel, retry |
+| Real cancellation | SUPPORTED_OFFLINE | `runtime.cancel()` on an in-flight execution → `CANCELLED` |
+| Approval maker-checker | SUPPORTED_OFFLINE | self-approval blocked; requester may not decide |
+| Concurrent approval decisions | SUPPORTED_OFFLINE | conditional UPDATE; exactly one decider wins |
+| Approval single-use dispatch | SUPPORTED_OFFLINE | one approval authorizes at most one execution |
+| Local deterministic execution | SUPPORTED_OFFLINE | ExecutionGateway only; mock providers |
+| Evidence and audit | SUPPORTED_OFFLINE | no credential value reaches the audit trail |
+| Soak, concurrency, recovery | SUPPORTED_OFFLINE | bounded local validation on the reference machine |
+| Release / rollback / incident runbooks | SUPPORTED_OFFLINE | written for use under pressure |
+| Launch-readiness Control Center | READ_ONLY_OFFLINE | GET routes only; no launch or approve control |
+| Owner review | OWNER_REVIEW_REQUIRED | not satisfiable by automation |
+| Public production deployment | PROHIBITED | `PUBLIC_PRODUCTION_AUTHORIZED=false` |
+| Broker / provider connectivity | PROHIBITED | absent, not merely disabled |
+| Credential collection | PROHIBITED | never requested, accepted or stored |
+| Account / balance / position access | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Order submission or execution | FORBIDDEN_BY_GOVERNANCE | no implementation |
+| Paper or live execution | PROHIBITED | not enabled |

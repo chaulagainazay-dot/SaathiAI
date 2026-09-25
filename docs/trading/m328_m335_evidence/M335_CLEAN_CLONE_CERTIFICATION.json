@@ -1,0 +1,41 @@
+{
+  "schema": "m335.clean_clone_certification.v1",
+  "ok": true,
+  "branch": "milestone/m328-m335-production-readiness",
+  "clone_head_sha": "7c363caf882a6e09a132cd1f9887e723d20b95ed",
+  "base_sha": "5b505f1a119989ec78856f969cb9fe3184bc784f",
+  "clone_method": "git clone --no-hardlinks from the implementation worktree",
+  "backend_tests": {
+    "command": "python -m pytest -q -p no:randomly tests/test_m328_m335_production_readiness.py tests/test_m320_m327_provider_contracts.py tests/test_m312_m319_connectivity_governance.py",
+    "result": "PASS",
+    "total": "208 passed"
+  },
+  "frontend_tests": {
+    "command": "npm test",
+    "result": "PASS",
+    "total": "318 passed, 0 failed"
+  },
+  "production_build": {
+    "command": "npm run build",
+    "result": "PASS",
+    "operations_routes_built": 6
+  },
+  "determinism_cross_check": {
+    "description": "prod-certify run in a separate process in the clean clone and in the implementation worktree",
+    "clean_clone_evidence_hash": "f7524bcd9efa36fdfe0fc6d4c2fde5bdfe67bf8562edffdf9acb14fc6d10ba46",
+    "worktree_evidence_hash": "f7524bcd9efa36fdfe0fc6d4c2fde5bdfe67bf8562edffdf9acb14fc6d10ba46",
+    "identical": true,
+    "note": "No wall clock or random source is read anywhere in the M328-M335 surface, so the certification evidence hash is byte-identical across processes and across checkouts."
+  },
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false
+}

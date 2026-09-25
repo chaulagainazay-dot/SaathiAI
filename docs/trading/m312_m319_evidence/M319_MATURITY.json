@@ -1,0 +1,129 @@
+{
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "approval_does_not_equal_activation": true,
+  "authority_does_not_implicitly_expand": true,
+  "can_advance_automatically": false,
+  "current": "GOVERNANCE_ONLY",
+  "current_level": 1,
+  "current_maturity": "GOVERNANCE_ONLY",
+  "definitions": {
+    "EXTERNAL_PAPER_CANARY_ELIGIBLE": {
+      "description": "Future-only \u2014 external paper canary",
+      "future_only": true,
+      "level": 4,
+      "requirements": [
+        "successful_read_only_canary",
+        "separate_human_authorization",
+        "paper_environment_proof",
+        "bounded_notional",
+        "execution_kill_switch",
+        "reconciliation",
+        "no_live_trading"
+      ]
+    },
+    "GOVERNANCE_NOT_ESTABLISHED": {
+      "description": "No governance charter or authority model",
+      "level": 0,
+      "requirements": []
+    },
+    "GOVERNANCE_ONLY": {
+      "description": "Governance complete; no provider connection",
+      "level": 1,
+      "requirements": [
+        "charter",
+        "authority_model",
+        "provider_registry",
+        "approval_framework",
+        "credential_policy",
+        "threat_model",
+        "incident_response",
+        "certification"
+      ]
+    },
+    "LIVE_EXECUTION_PROHIBITED": {
+      "description": "Live execution has no automatic unlock path",
+      "level": 5,
+      "no_automatic_unlock": true,
+      "requirements": [
+        "live_execution_remains_prohibited"
+      ]
+    },
+    "MOCK_CONTRACT_ELIGIBLE": {
+      "description": "Future-only \u2014 mock contracts",
+      "future_only": true,
+      "level": 2,
+      "requirements": [
+        "governance_complete",
+        "mock_provider_contracts",
+        "no_real_credential",
+        "no_network_provider_connection"
+      ]
+    },
+    "READ_ONLY_CANARY_ELIGIBLE": {
+      "description": "Future-only \u2014 read-only canary",
+      "future_only": true,
+      "level": 3,
+      "requirements": [
+        "human_authorization",
+        "approved_provider",
+        "approved_jurisdiction",
+        "read_only_capability_scope",
+        "disposable_credential_reference",
+        "automatic_expiry",
+        "revocation_drill",
+        "incident_readiness"
+      ]
+    }
+  },
+  "governance_only": true,
+  "governance_requirements": {
+    "approval_framework": true,
+    "authority_model": true,
+    "certification": true,
+    "charter": true,
+    "credential_policy": true,
+    "incident_response": true,
+    "provider_registry": true,
+    "threat_model": true
+  },
+  "live_execution_unlock_path": false,
+  "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+  "max_this_milestone": "GOVERNANCE_ONLY",
+  "no_account_access": true,
+  "no_balance_access": true,
+  "no_broker_login": true,
+  "no_canary_activation": true,
+  "no_credential_storage": true,
+  "no_live_trading": true,
+  "no_oauth": true,
+  "no_orders": true,
+  "no_position_access": true,
+  "no_provider_connection": true,
+  "offline_first": true,
+  "ok": true,
+  "paper_only": true,
+  "raw_credentials_forbidden": true,
+  "research_only": true,
+  "sandbox_only": true
+}

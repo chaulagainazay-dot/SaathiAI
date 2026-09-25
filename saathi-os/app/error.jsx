@@ -18,7 +18,7 @@ export default function Error({ error, reset }) {
           marginTop: 10, maxHeight: 220, overflow: "auto" }}>{error.stack.slice(0, 900)}</pre>
       )}
       <button onClick={() => reset()} style={{ marginTop: 16, padding: "10px 20px", borderRadius: 10,
-        border: "none", cursor: "pointer", fontWeight: 600, color: "#fff", background: "#9B6BFF" }}>
+        border: "none", cursor: "pointer", fontWeight: 600, color: "#fff", background: "var(--accent)" }}>
         Retry
       </button>
     </div>

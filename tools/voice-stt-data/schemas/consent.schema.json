@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SaathiProductSpeechConsent",
+  "type": "object",
+  "required": [
+    "speaker_id",
+    "consent_version",
+    "commercial_model_training_allowed",
+    "internal_research_allowed",
+    "evaluation_allowed",
+    "redistribution_allowed",
+    "recorded_at",
+    "withdrawal_reference"
+  ],
+  "properties": {
+    "speaker_id": { "type": "string", "pattern": "^spk_[0-9]{3}$" },
+    "consent_version": { "type": "string" },
+    "commercial_model_training_allowed": { "type": "boolean" },
+    "internal_research_allowed": { "type": "boolean" },
+    "evaluation_allowed": { "type": "boolean" },
+    "redistribution_allowed": { "type": "boolean" },
+    "recorded_at": { "type": "string" },
+    "withdrawal_reference": { "type": "string" },
+    "notes": { "type": "string" },
+    "region_group": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}

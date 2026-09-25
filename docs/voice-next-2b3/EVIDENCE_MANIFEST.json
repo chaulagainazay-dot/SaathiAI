@@ -1,0 +1,36 @@
+{
+  "mission": "V-NEXT-2B.3",
+  "verdict": "CODE_SWITCH_LOCAL_STT_NOT_QUALIFIED",
+  "architecture": "C_BROWSER_STT_REMAINS_PRIMARY",
+  "source_sha": "8d6883a690c8ffd99c798f7fd17f45f9e46585cd",
+  "source_pr": 30,
+  "source_ci": {
+    "critical_regressions": "SUCCESS",
+    "full_suite": "SUCCESS"
+  },
+  "gates": {
+    "ne_intent_min": 0.6,
+    "ne_first_span_min": 0.5,
+    "ne_cer_max": 0.45,
+    "mix_intent_min": 0.6,
+    "mix_first_span_min": 0.5,
+    "mix_term_min": 0.5,
+    "mix_cer_max": 0.5,
+    "en_intent_min": 0.7,
+    "numeric_fidelity_min": 0.7,
+    "peak_rss_mib_max": 1500
+  },
+  "gates_lowered": false,
+  "best_model": "bijay-small-ne-en-v3.1-ct2",
+  "best_class": "ENGLISH_ONLY_QUALIFIED",
+  "best_ne_intent": 0.5714285714285714,
+  "best_mix_intent": 0.5217391304347826,
+  "best_en_intent": 0.8,
+  "owner_corpus": "PARTIAL_TOOL_ONLY",
+  "router_implemented": false,
+  "tip_sha": "ec0e7c97d7f30555a8dc15677643ac91250fa4db",
+  "draft_pr": 31,
+  "draft_pr_url": "https://github.com/chaulagainazay-dot/SaathiAI/pull/31",
+  "branch": "qualification/v-next-2b3-code-switch-asr",
+  "worktree": "/Users/macbookpro/SaathiAI-voice-next-2b3"
+}

@@ -1,0 +1,186 @@
+{
+  "host": "Apple M2 8GB",
+  "verdict": "MULTILINGUAL_LOCAL_STT_NOT_YET_QUALIFIED",
+  "candidates": [
+    {
+      "name": "faster-whisper-base",
+      "nepali_gate": {
+        "criteria": {
+          "intent_preservation_min": 0.6,
+          "first_span_preservation_min": 0.5,
+          "cer_max": 0.45,
+          "term_preservation_min": 0.4
+        },
+        "metrics": {
+          "n": 13,
+          "mean_wer": 0.8336385836385836,
+          "mean_cer": 0.5786766446370604,
+          "intent_rate": 0.23076923076923078,
+          "first_span_rate": 0.3076923076923077,
+          "term_preservation": 0.4
+        },
+        "result": {
+          "intent_ok": false,
+          "first_span_ok": false,
+          "cer_ok": false,
+          "term_ok": true,
+          "passed": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.18888888888888888,
+          "mean_cer": 0.029034690799396683,
+          "intent_rate": 0.9444444444444444,
+          "first_span_rate": 0.7777777777777778,
+          "term_preservation": 0.6818181818181818
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 1.0809523809523809,
+          "mean_cer": 0.8468050468050468,
+          "intent_rate": 0.0,
+          "first_span_rate": 0.14285714285714285,
+          "term_preservation": 0.0
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 0.5451058201058201,
+          "mean_cer": 0.2658601754410764,
+          "intent_rate": 0.5,
+          "first_span_rate": 0.5,
+          "term_preservation": 0.6153846153846154
+        }
+      },
+      "latency": {
+        "p50": 0.3321952909999979,
+        "p95": 1.561468750000003,
+        "worst": 6.362455999999998,
+        "n": 31
+      },
+      "peak_rss_mib": 830.46875,
+      "cold_load_s": 0.5891322499999987
+    },
+    {
+      "name": "faster-whisper-small",
+      "nepali_gate": {
+        "criteria": {
+          "intent_preservation_min": 0.6,
+          "first_span_preservation_min": 0.5,
+          "cer_max": 0.45,
+          "term_preservation_min": 0.4
+        },
+        "metrics": {
+          "n": 13,
+          "mean_wer": 0.740964590964591,
+          "mean_cer": 0.5106254935089862,
+          "intent_rate": 0.23076923076923078,
+          "first_span_rate": 0.3076923076923077,
+          "term_preservation": 0.4
+        },
+        "result": {
+          "intent_ok": false,
+          "first_span_ok": false,
+          "cer_ok": false,
+          "term_ok": true,
+          "passed": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.17037037037037037,
+          "mean_cer": 0.029160382101558573,
+          "intent_rate": 0.9444444444444444,
+          "first_span_rate": 0.8333333333333334,
+          "term_preservation": 0.7727272727272727
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 0.9190476190476191,
+          "mean_cer": 0.7341658341658341,
+          "intent_rate": 0.0,
+          "first_span_rate": 0.14285714285714285,
+          "term_preservation": 0.0
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 0.5332010582010582,
+          "mean_cer": 0.24982842940933034,
+          "intent_rate": 0.5,
+          "first_span_rate": 0.5,
+          "term_preservation": 0.6153846153846154
+        }
+      },
+      "latency": {
+        "p50": 1.1288000830000016,
+        "p95": 2.099333166000001,
+        "worst": 18.470462166,
+        "n": 31
+      },
+      "peak_rss_mib": 1430.0625,
+      "cold_load_s": 1.101861583
+    },
+    {
+      "name": "faster-whisper-tiny",
+      "nepali_gate": {
+        "criteria": {
+          "intent_preservation_min": 0.6,
+          "first_span_preservation_min": 0.5,
+          "cer_max": 0.45,
+          "term_preservation_min": 0.4
+        },
+        "metrics": {
+          "n": 13,
+          "mean_wer": 0.7947496947496947,
+          "mean_cer": 0.5334632831948058,
+          "intent_rate": 0.23076923076923078,
+          "first_span_rate": 0.23076923076923078,
+          "term_preservation": 0.45
+        },
+        "result": {
+          "intent_ok": false,
+          "first_span_ok": false,
+          "cer_ok": false,
+          "term_ok": true,
+          "passed": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "mean_wer": 0.36666666666666664,
+          "mean_cer": 0.10151667504608682,
+          "intent_rate": 0.7222222222222222,
+          "first_span_rate": 0.6111111111111112,
+          "term_preservation": 0.6363636363636364
+        },
+        "ne": {
+          "n": 7,
+          "mean_wer": 0.9571428571428572,
+          "mean_cer": 0.7713109113109112,
+          "intent_rate": 0.14285714285714285,
+          "first_span_rate": 0.14285714285714285,
+          "term_preservation": 0.42857142857142855
+        },
+        "mixed": {
+          "n": 6,
+          "mean_wer": 0.6052910052910053,
+          "mean_cer": 0.2559743837260164,
+          "intent_rate": 0.3333333333333333,
+          "first_span_rate": 0.3333333333333333,
+          "term_preservation": 0.46153846153846156
+        }
+      },
+      "latency": {
+        "p50": 0.17254012500000115,
+        "p95": 0.8877387500000005,
+        "worst": 5.5571280000000005,
+        "n": 31
+      },
+      "peak_rss_mib": 470.390625,
+      "cold_load_s": 1.011237833
+    }
+  ]
+}

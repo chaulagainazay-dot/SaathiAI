@@ -1,0 +1,133 @@
+/* NEPSE Portfolio Tracker — module-scoped palette + primitives.
+   Additive: touches nothing global. Identity from the teardown (Fraunces display,
+   IBM Plex text/mono, restrained green accent, red declines, gold "Pro"). */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+.nepse-root{
+  /* retro CRT (was green-forest/cream): neutrals near-black + red; up=green, down=red kept */
+  --bg:#08060a;
+  --surface:#0f0b10;
+  --surface-2:#140e15;
+  --border:rgba(255,64,64,.18);
+  --text:#f2e8ea;
+  --text-dim:#b7a8ad;
+  --text-faint:#8f8288;
+  --accent:#2ee27a;               /* semantic UP / positive (data) — kept green */
+  --accent-soft:#0f2018;
+  --down:#ff4d4d;                 /* semantic DOWN / negative (data) — red */
+  --down-soft:#2c1414;
+  --gold:#ffab3d;
+  --gold-soft:#2a1e10;
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
+
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size:14px;
+  line-height:1.55;
+  min-height:100vh;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .nepse-root:not([data-theme="light"]){
+    --bg:#08060a; --surface:#0f0b10; --surface-2:#140e15; --border:rgba(255,64,64,.18);
+    --text:#f2e8ea; --text-dim:#b7a8ad; --text-faint:#8f8288;
+    --accent:#2ee27a; --accent-soft:#0f2018; --down:#ff4d4d; --down-soft:#2c1414;
+    --gold:#ffab3d; --gold-soft:#2a1e10;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
+  }
+}
+[data-theme="dark"] .nepse-root, .nepse-root[data-theme="dark"]{
+  --bg:#08060a; --surface:#0f0b10; --surface-2:#140e15; --border:rgba(255,64,64,.18);
+  --text:#f2e8ea; --text-dim:#b7a8ad; --text-faint:#8f8288;
+  --accent:#2ee27a; --accent-soft:#0f2018; --down:#ff4d4d; --down-soft:#2c1414;
+  --gold:#ffab3d; --gold-soft:#2a1e10;
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -14px rgba(0,0,0,0.6), inset 0 0 40px rgba(255,42,42,.03);
+}
+
+.nepse-root *{ box-sizing:border-box; }
+.nepse-root h1,.nepse-root h2,.nepse-root h3{
+  font-family:var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace); font-weight:700;
+  letter-spacing:.02em; margin:0; color:var(--text); text-wrap:balance;
+}
+.nepse-root .num, .nepse-root .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+.nepse-root a{ color:var(--accent); text-decoration:none; }
+.nepse-up{ color:var(--accent); }
+.nepse-down{ color:var(--down); }
+
+.nepse-wrap{ max-width:1180px; margin:0 auto; padding:0 1.5rem 5rem; }
+
+/* ticker */
+.nepse-ticker-wrap{ border-bottom:1px solid var(--border); background:var(--surface); overflow:hidden; white-space:nowrap; }
+.nepse-ticker{ display:inline-flex; gap:2.5rem; padding:0.5rem 0; animation:nepse-scroll 40s linear infinite; }
+@media (prefers-reduced-motion: reduce){ .nepse-ticker{ animation:none; } }
+.nepse-ticker span{ font-family:'IBM Plex Mono',monospace; font-size:0.76rem; color:var(--text-dim); display:inline-flex; gap:0.45rem; padding-left:2.5rem; }
+.nepse-ticker b{ color:var(--text); font-weight:600; }
+@keyframes nepse-scroll{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* boundary banner */
+.nepse-banner{ display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; padding:0.55rem 0; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; letter-spacing:0.04em; }
+.nepse-chip{ border:1px solid var(--border); border-radius:100px; padding:0.15rem 0.6rem; color:var(--text-faint); background:var(--surface); text-transform:uppercase; }
+.nepse-chip.warn{ color:var(--gold); border-color:var(--gold); background:var(--gold-soft); }
+
+/* tabs */
+.nepse-tabs{ display:flex; gap:0.25rem; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0.75rem 0 1.5rem; }
+.nepse-tab{ padding:0.5rem 0.85rem; font-size:0.9rem; color:var(--text-dim); border-bottom:2px solid transparent; border-radius:6px 6px 0 0; }
+.nepse-tab:hover{ background:var(--surface-2); color:var(--text); }
+.nepse-tab.active{ color:#ff5757; border-bottom-color:#ff2a2a; font-weight:600;
+  text-shadow:0 0 10px rgba(255,42,42,.35); }
+
+/* headers */
+.nepse-head{ padding:1.75rem 0 0.5rem; }
+.nepse-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem; }
+.nepse-eyebrow::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.nepse-title{ font-size:clamp(1.6rem,3vw,2.3rem); letter-spacing:-0.01em; }
+.nepse-dek{ margin-top:0.5rem; color:var(--text-dim); max-width:60ch; }
+
+/* cards + grids */
+.nepse-grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.nepse-grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.nepse-grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+@media (max-width:820px){ .nepse-grid-3,.nepse-grid-4{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .nepse-grid-2,.nepse-grid-3,.nepse-grid-4{ grid-template-columns:1fr; } }
+.nepse-card{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.25rem; box-shadow:var(--shadow); }
+.nepse-card h3{ font-size:1rem; margin-bottom:0.3rem; }
+.nepse-card .tag{ font-family:'IBM Plex Mono',monospace; font-size:0.66rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint); }
+.nepse-stat{ font-family:'Fraunces',serif; font-size:1.5rem; font-weight:600; }
+.nepse-stat.big{ font-size:2.2rem; }
+
+/* table */
+.nepse-table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:var(--shadow); }
+.nepse-table{ width:100%; border-collapse:collapse; font-size:0.88rem; min-width:640px; }
+.nepse-table th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint); font-weight:500; padding:0.6rem 0.8rem; border-bottom:1px solid var(--border); cursor:pointer; white-space:nowrap; }
+.nepse-table th.rt, .nepse-table td.rt{ text-align:right; }
+.nepse-table td{ padding:0.6rem 0.8rem; border-bottom:1px solid var(--border); color:var(--text-dim); white-space:nowrap; }
+.nepse-table td.strong{ color:var(--text); font-weight:600; }
+.nepse-table tr:last-child td{ border-bottom:none; }
+.nepse-table tbody tr:hover{ background:var(--surface-2); }
+
+.nepse-badge{ display:inline-flex; align-items:center; gap:0.3rem; font-family:'IBM Plex Mono',monospace; font-size:0.66rem; padding:0.15rem 0.5rem; border-radius:100px; }
+.nepse-badge.up{ background:var(--accent-soft); color:var(--accent); }
+.nepse-badge.down{ background:var(--down-soft); color:var(--down); }
+.nepse-badge.pro{ background:var(--gold-soft); color:var(--gold); }
+.nepse-badge.neutral{ background:var(--surface-2); color:var(--text-dim); }
+
+/* controls */
+.nepse-input, .nepse-select{ font-family:'IBM Plex Sans',sans-serif; font-size:0.9rem; padding:0.5rem 0.7rem; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); }
+.nepse-btn{ font-family:'IBM Plex Sans',sans-serif; font-size:0.88rem; font-weight:600; padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+.nepse-btn.ghost{ background:transparent; color:var(--accent); }
+.nepse-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+.nepse-row{ display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
+
+.nepse-callout{ border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 8px 8px 0; padding:0.9rem 1.1rem; font-size:0.9rem; color:var(--text); }
+.nepse-callout.gold{ border-left-color:var(--gold); background:var(--gold-soft); }
+.nepse-empty{ text-align:center; padding:3rem 1rem; color:var(--text-faint); }
+
+.nepse-swatch{ width:26px; height:26px; border-radius:7px; border:2px solid transparent; cursor:pointer; }
+.nepse-swatch.sel{ border-color:var(--text); }
+.nepse-pagination{ display:flex; gap:0.5rem; align-items:center; justify-content:flex-end; margin-top:0.9rem; font-size:0.85rem; color:var(--text-dim); }
+
+.nepse-gauge{ width:100%; height:10px; border-radius:100px; background:linear-gradient(90deg,var(--down),var(--gold),var(--accent)); position:relative; }
+.nepse-gauge .needle{ position:absolute; top:-4px; width:3px; height:18px; background:var(--text); border-radius:2px; transform:translateX(-50%); }
+
+/* live feed state — green when a licensed feed is actually serving */
+.nepse-chip.live { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }

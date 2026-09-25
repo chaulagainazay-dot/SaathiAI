@@ -1,0 +1,9 @@
+COMMAND: npm run build
+RESULT: PASS
+FRAMEWORK: Next.js 15.5.22
+STATIC PAGES: 126 generated
+PROVIDER ROUTES:
+- /trading/provider-contracts
+- /trading/provider-contracts/capabilities
+- /trading/provider-contracts/replay
+RESULTS REPRODUCED IN CLEAN CLONE: true

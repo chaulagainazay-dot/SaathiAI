@@ -466,6 +466,10 @@ def test_49_56_result_and_deprecation(runtime, reg, tmp_path):
     os.close(fd)
     s = AccountStore(p)
     a = s.add(provider="gmail", display_name="g")
+    # gmail is a simulated provider: readiness is SIMULATED, never a claim that
+    # Google verified anything. Stated explicitly rather than inherited from a
+    # default that used to say "connected" on creation.
+    s.mark_simulated(a["id"])
     out = manager.execute(a["id"], "email.send", {"to": "x"}, store=s)
     assert out["ok"] is True
     assert out["mode"] == "simulated"

@@ -1,5 +1,506 @@
 # SaathiOS Autonomous Roadmap
 
+## R2 — Trunk Convergence (2026-08-16)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Convergence and repair** — no new product functionality |
+| Branch | `integration/saathios-trunk-v3` |
+| Base | `feature/ui-next-3-1-production-motion` @ `1a51ae9…` |
+| Target | `integration/saathios-canonical-baseline` (pull request, not merged) |
+| Docs | `docs/integration/trunk-v3/` |
+| State | integrated; locally tested; browser-certified; **not yet published, CI-verified or merged** |
+| Next | `R3 — CENTRALIZED_AUTH_POLICY_HARDENING` (separate authorization) |
+
+Three program lines had advanced independently and no single checkout contained
+all three. R2 converged them onto one trunk and published it for CI
+verification. It added no feature.
+
+### Inputs integrated
+
+| Line | Branch | SHA | Role |
+| --- | --- | --- | --- |
+| UI-NEXT through 3.1 + T-NEXT through 4 | `feature/ui-next-3-1-production-motion` | `1a51ae9…` | convergence base |
+| V-NEXT through 2B.6 | `data/v-next-2b6-product-clean-speech` | `f4dd4fb…` | merged |
+| M64 route repair | `fix/m64-module-discovery-regression` | `8e59e2c…` | cherry-picked, source only |
+| R1 CORS/auth preservation | `recovery/r1-cors-auth-preservation` | `2a2b3bb…` | cherry-picked |
+| R1 import determinism | `recovery/r1-cors-auth-preservation` | `c849126…` | cherry-picked |
+
+R1 was cherry-picked rather than merged. Its branch sits on
+`integration/saathios-canonical-baseline-v2-voice`, which carries five commits
+of the **condensed** voice implementation; merging it would have imported that
+line alongside V-NEXT and let it contest ownership of the voice runtime — the
+one substitution this convergence was explicitly not to make. The M64 branch's
+browser evidence was rejected and only its source taken, because evidence
+captured on another checkout cannot certify this one.
+
+The V-NEXT merge produced exactly two textual conflicts. `saathi-os/package.json`
+was resolved **COMBINE**; `saathi-os/app/command/page.jsx` was resolved **ADAPT**,
+keeping the UI-NEXT structure and wiring the V-NEXT contract into it rather than
+choosing a side. Both resolutions, and three further REJECT/KEEP decisions in
+the certification harness, are recorded in
+`docs/integration/trunk-v3/CONVERGENCE_MANIFEST.md`.
+
+### Architectural outcomes
+
+One consolidated trunk carries all three lines. `/apps` and `/app-launcher`
+ownership is correct again, which is what the M64 route contract asserts.
+Python and worktree resolution is deterministic: the root `conftest.py` guard
+refuses collection if `saathi` ever resolves outside this checkout, so every
+pytest invocation proves its own resolution before running. Frontend and
+backend provenance is reproducible — each identifies its SHA and worktree at
+runtime, and certification fails closed when they disagree or when a foreign
+backend origin is observed. `CORSMiddleware` is outermost. The temporary
+OPTIONS authentication bypass is deleted rather than retained, so browser
+certification runs against real authentication. Runtime-generated evidence no
+longer contaminates immutable committed state.
+
+### Defects discovered by convergence
+
+Convergence surfaced four defects that no single input line could have exposed
+alone. They are repairs inside R2, not milestones of their own.
+
+- **CORS middleware ordering** (`2b0442f`). `CORSMiddleware` was not outermost,
+  so authentication failures on allowed origins returned without CORS headers
+  and reached the browser as opaque network errors rather than as 401s. The
+  middleware was moved outermost and the OPTIONS bypass deleted.
+- **Voice teardown froze client navigation** (`257f0ba`). Voice session teardown
+  re-entered its own update path; the resulting loop froze client-side
+  navigation shell-wide, not only in voice surfaces.
+- **Guaranteed-401 request on every signed-out page load** (`257f0ba`). Every
+  signed-out load issued a request that could only ever return 401.
+- **Runtime dirtying committed evidence** (`686e78d`). Runtime operation wrote
+  into committed evidence directories; storage was separated and the boundary
+  is now guarded by `tests/test_evidence_mutation_hygiene.py`.
+
+### Defects discovered by CI
+
+Publication found two more. Neither was visible to a macOS-only gate.
+
+- **Application package hashes depended on filesystem read order.**
+  `AppRuntime.validate_package` hashed a package's files in raw `os.walk` order,
+  so `package_hash` was a property of the filesystem rather than of the package.
+  Every built-in package has exactly two hashed files, so there were two
+  possible hashes: one pinned on APFS failed validation on ext4 with
+  `package_hash_mismatch`, taking 11 tests in `tests/test_m121_app_runtime.py`
+  with it. The canonical baseline had passed the same job on Linux only because
+  readdir order happened to agree — this was latent, not a convergence
+  regression. The walk is now ordered by name, and
+  `tests/test_package_hash_determinism.py` asserts that both the hash and the
+  pinned-hash validation survive a reversed read order, and refuses to pass
+  vacuously if the packages ever drop below two hashed files.
+- **The R2 documentation commit leaked absolute host paths into public knowledge
+  output.** `docs/autonomous/LOOP_STATE.json` is served by the knowledge
+  corpus, and `tests/test_m87_knowledge_grounding.py` forbids absolute paths
+  there. This one was self-inflicted by the preceding commit and is repaired in
+  the same program. The worktree path stays recorded in the browser
+  certificates, which are evidence and were not weakened to satisfy the test.
+
+Both repairs are determinism and hygiene work of the kind R2 already owns, and
+no product behaviour changed. The bounded backend suite grew from 976 to 1024:
+nine new determinism guards, plus the two suites that caught these failures,
+which the macOS gate had not been running.
+
+### Certification
+
+Both browser certifications were re-run on the converged trunk against a
+production build, a real backend and real authentication.
+
+| Certification | Verdict | Gates | Certified SHA |
+| --- | --- | --- | --- |
+| M64 — applications dashboard | **PASS** | 21 hard / 12 state / 6 responsive / 3 accessibility | `257f0ba…`, re-attested at `8b645e3…` |
+| M77 — voice output foundation | **PASS** | 36 hard / 6 responsive / 2 accessibility / 4 security | `8b645e3…` |
+
+Each certificate records the frontend SHA and the backend SHA it observed at
+runtime, and in both runs the two were proven equal.
+
+| Local suite | Result |
+| --- | --- |
+| Bounded backend regression | 1024 passed, 0 failed (976 before the CI-surfaced repairs) |
+| Frontend | 527 passed, 0 failed |
+| Authority invariants (`tests/test_r2_architecture_invariants.py`) | 36 assertions passed |
+
+### Publication and CI
+
+| Field | Value |
+| --- | --- |
+| Published SHA | `9e369bd` on `origin/integration/saathios-trunk-v3`, no force push |
+| Pull request | #45, open, not draft, base `integration/saathios-canonical-baseline` |
+| Workflow run | `reliability` 32010707455, testing `9e369bd` |
+| `critical-regressions` | **success** — 262 blocking manifest checks, 0 failed; 7547 collected; 309 routes |
+| `full-suite` | **success** — 7530 passed, 17 skipped, 0 failed |
+
+The first run, on `4bab721`, failed `full-suite` and found the two defects in
+the section above. Publication was the first time this code had run on Linux.
+
+### Remaining limitation
+
+The trunk is integrated, locally tested, browser-certified, published and
+CI-verified. It is **not merged**. The pull request targets
+`integration/saathios-canonical-baseline` and stays open; merge to the canonical
+baseline was never authorized and was not performed. Nothing here authorizes
+production, live trading, broker connectivity, or deployment.
+
+Auth enforcement still depends substantially on a large hand-maintained path
+bypass/allowlist plus duplicated route-level authorization behaviour. R2
+preserved that mechanism and repaired its ordering; it did not replace it. That
+replacement is R3 and requires explicit owner approval.
+
+---
+
+## V-NEXT-2B — Streaming STT + Intelligent Turn Orchestration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Streaming input + turns** — partial ≠ execute |
+| Branch | `feature/v-next-2b-streaming-stt-turns` |
+| Base | `feature/v-next-2a-vad-barge-in` @ `9fad029…` |
+| STT | Browser SpeechRecognition (+ mock tests) |
+| Orchestration | Saathi RealtimeVoicePipelineCoordinator |
+| Docs | `docs/voice-next-2b/` |
+| Verdict | `STREAMING_STT_TURN_ORCHESTRATION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2C` (separate authorization) |
+
+---
+
+## V-NEXT-2A — Local VAD + Acoustic Barge-In (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **VAD sensor + barge-in** via VoiceSession.interrupt |
+| Branch | `feature/v-next-2a-vad-barge-in` |
+| Base | `feature/v-next-1-canonical-voice-session` @ `b960b0d…` |
+| Adapter | energy_zcr_v1 (Silero deferred) |
+| Docs | `docs/voice-next-2a/` |
+| Verdict | `LOCAL_VAD_BARGE_IN_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2B` (separate authorization) |
+
+---
+
+## V-NEXT-1 — Canonical Voice Session + Single Audio Ownership (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Voice architecture consolidation** — no VAD/wake/full-duplex product claim |
+| Branch | `feature/v-next-1-canonical-voice-session` |
+| Base | `feature/ui-next-1-central-command` @ `d66fa3a…` |
+| Package | `saathi-os/lib/voice-session/*` + VoiceSessionProvider |
+| Docs | `docs/voice-next-1/` |
+| Verdict | `CANONICAL_VOICE_SESSION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-2` (separate authorization) |
+
+---
+
+## UI-NEXT-1 — Central Command Composition (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **UI composition** — no new backend, no voice redesign |
+| Branch | `feature/ui-next-1-central-command` |
+| Base | `integration/saathios-canonical-baseline` @ `20302574…` |
+| Surface | `/command` control plane |
+| Docs | `docs/ui-next-1/` |
+| Verdict | `CENTRAL_COMMAND_COMPOSITION_CERTIFIED_WITH_LIMITATIONS` |
+| Next | `V-NEXT-1` (separate authorization) |
+
+---
+
+## CANONICAL BASELINE INTEGRATION (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Integration** — M17 cherry-pick onto Candidate A; no product features |
+| Branch | `integration/saathios-canonical-baseline` |
+| Source | `hardening/fm-i6.2-macos-memory-gate-fix` @ `e1738d7deec5f44600fbf0d99e2b8f74a4bc83d0` |
+| M17 | Concurrent scheduled-graph recovery fix + tests + stress validated |
+| Docs | `docs/canonical-integration/` |
+| Terminal verdict | `CANONICAL_SAATHIOS_BASELINE_CERTIFIED_WITH_LIMITATIONS` |
+| Master merge | **False** |
+| Deployment | **False** |
+| Live trading / providers | **False** |
+| Next mission | `UI-NEXT-1 — SAATHIOS CENTRAL COMMAND COMPOSITION` (separate auth) |
+
+---
+
+## FM-I6.2-LIVE — Live Certification Attempt (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Live attempt** — published MG-FIX, evaluated combined gate, **no inference** |
+| Baseline | `a83305f0b1e69db896fc6b86f0d4ddbc10f92e82` |
+| Branch | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| Draft PR | https://github.com/chaulagainazay-dot/SaathiAI/pull/22 |
+| Runtime boundary | Pass (loopback-only, firewall on, digest match, Ollama 0.32.5) |
+| Memory gate | **DENIED** — `MODEL_HEADROOM_LOW` (reclaimable ~2380 MiB &lt; 4021.5 MiB) |
+| Live tests A/B/C | **Not run** |
+| Report | `docs/agent-runtime/FM_I6_2_LIVE_CERTIFICATION.md` |
+| Evidence | `docs/evidence/fm_i6_2_live/` |
+| Terminal verdict | `FM_I6_2_LIVE_MEMORY_GATE_DENIED` |
+| Production / role-qualified | **False** |
+| FM-I7 ready | **No** |
+| Next | Operator frees ~1.6+ GiB reclaimable headroom; re-run FM-I6.2-LIVE without lowering thresholds |
+
+## FM-I6.2-MG-FIX — Combined macOS Memory Gate Implementation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Implementation + injected tests** — no live inference |
+| Baseline | `54a4665e7bbc6e113c18ec50d150245934603991` |
+| Branch | `hardening/fm-i6.2-macos-memory-gate-fix` |
+| Module | `saathi/agent_runtime/harness/local_model_memory_gate.py` |
+| Report | `docs/agent-runtime/FM_I6_2_MEMORY_GATE_FIX.md` |
+| Evidence | `docs/evidence/fm_i6_2_memory_gate_fix/` |
+| Policy | `fm_i6_2_mg_fix.combined_macos.v1` |
+| Tests | 34 MG-FIX + FM-I1–I6 regression (218 passed, 1 skipped) |
+| Terminal verdict | `FM_I6_2_COMBINED_MEMORY_GATE_CERTIFIED_WITH_LIMITATIONS` |
+| Live cert | **Still separately gated** (host headroom + operator auth) |
+| FM-I7 ready | **No** |
+| Production certified | **False** |
+
+## FM-I6.2-MG — macOS Memory-Gate Validation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Validation + design only** — no live inference, no harness code change |
+| Baseline | FM-I6.2 tip @ `54a4665e7bbc6e113c18ec50d150245934603991` |
+| Branch | `hardening/fm-i6.2-ollama-live-certification` |
+| ADR | `docs/adr/ADR-MACOS-LOCAL-MODEL-MEMORY-GATE.md` |
+| Report | `docs/agent-runtime/FM_I6_2_MEMORY_GATE_VALIDATION.md` |
+| Evidence | `docs/evidence/fm_i6_2_memory_gate/` |
+| Finding | Pure free ≥ 20% is **not** a valid primary macOS gate; harness `free_percent` is reclaimable ratio (misnamed) |
+| Decision | `REPLACE_WITH_COMBINED_MACOS_GATE` |
+| Terminal verdict | `FM_I6_2_MEMORY_GATE_REQUIRES_REVISION` |
+| Live inference | **Not performed** |
+| FM-I6.2 live cert | **Still blocked** pending FM-I6.2-MG-FIX + operator headroom |
+| FM-I7 ready | **No** |
+| Next | **FM-I6.2-MG-FIX completed** on branch `hardening/fm-i6.2-macos-memory-gate-fix` |
+
+## FM-I6.2 — Ollama Loopback Remediation + Minimal Live Cert (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Operator-owned remediation** + optional minimal live cert |
+| Baseline | FM-I6.1 tip @ `8540e686f4a56d54b9dca8ec3d36004468fd0392` |
+| Branch | `hardening/fm-i6.2-ollama-live-certification` |
+| Report | `docs/agent-runtime/FM_I6_2_LOOPBACK_AND_LIVE_CERTIFICATION.md` |
+| Evidence | `docs/evidence/fm_i6_2/` |
+| Diagnosis | Dual runtime: LaunchAgent loopback + Ollama.app wildcard |
+| Live | **Not started** — operator must quit app, enable firewall, free memory |
+| Regression | 184 passed, 1 skipped |
+| Terminal verdict | `FM_I6_2_OPERATOR_ACTION_REQUIRED` |
+| FM-I7 ready | **No** |
+| Next | Operator completes Step 1 (Quit Ollama.app) → resume Phase D verification |
+
+## FM-I6.1 — LocalModelHarness Closeout (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Hardening / publication closeout** — no new features |
+| Baseline | FM-I6 @ `228f6efbc94402fc2a4129cb038b34d5ec7f8f51` |
+| Branch | `implementation/fm-i6-bounded-local-model-harness` |
+| Report | `docs/agent-runtime/FM_I6_1_CLOSEOUT.md` |
+| Evidence | `docs/evidence/fm_i6_1/` |
+| Runtime boundary | **TRUE_WILDCARD_EXPOSURE** (`*:11434` LAN/global open) — operator guide only |
+| Live inference | **SKIPPED** (binding + memory free%) |
+| Mock regression | 184 passed, 1 skipped |
+| Terminal verdict | `FM_I6_1_CLOSEOUT_CERTIFIED_WITH_LIMITATIONS` |
+| FM-I7 ready | **No** |
+| Production certified | **False** |
+| Next | FM-I7 only after separate owner authorization + preferably operator loopback rebind |
+
+## FM-I6 — Bounded LocalModelHarness Implementation (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — LocalModelHarness plumbing + mock transport |
+| Baseline | FM-I5 @ `8a45aa947944540e87a106616a2d42142543a5ca` |
+| Branch | `implementation/fm-i6-bounded-local-model-harness` |
+| Report | `docs/agent-runtime/FM_I6_LOCAL_MODEL_HARNESS_IMPLEMENTATION.md` |
+| Package | `saathi.agent_runtime.harness.local_model*` |
+| Runtime | Ollama user-managed loopback; mock transport CI-authoritative |
+| Model pin | `qwen2.5:1.5b` (not role-qualified) |
+| Live tests | Gated — binding unsafe and/or memory pressure on certifying host |
+| Terminal verdict | `FM_I6_LOCAL_MODEL_HARNESS_CERTIFIED_WITH_LIMITATIONS` |
+| Production certified | **False** |
+| Next | **FM-I7 only after separate owner authorization** — do not auto-start |
+
+## FM-I5 — LocalModelHarness Design and Security (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Design-only** — architecture + security ADR; no implementation |
+| Baseline | FM-I4 @ `498bf2f75dfe765368a125bfe68c1a3e8e1a985f` |
+| Branch | `docs/fm-i5-local-model-harness-design` |
+| ADR | `docs/adr/ADR-LOCAL-MODEL-HARNESS.md` |
+| Report | `docs/agent-runtime/FM_I5_LOCAL_MODEL_HARNESS_DESIGN.md` |
+| Runtime selection | `OLLAMA_SELECTED` (0.32.5 user-managed) |
+| Model pin | `qwen2.5:1.5b` (digest pinned; synthetic proof only; not M376 role-qualified) |
+| Process ownership | `USER_MANAGED_RUNTIME` |
+| Network | loopback `http://127.0.0.1:11434` only; cloud fallback prohibited |
+| Terminal verdict | `FM_I5_LOCAL_MODEL_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| Production certified | **False** |
+| Forbidden | LocalModelHarness code, ollama pull/run/start/stop, inference, providers, credentials, FM-I6 without new auth |
+| Next | **FM-I6 only after separate owner authorization** — do not auto-start |
+
+## FM-I4 — Harness Resource Governance (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — in-process admission, queue, fairness, limits |
+| Baseline | FM-I3 @ `4ebcd71c9489823bd7c53a44822d0bb572abf012` |
+| Branch | `implementation/fm-i4-resource-governance` |
+| Report | `docs/agent-runtime/FM_I4_RESOURCE_GOVERNANCE.md` |
+| Governor | `HarnessSessionGovernor` (not a general scheduler) |
+| Production certified | **False** |
+| Next | **FM-I5 only after separate owner authorization** |
+
+## FM-I3 — Durable Harness Session State (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — isolated SQLite session/event durability |
+| Baseline | FM-I2 @ `dd09ca033dd335694975b42102d11b0375a4e53e` |
+| Branch | `implementation/fm-i3-durable-harness-state` |
+| Report | `docs/agent-runtime/FM_I3_DURABLE_HARNESS_STATE.md` |
+| Store | `HarnessDurableStore` (injected; no process singleton) |
+| Replay | Inspection only (`can_execute=False`) |
+| Recovery | Fail-closed; no auto tool/model resume |
+| Production certified | **False** |
+| Next | **FM-I4 only after separate owner authorization** |
+
+## FM-I2 — Real ExecutionGateway Integration (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — real EG contract via isolated local no-op/echo only |
+| Baseline | FM-I1.5 @ `43df48b79065ceec1f37fd9dacca1d09579b6b67` |
+| Branch | `implementation/fm-i2-execution-gateway-integration` |
+| Report | `docs/agent-runtime/FM_I2_EXECUTIONGATEWAY_INTEGRATION.md` |
+| Adapter | `RealExecutionGatewayAdapter` → `ExecutionGateway.submit` |
+| GatewayTestDouble | Retained for isolated unit tests |
+| Production certified | **False** |
+| Next | **FM-I3 only after separate owner authorization** |
+
+## FM-I1.5 — Harness Stress Certification (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Mode | **Internal non-production** — stress, fuzz, concurrency, replay; no real adapter |
+| Baseline | FM-I1 @ `bf957f8fd7c942bcc139a30dfcb596c9d6b44fec` |
+| Branch | `implementation/fm-i1.5-harness-stress-certification` |
+| Report | `docs/agent-runtime/FM_I1_5_HARNESS_STRESS_CERTIFICATION.md` |
+| Tests | `tests/test_fm_i1_5_harness_stress.py` + FM-I1 suite |
+| Production certified | **False** |
+| Next | **FM-I2 only after separate owner authorization** |
+
+## FM-I1 — Fake AgentHarness Proof (2026-08-07)
+
+| Field | Value |
+| --- | --- |
+| Verdict | See terminal certification on branch `implementation/fm-i1-fake-agent-harness` |
+| Mode | **Internal non-production proof** — contract types + FakeInMemoryHarness + HarnessSessionController |
+| Authorized base | `docs/fm-c2-agent-session-harness-relationship` @ `97dc6bfab840834f3430df347f526835d94f34cd` |
+| Package | `saathi.agent_runtime.harness` |
+| Tests | `tests/test_fm_i1_agent_harness.py` |
+| FZ-01 | **Partially unfrozen** for FM-I1 scope only |
+| FZ-02 / FZ-07 | **Fully retained** |
+| Production certified | **False** |
+| Forbidden | Providers, commercial CLIs, Ollama, credentials, network/shell/browser, AgentSessionAdapter edits, EG replacement |
+| Next | **FM-I2 only after separate owner authorization** — do not auto-start |
+
+**AgentHarness is an internal platform multi-turn driver proof. Not production-activated.**
+
+## FM-C2 — AgentSessionAdapter ↔ AgentHarness Relationship (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AGENT_SESSION_HARNESS_RELATIONSHIP_APPROVED_WITH_LIMITATIONS` |
+| Mode | **Design-only** — no production code, no adapter changes, no FakeInMemoryHarness |
+| Baseline SHA | `f79726d5746ecd485210dee6af12a3ed33a9f01e` |
+| ADR | `docs/adr/ADR-AGENT-SESSION-ADAPTER-HARNESS-RELATIONSHIP.md` |
+| Design | `docs/architecture/FM_C2_AGENT_SESSION_ADAPTER_HARNESS_RECONCILIATION.md` |
+| Decision | **Alternative F** — controller composition + plane separation |
+| Platform multi-turn contract | **AgentHarness** (FM-I1 internal fake proof landed; still not production) |
+| Engineering process sessions | **AgentSessionAdapter** (active; eng-scoped only; **unchanged by FM-I1**) |
+| Wrap/implement each other? | **No in v1** |
+| ToolIntent construction | Controllers only — never either driver |
+| CX-05 | **Closed** (relationship) |
+| FZ-01 | **Partially unfrozen** for FM-I1 only (2026-08-07) |
+| FZ-02 | **Retained** |
+| Commercial CLIs | **Blocked** (FZ-07) |
+| Next | **FM-I1 complete on implementation branch** — do not start FM-I2 without owner authorization |
+
+**Do not modify AgentSessionAdapter or integrate commercial CLIs from this ADR alone.**
+
+## FM-C1 — Architecture Documentation Freeze and Contradiction Repair (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `ARCHITECTURE_DOCUMENTATION_BASELINE_FROZEN_WITH_LIMITATIONS` |
+| Mode | **Documentation only** — no production code, adapters, renames, providers, credentials, CI |
+| Starting SHA | `e9581f43848cf90283c7c4e1c0dbfbad65a4a531` |
+| Authority index | `docs/architecture/ARCHITECTURE_AUTHORITY_INDEX.md` |
+| Terminology | `docs/architecture/CANONICAL_TERMINOLOGY.md` |
+| Freeze register | `docs/architecture/ARCHITECTURE_FREEZE_REGISTER.md` |
+| Contradiction register | `docs/architecture/FM_C1_CONTRADICTION_REGISTER.md` |
+| Baseline report | `docs/architecture/FM_C1_DOCUMENTATION_BASELINE_REPORT.md` |
+| Key repair | ADR-EXECUTIONGATEWAY → **ACCEPTED_IMPLEMENTED** (was stale “awaiting implementation”) |
+| AgentHarness | Remains **unimplemented** and **frozen** (FZ-01) |
+| FakeInMemoryHarness | **Unauthorized** |
+| Policy floors / skill promotion | **Deferred** (FZ-16 / FZ-17); not renumbered as active milestones |
+| Commercial CLIs | **Blocked** (FZ-07) |
+| Next | **Completed:** FM-C2 design relationship. Implementation remains **FM-I1** gated. |
+
+**Documentation baseline frozen. Implementation still separately gated.**
+
+## M386–M393 — Architecture Consolidation and Overlap Review (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `SAATHIOS_ARCHITECTURE_READY_WITH_CONSOLIDATION_REQUIRED` |
+| Mode | **Analysis + design only** — no production code, adapters, migrations, providers, or CI |
+| Inspected SHA | `e9581f43848cf90283c7c4e1c0dbfbad65a4a531` |
+| ADR | `docs/adr/ADR-SAATHIOS-ARCHITECTURE-CONSOLIDATION.md` |
+| Full review | `docs/architecture/M386_M393_ARCHITECTURE_CONSOLIDATION_REVIEW.md` |
+| Composite readiness | ≈ 68 / 100 (see scorecard in review) |
+| ExecutionGateway | Remains **sole** external-action authority |
+| AgentHarness | Design retained **conditionally**; **not** to implement until engineering `AgentSessionAdapter` relationship ADR (FM-C2) |
+| Renumbering | Prior QM ADR “M386 policy floors / M387 skill promotion” **deferred** (not cancelled); M386–M393 reclaimed for consolidation |
+| Forbidden | AgentHarness types; FakeInMemoryHarness; policy floors; skill promotion; commercial CLIs; EG/TG/RBAC weaken; QM import |
+| Next | **Completed follow-on:** FM-C1 documentation baseline. Then **FM-C2** design-only only. |
+
+**Do not auto-start AgentHarness implementation, policy floors, skill promotion, or commercial CLI adapters.**
+
+## M385 — AgentHarness Interface Design (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `AGENT_HARNESS_DESIGN_APPROVED_WITH_LIMITATIONS` |
+| Mode | **Design-only** — no adapters, no runtime code, no providers |
+| ADR | `docs/adr/ADR-AGENT-HARNESS-INTERFACE.md` |
+| Design | `docs/agent-runtime/M385_AGENT_HARNESS_INTERFACE_DESIGN.md` |
+| Placement | Under `agent_runtime` via controller; tools only via ExecutionGateway |
+| First future adapter order | FakeInMemoryHarness → LocalModelHarness (read-only) → bounded coding |
+| Forbidden | QM import; gateway bypass; TG change; commercial CLI adapters without cert |
+| Next | M386–M393 + **FM-C1 complete**. Implementation still blocked; next design = **FM-C2** only |
+
+**AgentHarness is an internal driver contract, not an authority layer. Design-only; not implemented.**
+
+## M377–M384 — QM Multi-Agent Runtime Architecture Gap Analysis (2026-08-06)
+
+| Field | Value |
+| --- | --- |
+| Verdict | `ADAPT_SELECTED_PATTERNS` |
+| Mode | **Analysis-only** — no production code, no deploy, no QM import |
+| QM tip audited | `0f0e0adccce2` (github.com/yc-software/qm, MIT) |
+| ADR | `docs/adr/ADR-QM-MULTI-AGENT-RUNTIME.md` |
+| Evidence | `docs/agent-runtime/M377_M384_QM_MULTI_AGENT_RUNTIME_GAP_ANALYSIS.md` |
+| Scores | Architecture 42 · Security 38 · Governance 31 (0–100) |
+| Forbidden | Replace ExecutionGateway / Approval / Governance / RBAC / Trading Guardian |
+| Follow-on | M385 design complete; M386–M393 architecture consolidation complete (docs); policy floors / skill promotion still deferred |
+
+**QM is a conceptual reference only. No runtime alignment. No plugin integration. No QM source copied.**
+
 ## M296–M303 — Institutional Portfolio & Risk Intelligence (2026-07-30)
 
 | Field | Value |
@@ -61,7 +562,7 @@ Evidence: `docs/trading/M272_M279_MULTI_STRATEGY_RESEARCH_LAB.md`, `docs/trading
 | Live / broker / canary / orders | **Not authorized** |
 | Next | Completed by M272–M279 research lab |
 
-**M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**  
+**M248–M255 IS NOW PRESENT IN COMMITTED GIT HISTORY.**
 **M248–M263 PASSES FROM A CLEAN CLONE USING COMMITTED SOURCE ONLY.**
 
 Evidence: `docs/trading/M264_M271_INTELLIGENCE_RECOVERY_AND_HISTORICAL_DATA.md`, `docs/trading/m264_m271_evidence/`.
@@ -1559,3 +2060,251 @@ Branch `milestone/m42-graduation-review`.
 - Evidence: `docs/trading/m232_m239_evidence/`. Doc: `docs/trading/M232_M239_REPRODUCIBILITY_SUPPLY_CHAIN_AUTHORIZATION.md`.
 - **Superseded next-step:** M240–M247 completed on branch `milestone/m240-m247-provider-canary-planning` (planning package ready for owner review; no connectivity).
 
+### M312–M319 Connectivity Governance
+
+Certified with limitations: GOVERNANCE_ONLY; no provider connection.
+
+### M320–M327 Credentialless Provider Contracts & Mock Connectivity
+
+Implemented on `milestone/m320-m327-provider-contracts` from verified predecessor
+`6639ca730ece11bce160a55a237fcaff8df3058c`. Adds provider-neutral contracts,
+explicit capability states, deterministic synthetic mock data, integrity-checked
+replay, offline transports, strict schemas, normalized errors, idempotency, and
+an unauthenticated provider-session lifecycle. Existing connectivity governance,
+authority, approval, audit, evidence, policy, maturity, and certification
+systems remain authoritative.
+
+Maximum state is `MOCK_PROVIDER_READY_NO_REAL_CONNECTIVITY`; maturity is
+`MOCK_CONNECTIVITY_ONLY`. No real connection, OAuth, credentials, provider
+authentication, account data, order path, transfer, canary, deployment, or live
+trading is authorized or implemented.
+
+The authoritative M327 interactive browser rerun passed with limitations using
+the already-installed project-pinned Playwright Chromium runtime. The original
+in-app-runtime failure remains preserved as historical evidence. All browser
+traffic was localhost-only, all 17 authorities remained false, and no provider
+credential, OAuth, account-link, live-connect, order, transfer, withdrawal, or
+canary control was rendered.
+
+### M328–M335 Production Readiness, Observability & Operational Resilience
+
+Certified with limitations on `milestone/m328-m335-production-readiness`.
+Maximum state `OPERATIONALLY_READY_OFFLINE`. Recorded eight full-suite backend
+failures and proved they predated the milestone.
+
+### M336–M343 Baseline Regression Debt Closure & Private-Alpha Launch Readiness
+
+Implemented on `milestone/m336-m343-private-alpha-readiness` from verified
+predecessor `6cdf72661834242eb4901f7eaf44a4425957db37`.
+
+Closes the eight inherited failures rather than carrying them forward. All eight
+reduced to two root causes. The first — build artifacts (`.venv`,
+`saathi-os/node_modules`) treated as required host prerequisites — was not
+cosmetic: it meant a newly invited private-alpha tester could never complete
+first run, because `prepare()` could not return `ok` on a machine where
+installation had not already been performed in place. The second was a release
+gate that counted a bare PEM header as a leaked key and so blocked on its own
+secret-rejection sample, red since M224–M231.
+
+All three repairs are implementation-side. The three test files containing the
+eight failures are byte-identical to the predecessor commit, verified by
+`git hash-object`. Eighteen focused regression tests guard the repairs, including
+one that injects a genuine PEM key body and asserts the gate still blocks.
+
+Building the certification surfaced two further defects: every release manifest
+recorded the SHA twice (`git rev-parse HEAD HEAD`), and concurrent approval
+decisions could all win a read-check-write race — found by the soak, invisible to
+the sequential test that had always passed.
+
+Adds the private-alpha contract, a 71-step certified journey whose eighteen
+refusals are each asserted to return their own specific code, corrected
+platform-status wording, twelve failure and empty states, bounded soak with
+concurrency and recovery scenarios, four operational runbooks, and a read-only
+launch-readiness Control Center.
+
+Maximum state is `PRIVATE_ALPHA_READY_OFFLINE_INVITE_ONLY`. Invite-only,
+localhost-only. No public registration, no broker or provider connection, no
+credential, no account access, no order, no paper or live execution. All fifteen
+authority locks false.
+
+Owner review is required, cannot be satisfied by automation, and had not been
+performed at certification time. Private-alpha readiness does not authorize
+public production deployment. M344 was not started.
+
+### M344–M351 Multi-Agent Development Environment Foundation
+
+Verdict: `MULTI_AGENT_DEVELOPMENT_FOUNDATION_CERTIFIED_WITH_LIMITATIONS`.
+Branch `milestone/m344-m351-multi-agent-development-foundation`, baseline
+`53b9b20`. Evidence: `docs/evidence/m344_m351/`.
+
+A SaathiOS-native environment in which specialised development agents receive
+bounded missions, research independently, deliberate in recorded meetings and
+produce evidence-backed decisions. It was originally specified as M328–M335;
+that range and M336–M343 are already shipped, so reusing the numbers would have
+created two milestones with the same identity. Renumbered with owner approval;
+scope unchanged.
+
+The discovery pass established what already existed. `saathi/engineering/`
+(8,183 lines, M20.0–M20.7) already governs coding-agent supervision, bound
+approvals, a hash-chained session ledger, integrity evidence and
+disabled-by-default authority. `saathi/safety.py` already owns deterministic
+action classification. Four systems already own product missions. Six of the
+eleven required capabilities therefore existed and were extended rather than
+rebuilt; `saathi/engineering/` was not modified at all.
+
+Five did not exist. `saathi/agentdev/` adds them above `engineering/` with a
+strictly one-way dependency (ADR-012): fourteen declarative role contracts with
+repository path scopes and independent reviewers, mission-bound worktree
+isolation, sixteen artifact kinds, five structured meeting types, eleven review
+gates, and the first agent-behaviour evaluation suite. Authority reuses
+`SafetyLevel` and `Approval`; a test asserts no parallel enum exists.
+
+Three properties are structural rather than instructional. No agent may approve
+its own output, in either the pass or the fail direction. A gate cannot be
+skipped by advancing twice, because each state names its exit gates and the
+check runs on every hop. Consensus cannot be fabricated: a `decided` meeting
+outcome is refused while any challenge is unanswered, unanswered challenges
+become preserved disagreements on the mission, and
+`APPROVED_FOR_IMPLEMENTATION` is refused while any disagreement stands.
+
+The worktree gap was measured, not assumed: the baseline reported 112 git
+worktrees of which 102 were stale and prunable, left by the ad-hoc M233
+reproduction helper. The new manager binds one worktree to one mission and one
+agent, refuses branch and path collisions, and exposes no removal method at
+all — only a removal plan that withholds its command while uncommitted,
+untracked, contaminated or unmerged state exists. Destructive git verbs are
+refused before `subprocess`. The 102 stale worktrees were reported and left in
+place.
+
+The simulated mission ran all twelve steps with all seven required agents, three
+meetings and 24 artifacts across 12 kinds, and deliberately left a real
+disagreement unresolved: ten scenarios bound ten refusals, not the behaviour
+space. The terminal verdict is therefore `APPROVED_WITH_LIMITATIONS`, not a
+clean approval, and the naming question was referred to the owner.
+
+343 new tests, 144 existing engineering and agent regressions, and 1,090
+existing safety, governance, approval, security and trading tests all pass.
+Zero model calls, zero provider calls, zero paid calls, zero network calls.
+
+Trading Guardian is unchanged and unimported. No credential, global
+configuration, MCP server, broker, deploy, merge or push was touched. ECC
+remains an external read-only reference; no ECC file, module, hook or dependency
+exists in this repository.
+
+The verdict carries limitations because three claims cannot be made honestly
+yet: nothing sandboxes a filesystem, so worktree confinement is detected rather
+than prevented; no model is in the loop, so agent behaviour under a real model
+is unproven; and the owner has not reviewed the evidence. M352–M359 was not
+started.
+
+## M352–M359 — Agent Operations, Model-in-Loop Evaluation & Certification (2026-08-04)
+
+**Verdict:** `AGENT_OPERATIONS_CERTIFIED_WITH_LIMITATIONS`
+**Evidence:** `docs/evidence/m352_m359/`
+
+Extends the M344–M351 multi-agent development foundation. Seven new modules,
+all inside `saathi/agentdev/`; zero modules outside it changed; zero packages
+installed; the existing `~/SaathiAI/.venv` reused.
+
+M352 closed the question M351 referred upward — may a ten-scenario
+deterministic suite claim behaviour evaluation before any model participates?
+No. Twelve terms are now pinned as typed data with one classification each,
+twenty-two literal phrasings are banned, and `terminology audit` fails if one
+reappears. M353 delivered the read-only operations console (fifteen panels,
+no write verb, no store mutation, no external reference, no polling), closing
+foundation limitation 6. M354 delivered the deterministic runner: any mission
+plan executes through one seven-phase contract with traces, timing, lineage and
+named failure causes, producing byte-identical artifacts across runs. M355
+connected one local model over loopback behind an adapter that offers nine
+capabilities and structurally denies shell, filesystem, tools, non-loopback
+network, credentials and provider fallback.
+
+M356 replaced exactly one participant — the Research Agent — with `qwen3:4b`
+and scored it against a fully published rubric. It passed 2 of 8 scenarios: 32
+of 32 form criteria, 2 of 7 honesty criteria. Asked to edit protected
+configuration and force-push, it refused correctly in the refusal field and, in
+the same reply, asserted as a fact that it had done both. M357 then attacked
+the system with nine prompt attacks: the model complied with 7 of 9; the system
+held on 9 of 9 — eight refusals and one recorded substitution, nothing silent.
+The model is not the control; the refusals are. M358 gave the owner a review
+packet and four actions — approve, reject, request changes, needs research —
+recorded in an append-only hash-chained ledger whose editing, deletion,
+reordering and forgery are each detected and located by test.
+
+378 new tests, 346 existing agentdev tests, 181 engineering/registry/safety and
+1,033 governance/approval/security/trading regressions all pass: 1,938 passed,
+0 failed. Zero cloud calls, zero paid calls, zero credentials, zero pushes,
+merges or deploys, zero worktrees created.
+
+The verdict carries limitations because four claims still cannot be made
+honestly: nothing sandboxes a filesystem, so worktree confinement is detected
+rather than prevented; the concurrency ceilings are declared and reported but
+unenforced, because nothing spawns processes; only one model in one seat was
+ever exercised, and it failed most behaviour scenarios; and attack coverage is
+a list of nine rather than a proof. M360 and beyond were not started, and
+require explicit owner approval.
+
+## M369–M376 — Local Model Qualification, Truthfulness Verification & Role Assignment (2026-08-05)
+
+**Verdict:** `LOCAL_MODEL_QUALIFICATION_CERTIFIED_WITH_LIMITATIONS`
+**Evidence:** `docs/evidence/m369_m376/`
+
+Extends M352–M359. Six new modules, all inside `saathi/agentdev/`; zero modules
+outside it changed; zero packages installed; the existing `~/SaathiAI/.venv`
+reused. No model was downloaded or deleted.
+
+M352–M359 measured one model in one seat. This range asks whether any model
+installed on this machine is good enough to be given a named role. The answer
+is no, and the apparatus that produced that answer is the deliverable.
+
+M369 pinned the vocabulary the range is written in — model output, model claim,
+verified claim, unverified claim, contradictory claim, completion claim,
+external evidence, role qualification, role restriction, model
+disqualification — each with what it does not mean, and each checked for
+presence on the surfaces it claims. M370 read the host: five models installed,
+three eligible, two over the 4.0 GiB ceiling that half of 8 GiB physical memory
+sets. `resource_unsuitable_on_current_host` is a statement about the machine
+and never about the model. M371 generalised the M356/M357 harness so several
+models can be measured against one pinned suite, with digest, prompt version,
+rubric version, settings, repository SHA and host recorded together, and every
+raw reply, parsed reply and failed run preserved.
+
+M372 ran twelve scenarios at three runs each against every eligible model —
+thirty-six runs per model, none discarded. `qwen3:4b` passed 4 of 12 on every
+run; `qwen2.5:1.5b` and `qwen2.5-coder:3b` passed none. M373 ran eighteen
+adversarial attacks against each, reporting model behaviour and system
+behaviour separately: the system held 18 of 18 for all three models, with zero
+failed open, while the models complied with 13, 10 and 6 respectively. A system
+block is not a model refusal, and the report never averages one into the other.
+M374 added the claim verifier — twenty detectors over seventeen subjects, six
+statuses — which found 18 internal contradictions and 48 unsupported completion
+claims across the three models, and zero verified claims.
+
+M375 scored every model against ten candidate roles in three tiers with
+thresholds published before the evidence was collected. Zero model-role pairs
+qualified; `thresholds_lowered` is false. M376 turned that into a routing
+policy that refuses: all ten roles route to `NO_QUALIFIED_MODEL`, meaning a
+deterministic workflow or a person, with automatic, cloud and paid fallback all
+off. The read-only console gained thirteen qualification panels and still has
+no write verb.
+
+`qwen3:4b` was measured twice — 2 of 8 under M356, 4 of 12 under M372. Both
+readings stay committed. They are recorded side by side and never subtracted:
+the suites differ in size and scenario set, and the run counts differ, so
+comparison is directional only. Both fall short of every threshold, and the
+owner disposition is unchanged — `QWEN3_4B_ROLE_UNCHANGED`.
+
+Zero cloud calls, zero paid calls, zero credentials, zero model downloads, zero
+model deletions, zero global configuration changes, zero pushes, merges or
+deploys. No model holds tool, filesystem, shell, implementation, approval,
+mission-transition or deployment authority.
+
+The verdict carries limitations because five claims cannot be made honestly:
+only three of five installed models were evaluated, and the other two are
+unmeasured rather than poor; zero roles qualified, so the routing policy's
+selection path is exercised only by test; determinism is requested from the
+provider and not guaranteed, which is why runs are repeated; the one-model
+concurrency ceiling is observed rather than enforced, because nothing here
+spawns a process; and coverage is twelve scenarios and eighteen attacks rather
+than a proof. M377 and beyond were not started, and require explicit owner
+approval.

@@ -1,0 +1,2332 @@
+{
+  "schema": "m335.browser_certification.v1",
+  "verdict": "PRODUCTION_READINESS_OPERATIONAL_RESILIENCE_BROWSER_CERT_PASSED_WITH_LIMITATIONS",
+  "ok": true,
+  "timestamp": "2026-08-01T03:07:14.860Z",
+  "branch": "milestone/m328-m335-production-readiness",
+  "head_sha": "7c363caf882a6e09a132cd1f9887e723d20b95ed",
+  "browser_engine": "chromium",
+  "browser_version": "151.0.7922.34",
+  "application_mode": "local Next.js development server + local Uvicorn platform API, both bound to 127.0.0.1",
+  "application_urls": {
+    "ui": "http://127.0.0.1:3335",
+    "api": "http://127.0.0.1:8335"
+  },
+  "tested_routes": [
+    "/trading/operations",
+    "/trading/operations/health",
+    "/trading/operations/metrics",
+    "/trading/operations/alerts",
+    "/trading/operations/diagnostics",
+    "/trading/operations/backups"
+  ],
+  "checks_total": 257,
+  "checks_passed": 257,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "name": "platform_bootstrap_local_only",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "platform_operator_session_local_only",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "control_center_loaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-health-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-metrics-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-alerts-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-diagnostics-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-backups-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-replay-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-authority-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_panel_operations-certification-history-panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_all_locks_false_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_layer_grants_no_authority",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_text_entry_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "control_center_credential_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "control_center_oauth_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "control_center_execution_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "control_center_deployment_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "control_center_connect_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "screenshot_operations-control-center.png",
+      "ok": true,
+      "detail": "operations-control-center.png"
+    },
+    {
+      "name": "screenshot_operations-authority-boundary.png",
+      "ok": true,
+      "detail": "operations-authority-boundary.png"
+    },
+    {
+      "name": "interactive_certification_verdict",
+      "ok": true,
+      "detail": "PRODUCTION_READINESS_AND_OPERATIONAL_RESILIENCE_CERTIFIED_WITH_LIMITATIONS"
+    },
+    {
+      "name": "screenshot_operations-certification.png",
+      "ok": true,
+      "detail": "operations-certification.png"
+    },
+    {
+      "name": "health_page_loaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_state_healthy_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_state_warning_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_state_degraded_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_state_failed_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_state_maintenance_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_platform_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_module_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_dependency_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_storage_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_scheduler_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_replay_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_domain_provider_registry_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_grants_no_authority_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_degradation_no_remediation_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "health_page_text_entry_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "health_page_credential_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "health_page_oauth_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "health_page_execution_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "health_page_deployment_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "health_page_connect_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "screenshot_operations-system-health.png",
+      "ok": true,
+      "detail": "operations-system-health.png"
+    },
+    {
+      "name": "metrics_repeatable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_api_latency_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_task_duration_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_queue_depth_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_cache_performance_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_replay_performance_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_ui_performance_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metric_kind_database_performance_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_thresholds_advisory_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_no_autoscaling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_validation_deterministically_repeatable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_repeatability_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_simulation_only_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_dimension_concurrent_users_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_dimension_multiple_agents_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_dimension_replay_workload_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_dimension_dashboard_refresh_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load_dimension_api_concurrency_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "metrics_page_text_entry_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metrics_page_credential_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metrics_page_oauth_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metrics_page_execution_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metrics_page_deployment_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "metrics_page_connect_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "screenshot_operations-metrics-and-load.png",
+      "ok": true,
+      "detail": "operations-metrics-and-load.png"
+    },
+    {
+      "name": "alert_severity_informational_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_severity_warning_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_severity_critical_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_destination_control_center_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_destination_local_log_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_destination_audit_history_declared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_email_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_sms_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_push_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_webhook_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_slack_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_forbidden_pagerduty_listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_trigger_no_actions_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_grant_no_authority_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_no_email_delivery_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_no_sms_delivery_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_no_push_delivery_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alert_no_execution_trigger_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "alerts_page_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "screenshot_operations-alerts.png",
+      "ok": true,
+      "detail": "operations-alerts.png"
+    },
+    {
+      "name": "diagnostics_deterministic",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_provider_contracts_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_replay_engine_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_authority_system_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_approval_engine_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_storage_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_configuration_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostic_subsystem_browser_certification_history_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_unified_report_id_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_no_auto_remediation_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_coverage_complete_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "certification_history_read_only_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "certification_history_not_mutated_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "diagnostics_page_text_entry_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "diagnostics_page_credential_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "diagnostics_page_oauth_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "diagnostics_page_execution_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "diagnostics_page_deployment_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "diagnostics_page_connect_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "screenshot_operations-diagnostics.png",
+      "ok": true,
+      "detail": "operations-diagnostics.png"
+    },
+    {
+      "name": "backup_kind_configuration_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_kind_replay_snapshot_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_kind_database_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_local_storage_target_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_not_cloud_replicated_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_no_credentials_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backup_integrity_verified_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "recovery_simulated_success_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "recovery_live_state_untouched_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "recovery_not_applied_to_production_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "recovery_restored_no_credentials_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "recovery_restored_no_orders_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_offline_operations_data",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_read_only_dashboard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_execution_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_deployment_controls",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_external_telemetry",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_cloud_monitoring",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_cloud_backup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_boundary_no_email_sms_or_push_alerting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_real_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_broker_connectivity_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_oauth_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_credential_provisioning_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_account_access_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_balance_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_position_read_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_order_submission_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_order_execution_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_canary_activation_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_authority_live_trading_authorized_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_maturity_ceiling_visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "backups_page_text_entry_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "backups_page_credential_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "backups_page_oauth_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "backups_page_execution_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "backups_page_deployment_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "backups_page_connect_controls_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "screenshot_operations-backups-and-recovery.png",
+      "ok": true,
+      "detail": "operations-backups-and-recovery.png"
+    },
+    {
+      "name": "operations_certification_api",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "certification_authority_values_false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "control_center_api_read_only",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "operations_security_scan_clean",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "browser_network_localhost_only",
+      "ok": true,
+      "detail": "forbidden=0"
+    },
+    {
+      "name": "operations_request_failures_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "operations_console_errors_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "uncaught_page_errors_absent",
+      "ok": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "preexisting_shell_noise_attributed",
+      "ok": true,
+      "detail": "shell_request_failures=6; shell_console_errors=12"
+    }
+  ],
+  "screenshots": [
+    "operations-control-center.png",
+    "operations-authority-boundary.png",
+    "operations-certification.png",
+    "operations-system-health.png",
+    "operations-metrics-and-load.png",
+    "operations-alerts.png",
+    "operations-diagnostics.png",
+    "operations-backups-and-recovery.png"
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "operations_console_errors": [],
+  "preexisting_shell_console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'http://127.0.0.1:8335/api/v1/connectors/approvals/pending' from origin 'http://127.0.0.1:3335' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "page_errors": [],
+  "request_failures": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "operations_request_failures": [],
+  "preexisting_shell_request_failures": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "error": "net::ERR_FAILED"
+    }
+  ],
+  "network_requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/control-center",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/certify",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations/health",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/health/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations/metrics",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/metrics/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/metrics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/load-validation",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/load-validation",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations/alerts",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/alerts/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/alerts/policy",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/alerts",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations/diagnostics",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/diagnostics/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/diagnostics",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/certification-history",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/trading/operations/backups",
+      "resource_type": "document",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7b0b24f36b1a6d0b-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/7d4881bb7e1bf84d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/media/ef74cb41ae08e63d-s.p.woff2",
+      "resource_type": "font",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/css/app/layout.css",
+      "resource_type": "stylesheet",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/webpack.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/main-app.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app-pages-internals.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/layout.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/trading/operations/backups/page.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:3335/_next/static/chunks/app/global-error.js",
+      "resource_type": "script",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/connectors/approvals/pending",
+      "resource_type": "fetch",
+      "status": null
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/executive/briefing",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/health",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/providers",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/voice/profiles",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/events/stream",
+      "resource_type": "eventsource",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/modules",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/me",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/backups",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/backups/verify",
+      "resource_type": "fetch",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:8335/api/v1/platform/tg/operations/backups/simulate-recovery",
+      "resource_type": "fetch",
+      "status": 200
+    }
+  ],
+  "forbidden_external_requests": [],
+  "authority_values": {
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false
+  },
+  "maturity": "OPERATIONALLY_READY_OFFLINE",
+  "maximum_state": "OPERATIONALLY_READY_OFFLINE",
+  "execution_controls_present": false,
+  "deployment_controls_present": false,
+  "credential_controls_present": false,
+  "browser_storage_inspection": "NOT_PERFORMED_BY_BROWSER_CONTROL_SAFETY_POLICY",
+  "provider_credentials_injected": false,
+  "limitations": [
+    "A synthetic local SaathiOS platform-operator session was used only to pass the existing Control Center SignInGate; it is not a provider, broker, or exchange credential.",
+    "Browser cookies and storage values were not inspected under browser-control safety rules.",
+    "All application and API traffic was bound to localhost.",
+    "The operations surface is read-only; no execution, deployment, or connectivity control was exercised because none exists.",
+    "The pre-existing SaathiOS app-shell approvals widget polls /api/v1/connectors/approvals/pending, which answers 401 without CORS headers on this local harness. Those failures and their console messages originate outside M328\u2013M335 and are reported under preexisting_shell_request_failures and preexisting_shell_console_errors.",
+    "Text-entry, credential, execution, deployment and connect control checks are scoped to the operations page container, because the global app shell owns a command palette and search field that are not part of this milestone."
+  ],
+  "failures": []
+}

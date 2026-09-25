@@ -1,0 +1,123 @@
+{
+  "schema": "M312_M319_EVIDENCE_MANIFEST",
+  "files": {
+    "FOCUSED_TEST_LOG.txt": {
+      "sha256": "234ad3d43c6c675986a8705020ba6c6eaeb36938f708b63e2bba032c27038f25",
+      "bytes": 99
+    },
+    "FRONTEND_TEST_LOG.txt": {
+      "sha256": "1e534841a8912a56970ea9eedffebf0fd548f1708e12eb8e36fac61997176b3b",
+      "bytes": 425
+    },
+    "IMPLEMENTATION_INVENTORY.json": {
+      "sha256": "63227d7dc750a2666248d9b2721092df2955e0f49250df2d1fa9ae192af40228",
+      "bytes": 1006
+    },
+    "INITIAL_GIT_STATUS.txt": {
+      "sha256": "e8751cdda9fc005f436f23ada3de16bfb8cc92bea267828c8ff03ce6726da822",
+      "bytes": 291
+    },
+    "LIMITATIONS.json": {
+      "sha256": "e292743df989e9d65f89b3028d8fd8e1ace2667d5790586480ab475104b123f3",
+      "bytes": 617
+    },
+    "M312_CONNECTIVITY_GOVERNANCE_CHARTER.json": {
+      "sha256": "8fa76032e190add4dfff73b99563959b3328b2aec9f0a21e9945284b5956ad4e",
+      "bytes": 7557
+    },
+    "M312_RECOVERY_BASELINE.json": {
+      "sha256": "48b01618c8c004119dec9df3f88a4bb4a8b47ef9b3a6ade38a89861ff918afdc",
+      "bytes": 2498
+    },
+    "M313_AUTHORITY_EVALUATION_EXAMPLES.json": {
+      "sha256": "2e7a089a257bcff7cccc0fb719dc5ab4d78bda821fe21c15eb7c73d92f83ad60",
+      "bytes": 2532
+    },
+    "M313_CONNECTIVITY_AUTHORITY_MODEL.json": {
+      "sha256": "7fe95feb809ae9132d5add1311a3229be6bcd514a23beb2d1c956625dbfb5847",
+      "bytes": 14213
+    },
+    "M314_PROVIDER_GOVERNANCE_REGISTRY.json": {
+      "sha256": "9b23598aac3282bf474b0be05e7a375b370fc885dae229df513afed5b4fd04b6",
+      "bytes": 18211
+    },
+    "M315_CONNECTIVITY_APPROVAL_FRAMEWORK.json": {
+      "sha256": "e624b5a652238ad42a55d57c4dce53478841d546ec4f639c1b83817670e37ea9",
+      "bytes": 7748
+    },
+    "M315_LLM_APPROVAL_REJECTION.json": {
+      "sha256": "2f657515231095ad9e5148dae6086d8578b6c9db696b4be41b0d191f22e4ebbb",
+      "bytes": 105
+    },
+    "M315_SELF_APPROVAL_REJECTION.json": {
+      "sha256": "2f657515231095ad9e5148dae6086d8578b6c9db696b4be41b0d191f22e4ebbb",
+      "bytes": 105
+    },
+    "M316_CREDENTIAL_GOVERNANCE_POLICY.json": {
+      "sha256": "26d4152b01efb721cc21d5a537676dab168701a28a55322b206c367d8f8408ba",
+      "bytes": 3545
+    },
+    "M317_REVOCATION_AND_INCIDENT_RESPONSE.json": {
+      "sha256": "89f17757502d6c1f363e46d901617a3d2427b2aceae939b3a8c3e321c4c18be3",
+      "bytes": 10909
+    },
+    "M318_PROVIDER_CONNECTIVITY_THREAT_MODEL.json": {
+      "sha256": "259882b753cfc94d3ceaa9d46b1710d0547496ec9a10fa91fa01c593341c6030",
+      "bytes": 109857
+    },
+    "M319_BROWSER_CERT_LOG.txt": {
+      "sha256": "ccf0fcc402c319fe291a62a9025c5535ac9ba62243701dc416dbffdc5317746f",
+      "bytes": 748
+    },
+    "M319_BROWSER_CERT_SUMMARY.json": {
+      "sha256": "8f30767bdf2772f06a992268d204caf044b581720c7e0ff9762272c53d03d7e2",
+      "bytes": 3285
+    },
+    "M319_CERTIFY.json": {
+      "sha256": "94017932109a6d12f59a3a2d22342c3903e13622da8e9077da35ae9eb08f2779",
+      "bytes": 3730
+    },
+    "M319_CLEAN_CLONE_CERTIFICATION.json": {
+      "sha256": "dccdf80cd74705b25ae648f943dd34ee2952dbc3acda0412b159c3845ea5b54e",
+      "bytes": 849
+    },
+    "M319_DASHBOARD.json": {
+      "sha256": "9f08a228269be50bf4b47ab056afb39b86265c115b0c79fcec3a669a64b179bc",
+      "bytes": 5156
+    },
+    "M319_MATURITY.json": {
+      "sha256": "2ab5cd26fba2e125fffc49d67d8cfa4ca780222939ae9e2de1b6e0fbe0bea78d",
+      "bytes": 3904
+    },
+    "M319_PIPELINE.json": {
+      "sha256": "59c0a6c6d41975b36e010e75a2bafe63856aae09fd36954a2c3cc8228337eb49",
+      "bytes": 6000
+    },
+    "M319_SECURITY_SCANS.json": {
+      "sha256": "8d5d900bbf6e63d610e00b88e0d95bc3b0ffc8b6d6fc961937df7f0545153ba4",
+      "bytes": 3094
+    },
+    "PRODUCTION_BUILD_LOG.txt": {
+      "sha256": "61f0472d689e8bdb3bd53857549994278578c36fe5aa8e8bdecb5a855a21a1dc",
+      "bytes": 8505
+    },
+    "REGRESSION_TEST_LOG.txt": {
+      "sha256": "22dda2ca00ae6324a6f97b96c400ce0c3cb8bf22b31857fc022eeba879e7e569",
+      "bytes": 98
+    },
+    "STARTING_SHA.txt": {
+      "sha256": "ba6a733bee8fcbe7b5ccc8b1685c8a90cc9625b24ca9315a6e7a2e74979132b2",
+      "bytes": 41
+    },
+    "browser/M319_BROWSER_CERT.json": {
+      "sha256": "8f30767bdf2772f06a992268d204caf044b581720c7e0ff9762272c53d03d7e2",
+      "bytes": 3285
+    },
+    "browser/screenshots/connectivity_governance_control_center.png": {
+      "sha256": "a8ced14fa2fedd0b701c092b6050af3f6bf72e2ec768cdd7f3fb055ece6725fc",
+      "bytes": 114465
+    }
+  },
+  "verdict": "TRADING_CONNECTIVITY_GOVERNANCE_CERTIFIED_WITH_LIMITATIONS",
+  "ok": true
+}

@@ -1,0 +1,175 @@
+{
+  "record": "SAATHIOS_FULL_E2E_FUNCTIONAL_AUDIT_RECOVERY_BASELINE",
+  "phase": "PHASE_1_RECOVERY_WORKTREE_AND_RUNTIME_AUDIT",
+  "generated_by": "phase-1 manual inspection (git worktree list, git log, lsof, ps, curl)",
+  "primary_repository": "/Users/macbookpro/SaathiAI",
+
+  "baseline_resolution": {
+    "status": "RESOLVED",
+    "chosen_starting_sha": "1647e19",
+    "chosen_starting_branch": "fix/saathios-ui-recovery",
+    "chosen_starting_worktree": "/Users/macbookpro/SaathiAI-ui-recovery",
+    "reason": "Newest verified commit. Contains the full M336-M343 private-alpha certified tree (d2961e0 proven an ancestor via `git merge-base --is-ancestor`) plus exactly one reviewed UI-recovery commit. Working tree clean, no unreviewed unrelated changes.",
+    "superseded_candidate": {
+      "sha": "d2961e02f8b0967a7d1dc419a71bc9acc8ec5a47",
+      "branch": "milestone/m336-m343-private-alpha-readiness",
+      "reason_not_chosen": "The UI recovery mission has already produced a newer verified commit on top of it (1647e19). Mission brief explicitly instructs using the newest verified commit."
+    },
+    "ancestry_proof": [
+      "git merge-base --is-ancestor d2961e02f8b0967a7d1dc419a71bc9acc8ec5a47 1647e19 -> true",
+      "git merge-base --is-ancestor 6639ca7 1647e19 -> true"
+    ]
+  },
+
+  "repair_worktree": {
+    "path": "/Users/macbookpro/SaathiAI-full-e2e",
+    "branch": "fix/saathios-full-e2e-functional-recovery",
+    "created_from": "1647e19",
+    "frontend_path": "/Users/macbookpro/SaathiAI-full-e2e/saathi-os",
+    "backend_path": "/Users/macbookpro/SaathiAI-full-e2e/saathi",
+    "backend_entrypoint": "python -m saathi.server",
+    "frontend_deps_installed": true,
+    "frontend_deps_method": "npm ci --prefer-offline (exit 0)"
+  },
+
+  "worktrees_inspected": [
+    {
+      "path": "/Users/macbookpro/SaathiAI",
+      "branch": "milestone/m312-m319-connectivity-governance",
+      "sha": "6639ca730ece11bce160a55a237fcaff8df3058c",
+      "git_status": "DIRTY - 10 modified tracked files, 17 untracked paths",
+      "modified_backend_files": [
+        "saathi/inference/adapters/http_providers.py",
+        "saathi/inference/provider_descriptor.py",
+        "saathi/inference/provider_policy.py",
+        "saathi/model_router.py"
+      ],
+      "role": "primary repository; ALSO the working directory of the LIVE backend process",
+      "verdict": "NOT a valid runtime baseline - stale branch plus uncommitted changes"
+    },
+    {
+      "path": "/Users/macbookpro/SaathiAI-m320-m327",
+      "branch": "milestone/m328-m335-production-readiness",
+      "sha": "6cdf726",
+      "git_status": "not inspected in depth (superseded)",
+      "role": "older milestone worktree",
+      "verdict": "superseded by m336-m343"
+    },
+    {
+      "path": "/Users/macbookpro/SaathiAI-m336-m343",
+      "branch": "milestone/m336-m343-private-alpha-readiness",
+      "sha": "d2961e0",
+      "git_status": "clean",
+      "role": "certified private-alpha milestone worktree",
+      "verdict": "valid but superseded by fix/saathios-ui-recovery"
+    },
+    {
+      "path": "/Users/macbookpro/SaathiAI-ui-recovery",
+      "branch": "fix/saathios-ui-recovery",
+      "sha": "1647e19",
+      "git_status": "clean",
+      "role": "UI recovery mission output; SERVES the live frontend on port 3000",
+      "verdict": "CHOSEN BASELINE"
+    },
+    {
+      "path": "/Users/macbookpro/.worktrees/backend-core",
+      "branch": "agent/backend-core",
+      "sha": "dbcb589",
+      "role": "agent scratch worktree",
+      "verdict": "out of scope"
+    },
+    {
+      "path": "/Users/macbookpro/.worktrees/frontend-auth",
+      "branch": "agent/frontend-auth",
+      "sha": "82ebdd9",
+      "role": "agent scratch worktree",
+      "verdict": "out of scope"
+    },
+    {
+      "path": "/private/var/folders/.../m233-worktree-*/clean-wt (x100)",
+      "branch": "detached HEAD",
+      "sha": "1e3f0a1",
+      "role": "abandoned M233 clean-clone temp worktrees",
+      "verdict": "PRUNABLE - stale, not deleted by this mission (no unrelated destructive action)"
+    }
+  ],
+
+  "running_processes": [
+    {
+      "pid": 12672,
+      "command": "next-server (v15.5.22)",
+      "listening": "TCP *:3000",
+      "cwd": "/Users/macbookpro/SaathiAI-ui-recovery/saathi-os",
+      "serves": "frontend",
+      "branch_at_cwd": "fix/saathios-ui-recovery",
+      "sha_at_cwd": "1647e19",
+      "verdict": "CORRECT source tree"
+    },
+    {
+      "pid": 1328,
+      "command": "python -m saathi.server",
+      "listening": "TCP 127.0.0.1:8765",
+      "cwd": "/Users/macbookpro/SaathiAI",
+      "serves": "backend BFF / API",
+      "branch_at_cwd": "milestone/m312-m319-connectivity-governance",
+      "sha_at_cwd": "6639ca7",
+      "verdict": "WRONG source tree - see DEFECT-ENV-001"
+    }
+  ],
+
+  "port_scan": {
+    "3000": "LISTEN - next-server pid 12672",
+    "8000": "free",
+    "8327": "free",
+    "8765": "LISTEN - python -m saathi.server pid 1328"
+  },
+
+  "frontend_api_wiring": {
+    "env_var": "NEXT_PUBLIC_SAATHI_API",
+    "default_when_unset": "http://localhost:8765",
+    "session_transport": "localStorage key `saathi_session` sent as `x-baadar-session` header, plus credentials:include",
+    "source": "saathi-os/lib/api.js:6-24"
+  },
+
+  "backend_probe_from_live_process": {
+    "GET /health": 404,
+    "GET /api/v1/health": 401,
+    "GET /api/v1/platform/health": 200,
+    "GET /api/v1/auth/login": 404,
+    "GET /api/v1/platform/missions": 401,
+    "GET /api/v1/operations/private-alpha-readiness": 401,
+    "interpretation": "Backend is alive and fails closed with 401 on protected routes. 404 on /api/v1/auth/login is expected for GET (route is POST-only) and is not by itself a defect."
+  },
+
+  "baseline_defects_found_in_phase_1": [
+    {
+      "id": "DEFECT-ENV-001",
+      "severity": "BLOCKER",
+      "ownership": "ENVIRONMENT_OPERATIONAL",
+      "title": "Live backend is served from a stale branch with uncommitted changes while the frontend is served from a much newer branch",
+      "detail": "next-server (port 3000) runs from /Users/macbookpro/SaathiAI-ui-recovery @ 1647e19. python -m saathi.server (port 8765) runs from /Users/macbookpro/SaathiAI @ 6639ca7 on milestone/m312-m319-connectivity-governance, with 4 modified backend source files uncommitted.",
+      "measured_gap": "git diff --stat 6639ca7 1647e19 -- saathi/ => 35 files changed, 8791 insertions(+), 22 deletions(-)",
+      "impact": "The running API is missing the entire M320-M343 surface that the running UI calls. Any front-end journey depending on M320+ endpoints will fail against this process. This alone can explain a large class of 'the app is broken' reports.",
+      "resolution_in_this_mission": "Do not reuse pid 1328. Start an isolated backend from /Users/macbookpro/SaathiAI-full-e2e on a dedicated port with an isolated database. pid 1328 is NOT killed (unrelated process, per mission safety boundary)."
+    },
+    {
+      "id": "DEFECT-ENV-002",
+      "severity": "LOW",
+      "ownership": "ENVIRONMENT_OPERATIONAL",
+      "title": "100 prunable stale git worktrees from milestone M233",
+      "detail": "`git worktree list` reports 100 entries under /private/var/folders/.../m233-worktree-*/clean-wt marked prunable.",
+      "impact": "Cosmetic/operational noise; slows worktree enumeration. No functional impact on the application.",
+      "resolution_in_this_mission": "Reported only. Not pruned - out of mission scope and would be an unrequested destructive action."
+    }
+  ],
+
+  "isolation_plan": {
+    "backend_port": 8766,
+    "frontend_port": 3100,
+    "database": "/Users/macbookpro/SaathiAI-full-e2e/data/saathi.db (auto-derived from repo ROOT in saathi/config.py:100; worktree is fresh so the DB starts empty)",
+    "no_collision_with": ["pid 1328 on 8765", "pid 12672 on 3000"],
+    "credentials": "runtime-generated per run, injected via environment, never written to evidence"
+  },
+
+  "verdict": "PHASE_1_BASELINE_RESOLVED"
+}

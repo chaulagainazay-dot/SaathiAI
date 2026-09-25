@@ -1,0 +1,246 @@
+{
+  "ACCOUNT_ACCESS_AUTHORIZED": false,
+  "API_KEYS_ACCEPTED": false,
+  "AUTOMATED_INVESTMENT_AUTHORITY": false,
+  "BALANCE_READ_AUTHORIZED": false,
+  "BROKER_CONNECTIVITY_AUTHORIZED": false,
+  "CANARY_ACTIVATION_AUTHORIZED": false,
+  "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+  "CREDENTIAL_STORAGE_AUTHORIZED": false,
+  "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+  "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+  "LIVE_TRADING_AUTHORIZED": false,
+  "OAUTH_AUTHORIZED": false,
+  "ORDER_CANCELLATION_AUTHORIZED": false,
+  "ORDER_EXECUTION_AUTHORIZED": false,
+  "ORDER_MODIFICATION_AUTHORIZED": false,
+  "ORDER_SUBMISSION_AUTHORIZED": false,
+  "POSITION_READ_AUTHORIZED": false,
+  "PRODUCTION_AUTHORIZED": false,
+  "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+  "REAL_CONNECTIVITY_AUTHORIZED": false,
+  "TRANSFER_AUTHORIZED": false,
+  "WITHDRAWAL_AUTHORIZED": false,
+  "approval_does_not_equal_activation": true,
+  "approvals": {
+    "ACCOUNT_ACCESS_AUTHORIZED": false,
+    "API_KEYS_ACCEPTED": false,
+    "AUTOMATED_INVESTMENT_AUTHORITY": false,
+    "BALANCE_READ_AUTHORIZED": false,
+    "BROKER_CONNECTIVITY_AUTHORIZED": false,
+    "CANARY_ACTIVATION_AUTHORIZED": false,
+    "CREDENTIAL_PROVISIONING_AUTHORIZED": false,
+    "CREDENTIAL_STORAGE_AUTHORIZED": false,
+    "CREDENTIAL_VALIDATION_AUTHORIZED": false,
+    "EXTERNAL_PAPER_EXECUTION_AUTHORIZED": false,
+    "LIVE_TRADING_AUTHORIZED": false,
+    "OAUTH_AUTHORIZED": false,
+    "ORDER_CANCELLATION_AUTHORIZED": false,
+    "ORDER_EXECUTION_AUTHORIZED": false,
+    "ORDER_MODIFICATION_AUTHORIZED": false,
+    "ORDER_SUBMISSION_AUTHORIZED": false,
+    "POSITION_READ_AUTHORIZED": false,
+    "PRODUCTION_AUTHORIZED": false,
+    "READ_ONLY_PRODUCTION_AUTHORIZED": false,
+    "REAL_CONNECTIVITY_AUTHORIZED": false,
+    "TRANSFER_AUTHORIZED": false,
+    "WITHDRAWAL_AUTHORIZED": false,
+    "any_active_connectivity": false,
+    "approval_does_not_equal_activation": true,
+    "approvals": [
+      {
+        "account_identifier_reference": "none",
+        "activates_connectivity": false,
+        "allowed_network_destinations": [
+          "localhost"
+        ],
+        "approval_id": "appr_ce6af2a989ad4dc5",
+        "approval_type": "provider_documentation_review",
+        "approver": "gov_approver",
+        "audit_references": [
+          "submitted_by:gov_requestor",
+          "approved_not_active_by:gov_approver"
+        ],
+        "capability_scope": [
+          "offline_fixture_access"
+        ],
+        "created_at": 1785421620.03839,
+        "credential_reference_policy": "synthetic_only",
+        "decision_at": 1785421620.039038,
+        "decision_notes": "",
+        "emergency_contacts": [],
+        "environment": "governance",
+        "evidence_requirements": [
+          "charter_hash",
+          "provider_docs"
+        ],
+        "expiry_time": 1785508020.0383139,
+        "explicit_acknowledgements": [
+          "governance_only",
+          "no_activation",
+          "no_credentials"
+        ],
+        "immutable_decision": true,
+        "instrument_scope": [
+          "none"
+        ],
+        "jurisdiction": "N/A",
+        "limitations": [
+          "approval_does_not_equal_activation",
+          "no_provider_connection",
+          "governance_only"
+        ],
+        "maximum_session_duration": 3600.0,
+        "operation_scope": [
+          "documentation_review"
+        ],
+        "provider": "prov_mock_contract",
+        "request_id": "req_9825bbbbb3ff4db3",
+        "requestor": "gov_requestor",
+        "revocation_conditions": [
+          "operator_request",
+          "policy_violation"
+        ],
+        "rollback_requirements": [
+          "revoke_and_disable"
+        ],
+        "start_time": 1785421620.03839,
+        "status": "APPROVED_NOT_ACTIVE",
+        "updated_at": 1785421620.039039
+      },
+      {
+        "account_identifier_reference": "none",
+        "activates_connectivity": false,
+        "allowed_network_destinations": [
+          "localhost"
+        ],
+        "approval_id": "appr_5a1de81d9b094ee7",
+        "approval_type": "provider_documentation_review",
+        "approver": "bob",
+        "audit_references": [
+          "submitted_by:alice",
+          "approved_not_active_by:bob"
+        ],
+        "capability_scope": [
+          "offline_fixture_access"
+        ],
+        "created_at": 1785421620.0398989,
+        "credential_reference_policy": "synthetic_only",
+        "decision_at": 1785421620.040517,
+        "decision_notes": "",
+        "emergency_contacts": [],
+        "environment": "governance",
+        "evidence_requirements": [
+          "docs_hash"
+        ],
+        "expiry_time": 1785508020.0398579,
+        "explicit_acknowledgements": [
+          "governance_only",
+          "no_activation"
+        ],
+        "immutable_decision": true,
+        "instrument_scope": [
+          "none"
+        ],
+        "jurisdiction": "N/A",
+        "limitations": [
+          "approval_does_not_equal_activation",
+          "no_provider_connection",
+          "governance_only"
+        ],
+        "maximum_session_duration": 3600.0,
+        "operation_scope": [
+          "documentation_review"
+        ],
+        "provider": "prov_mock_contract",
+        "request_id": "req_9792486ae5d44385",
+        "requestor": "alice",
+        "revocation_conditions": [
+          "operator_request"
+        ],
+        "rollback_requirements": [
+          "revoke_and_disable"
+        ],
+        "start_time": 1785421620.0398989,
+        "status": "APPROVED_NOT_ACTIVE",
+        "updated_at": 1785421620.0405178
+      }
+    ],
+    "authority_does_not_implicitly_expand": true,
+    "count": 2,
+    "current_maturity": "GOVERNANCE_ONLY",
+    "governance_only": true,
+    "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+    "no_account_access": true,
+    "no_balance_access": true,
+    "no_broker_login": true,
+    "no_canary_activation": true,
+    "no_credential_storage": true,
+    "no_live_trading": true,
+    "no_oauth": true,
+    "no_orders": true,
+    "no_position_access": true,
+    "no_provider_connection": true,
+    "offline_first": true,
+    "ok": true,
+    "paper_only": true,
+    "raw_credentials_forbidden": true,
+    "research_only": true,
+    "sandbox_only": true
+  },
+  "authority_does_not_implicitly_expand": true,
+  "categories": [
+    "provider_documentation_review",
+    "mock_adapter_testing",
+    "credentialless_contract_testing",
+    "read_only_canary_request",
+    "external_paper_canary_request",
+    "incident_exception_request",
+    "revocation_request",
+    "emergency_shutdown_request"
+  ],
+  "controls": {
+    "approval_does_not_equal_activation": true,
+    "explicit_human_identity": true,
+    "immutable_decision": true,
+    "maker_checker": true,
+    "mandatory_expiry": true,
+    "narrow_scopes": true,
+    "no_automatic_activation": true,
+    "no_llm_approval": true,
+    "no_self_approval": true,
+    "revocation_support": true,
+    "single_purpose": true
+  },
+  "current_maturity": "GOVERNANCE_ONLY",
+  "governance_only": true,
+  "max_state": "CONNECTIVITY_GOVERNANCE_READY_NO_PROVIDER_CONNECTION",
+  "no_account_access": true,
+  "no_balance_access": true,
+  "no_broker_login": true,
+  "no_canary_activation": true,
+  "no_credential_storage": true,
+  "no_live_trading": true,
+  "no_oauth": true,
+  "no_orders": true,
+  "no_position_access": true,
+  "no_provider_connection": true,
+  "offline_first": true,
+  "paper_only": true,
+  "raw_credentials_forbidden": true,
+  "research_only": true,
+  "sandbox_only": true,
+  "schema": "M315_CONNECTIVITY_APPROVAL_FRAMEWORK",
+  "states": [
+    "DRAFT",
+    "SUBMITTED",
+    "UNDER_REVIEW",
+    "APPROVED_NOT_ACTIVE",
+    "REJECTED",
+    "EXPIRED",
+    "REVOKED",
+    "EMERGENCY_REVOKED",
+    "CONSUMED",
+    "SUPERSEDED"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "discovered": 1042,
+  "executed": 1042,
+  "passed": 1042,
+  "failed": 0,
+  "skipped": 0,
+  "not_run": 0,
+  "commands": [
+    "python -m pytest -q tests/test_m3*agentdev*.py",
+    "python -m pytest -q tests/test_m356_agentdev_model_eval.py tests/test_m357_agentdev_adversarial.py tests/test_m369_agentdev_qualification_terms.py tests/test_m370_agentdev_model_inventory.py tests/test_m371_agentdev_cross_model_eval.py tests/test_m372_agentdev_cross_model_behavior.py tests/test_m373_agentdev_cross_model_adversarial.py tests/test_m374_agentdev_claim_verification.py tests/test_m375_agentdev_role_qualification.py tests/test_m376_agentdev_certification_and_routing.py"
+  ],
+  "suite_results": {
+    "full_agentdev_m3xx": {
+      "passed": 1042,
+      "failed": 0,
+      "skipped": 0
+    },
+    "focused_m356_m376": {
+      "passed": 384,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "notes": "Certifier does not run pytest; these counts are from operator-recorded runs on this host."
+}

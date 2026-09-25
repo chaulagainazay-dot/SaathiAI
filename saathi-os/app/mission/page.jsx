@@ -6,7 +6,7 @@ import { Panel, Eyebrow, Bar, Dot } from "@/components/ui";
 import { color } from "@/lib/departments";
 import { fetchMissions } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API || "http://localhost:8765";
+const API_BASE = process.env.NEXT_PUBLIC_SAATHI_API ?? "http://localhost:8765";
 
 const HEALTH_LABELS = {
   knowledge: "Knowledge",

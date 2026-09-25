@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-08-07T10:23:41.851520+00:00",
+  "speaker_count": 0,
+  "speakers": [],
+  "consent_count": 0,
+  "commercial_consent_speakers": 0,
+  "clips": 0,
+  "hours": 0.0,
+  "average_duration_s": 0.0,
+  "median_duration_s": 0.0,
+  "language_class": {},
+  "EN": 0,
+  "NE": 0,
+  "MIX": 0,
+  "numeric_clips": 0,
+  "financial_clips": 0,
+  "bucket": {},
+  "split": {},
+  "qa_status": {},
+  "clips_per_speaker": {},
+  "hours_per_speaker": {},
+  "device_distribution": {},
+  "noise_class_distribution": {},
+  "warnings": [
+    "speaker_count_below_5",
+    "mix_clips_below_500",
+    "numeric_clips_below_200",
+    "commercial_consent_speakers_below_5",
+    "zero_clips"
+  ]
+}

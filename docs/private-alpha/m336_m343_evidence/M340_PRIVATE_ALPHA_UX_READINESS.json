@@ -1,0 +1,166 @@
+{
+  "schema": "m340.private_alpha_ux_readiness.v1",
+  "milestone": "M340",
+  "title": "Onboarding, UX and failure-state readiness for invited non-developer testers",
+  "branch": "milestone/m336-m343-private-alpha-readiness",
+
+  "misleading_language_audit": {
+    "method": "grep over saathi-os/app, saathi-os/components and saathi-os/lib for connectivity wording, then manual review of every hit",
+    "hits_reviewed": 20,
+    "defects_found": 1,
+    "defects": [
+      {
+        "file": "saathi-os/components/shell/StatusBar.jsx",
+        "line": 35,
+        "before": "live.connected ? \"Live connected\" : \"Live disconnected\"",
+        "after": "live.connected ? \"Local platform online\" : \"Local platform offline\"",
+        "why": "The flag reflects only the local Server-Sent-Events stream from the local backend (LiveProvider subscribes to ${API_BASE}/api/events/stream). On a product with no broker connectivity, no market access and no execution authority, 'Live connected' in the global chrome claimed something untrue.",
+        "severity": "HIGH — it appeared on every authenticated screen",
+        "additional": "A 'Private alpha · local only' badge was added beside it, and the segment carries data-testid=\"local-platform-status\" so the browser certification asserts the wording."
+      }
+    ],
+    "hits_reviewed_and_left_unchanged": [
+      {
+        "pattern": "LIVE EXECUTION: UNAVAILABLE, NO LIVE ORDERS, LIVE TRADING NOT AUTHORIZED, NO LIVE MARKET ACCESS, NO AUTO LIVE PROMOTION, NOT LIVE-ELIGIBLE",
+        "files": "saathi-os/app/trading/**",
+        "reason": "Every remaining occurrence of 'live' is an explicit negation stating that the capability does not exist. Changing them would weaken the disclosure, not improve it."
+      },
+      {
+        "pattern": "connected / sourcesConnected / connectorsStatus",
+        "files": "saathi-os/app/page.jsx, app/approvals/page.jsx, app/trading/provider-contracts/page.jsx",
+        "reason": "These describe local data-source availability and synthetic offline fixtures, and are already qualified in context (e.g. 'source boundary: synthetic offline fixtures · connected=false'). None implies broker connectivity."
+      }
+    ],
+    "forbidden_implications_checked": [
+      "broker connectivity",
+      "live market access",
+      "account connection",
+      "execution readiness",
+      "live trading"
+    ],
+    "residual_risk": "The audit covers the SaathiOS frontend tree. Strings originating from backend payloads are rendered verbatim; the browser certification asserts the absence of a 'live connected' claim in the rendered page text as a backstop."
+  },
+
+  "surfaces_delivered": {
+    "component": "saathi-os/components/private-alpha/PrivateAlphaNotice.jsx",
+    "states": [
+      {"state": "private-alpha landing / persistent disclosure", "test_id": "private-alpha-banner", "notes": "eight labels plus eight plain-language limitations"},
+      {"state": "limitations list", "test_id": "private-alpha-limitations"},
+      {"state": "invite-required messaging", "test_id": "invite-required", "reason_code": "PRIVATE_ALPHA_INVITE_ONLY"},
+      {"state": "sign-in guidance", "test_id": "signin-guidance", "notes": "does not reveal whether an account exists"},
+      {"state": "permission denied", "test_id": "permission-denied", "reason_code": "PERMISSION_DENIED"},
+      {"state": "approval pending", "test_id": "approval-pending", "notes": "states that the assistant cannot approve it"},
+      {"state": "mission running", "test_id": "mission-running", "notes": "cancellation is offered, progress is observable"},
+      {"state": "session expired", "test_id": "session-ended", "reason_code": "SESSION_EXPIRED"},
+      {"state": "session revoked", "test_id": "session-ended", "reason_code": "SESSION_REVOKED"},
+      {"state": "mission failure with recovery guidance", "test_id": "mission-failure", "notes": "routes to diagnostics and to evidence/audit"},
+      {"state": "unsupported feature", "test_id": "unsupported-feature", "notes": "says the capability does not exist in this build rather than implying a hidden setting"},
+      {"state": "local/offline platform status", "test_id": "local-platform-status-detail"}
+    ],
+    "composed_from": "existing ui.jsx primitives (Panel, Pill, Stack, Text, Heading, Badge, EmptyState, BlockedState) — no parallel component system was created",
+    "first_run_setup": "existing /platform/onboarding surface (M60 Workstream 1) retained and reused; not duplicated",
+    "empty_states": "existing EmptyState primitive plus mission-list empty state (data-testid=\"missions-empty\")",
+    "evidence_and_audit_links": "MissionFailureState exposes diagnostics and evidence links; the readiness page lists every evidence path in its release-package section"
+  },
+
+  "accessibility": {
+    "method": "STATIC STRUCTURAL AUDIT of the surfaces this milestone added or changed. No automated axe run and no screen-reader session was performed — the repository has no axe or jest-axe harness, and adding one was outside this milestone's scope. This result is therefore a structural check, not a full WCAG conformance claim.",
+    "scope": [
+      "saathi-os/components/private-alpha/PrivateAlphaNotice.jsx",
+      "saathi-os/app/operations/private-alpha-readiness/page.jsx",
+      "saathi-os/components/shell/StatusBar.jsx"
+    ],
+    "checks": [
+      {
+        "check": "keyboard navigation",
+        "result": "PASS",
+        "detail": "The readiness page has exactly one interactive control, rendered by the ui.jsx Button primitive as a real <button type=\"button\">. Links in the failure states are real <a href>. No div-with-onClick, no custom focus trap, nothing keyboard-inaccessible."
+      },
+      {
+        "check": "focus order",
+        "result": "PASS",
+        "detail": "Document order matches visual order: heading, disclosure banner, human-review markers, load control, then results. No positive tabindex anywhere in the changed files."
+      },
+      {
+        "check": "labels",
+        "result": "PASS",
+        "detail": "The disclosure banner carries aria-label=\"Private alpha status and limitations\". Every Badge renders label text, never colour alone (the ui.jsx Badge contract is 'NEVER color-only — always label + shape marker')."
+      },
+      {
+        "check": "contrast",
+        "result": "PASS_WITH_LIMITATION",
+        "detail": "All colours come from the existing design tokens and the established Badge/Pill patterns, which pair colour with text in every case, so no information is conveyed by colour alone. Measured contrast ratios were not recomputed for this milestone; the tokens are unchanged from the certified predecessor."
+      },
+      {
+        "check": "semantic headings",
+        "result": "PASS",
+        "detail": "One <h1> (page title) and <h2> for each section, via the ui.jsx Heading primitive which renders real h1..h6. No level is skipped."
+      },
+      {
+        "check": "form errors",
+        "result": "NOT_APPLICABLE",
+        "detail": "The readiness page contains no form, input, textarea or select — asserted by test. Failure states carry an explicit machine-readable reason code (PERMISSION_DENIED, SESSION_REVOKED, PRIVATE_ALPHA_INVITE_ONLY) rather than a bare colour or icon."
+      },
+      {
+        "check": "status announcements",
+        "result": "PASS",
+        "detail": "Approval-pending and mission-running carry role=\"status\" with aria-live=\"polite\", so a screen reader announces a state change without interrupting. Disclosure panels use role=\"note\". The global status bar already carried role=\"status\" aria-live=\"polite\"."
+      },
+      {
+        "check": "destructive-action confirmation",
+        "result": "NOT_APPLICABLE",
+        "detail": "The readiness surface is read-only and offers no destructive action. The repository's existing ConfirmDialog primitive remains the pattern for destructive actions elsewhere."
+      },
+      {
+        "check": "wide content does not force horizontal page scroll",
+        "result": "PASS",
+        "detail": "The checklist table is wrapped in a container with overflowX: auto, asserted by test."
+      },
+      {
+        "check": "table semantics",
+        "result": "PASS",
+        "detail": "The checklist uses a real <table> with a <caption>, scope=\"col\" column headers and scope=\"row\" row headers."
+      }
+    ],
+    "not_covered": [
+      "automated axe/WCAG rule scan",
+      "screen-reader walkthrough with VoiceOver",
+      "measured colour-contrast ratios",
+      "reduced-motion and high-contrast preference testing",
+      "surfaces outside the three files this milestone changed"
+    ]
+  },
+
+  "frontend_tests": {
+    "file": "saathi-os/lib/m336_private_alpha_readiness.test.js",
+    "suites": 5,
+    "tests": 24,
+    "passed": 24,
+    "failed": 0,
+    "covers": [
+      "the 'Live connected' wording is gone and cannot return",
+      "local platform wording and the private-alpha badge are present",
+      "no surface implies broker connectivity, market access, account connection, execution readiness or trading",
+      "every required failure and empty state exists",
+      "aria-live, role=status and role=note are present",
+      "no credential, registration, broker or execution control is rendered",
+      "the readiness page has no input, form, textarea or mutating control",
+      "the readiness API exposes no POST, PUT, PATCH or DELETE route",
+      "owner approval cannot be marked complete by automation"
+    ]
+  },
+
+  "full_frontend_suite": {
+    "tests": 342,
+    "passed": 342,
+    "failed": 0,
+    "note": "318 predecessor tests plus the 24 added here."
+  },
+
+  "verdict": "M340_PRIVATE_ALPHA_UX_READY_WITH_LIMITATIONS",
+  "limitations": [
+    "Accessibility result is a structural audit of the changed surfaces, not a WCAG conformance claim.",
+    "No automated accessibility scanner or screen-reader session was run; the repository has no such harness.",
+    "The misleading-language audit covers the frontend tree; backend-sourced strings are covered only by the browser certification's rendered-text assertion."
+  ]
+}

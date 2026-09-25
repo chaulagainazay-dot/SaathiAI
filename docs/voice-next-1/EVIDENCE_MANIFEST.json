@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "mission": "V-NEXT-1-CANONICAL-VOICE-SESSION",
+  "verdict": "CANONICAL_VOICE_SESSION_CERTIFIED_WITH_LIMITATIONS",
+  "source_branch": "feature/ui-next-1-central-command",
+  "source_sha": "d66fa3aea03dbb8f5daed431ff62d64fad7906a9",
+  "feature_branch": "feature/v-next-1-canonical-voice-session",
+  "publish_head_at_write": "d66fa3aea03dbb8f5daed431ff62d64fad7906a9",
+  "tests": {
+    "frontend_unit_passed": 406,
+    "voice_session_unit": 7,
+    "build": "pass"
+  },
+  "security": {
+    "zero_new_financial_authority": true,
+    "zero_voice_authorization_bypass": true,
+    "zero_new_credentials": true,
+    "zero_unbounded_audio_retention": true
+  },
+  "capabilities": {
+    "manualInterruptAvailable": true,
+    "vadAvailable": false,
+    "wakeWordAvailable": false,
+    "fullDuplexAvailable": false
+  }
+}

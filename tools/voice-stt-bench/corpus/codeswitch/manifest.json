@@ -1,0 +1,227 @@
+{
+  "version": "v-next-2b3-codeswitch",
+  "note": "Code-switch + numeric corpus. Gates locked before generation.",
+  "finance_terms": [
+    "portfolio",
+    "risk",
+    "nav",
+    "drawdown",
+    "rebalance",
+    "exposure",
+    "trading guardian",
+    "executiongateway",
+    "approvals",
+    "missions",
+    "saathi",
+    "stop-loss",
+    "percent",
+    "shares"
+  ],
+  "numbers": [
+    "5",
+    "five",
+    "15",
+    "fifteen",
+    "500",
+    "five hundred",
+    "50000",
+    "fifty thousand",
+    "1.5",
+    "one point five"
+  ],
+  "count": 24,
+  "items": [
+    {
+      "id": "cs_001",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "आजको portfolio risk explain गर",
+      "wav": "codeswitch/wav/cs_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_002",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "मेरो pending approvals show गर",
+      "wav": "codeswitch/wav/cs_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_003",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Trading Guardian को status के छ?",
+      "wav": "codeswitch/wav/cs_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_004",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "आजको NAV र drawdown compare गर",
+      "wav": "codeswitch/wav/cs_004.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_005",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Saathi, current portfolio exposure कति छ?",
+      "wav": "codeswitch/wav/cs_005.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_006",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "यो proposal approve नगर",
+      "wav": "codeswitch/wav/cs_006.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_007",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Stop, त्यो action cancel गर",
+      "wav": "codeswitch/wav/cs_007.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_008",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Saathi, system health check गर",
+      "wav": "codeswitch/wav/cs_008.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_009",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "ExecutionGateway healthy छ?",
+      "wav": "codeswitch/wav/cs_009.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_010",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "आजको market मा मेरो biggest risk के हो?",
+      "wav": "codeswitch/wav/cs_010.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_011",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Portfolio rebalance proposal देखाऊ",
+      "wav": "codeswitch/wav/cs_011.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_012",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Show my missions र approvals",
+      "wav": "codeswitch/wav/cs_012.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_013",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Open command center र system health देखाऊ",
+      "wav": "codeswitch/wav/cs_013.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "cs_014",
+      "lang": "mixed",
+      "category": "MIX_CS",
+      "text": "Cancel that response र फेरि सुन",
+      "wav": "codeswitch/wav/cs_014.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_001",
+      "lang": "en",
+      "category": "NUMERIC",
+      "text": "Reduce position by five percent.",
+      "wav": "codeswitch/wav/nm_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_002",
+      "lang": "en",
+      "category": "NUMERIC",
+      "text": "Set stop-loss at fifteen percent.",
+      "wav": "codeswitch/wav/nm_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_003",
+      "lang": "en",
+      "category": "NUMERIC",
+      "text": "Buy five hundred shares.",
+      "wav": "codeswitch/wav/nm_003.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_004",
+      "lang": "en",
+      "category": "NUMERIC",
+      "text": "NAV is fifty thousand NPR.",
+      "wav": "codeswitch/wav/nm_004.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_005",
+      "lang": "en",
+      "category": "NUMERIC",
+      "text": "Drawdown is one point five percent.",
+      "wav": "codeswitch/wav/nm_005.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_006",
+      "lang": "mixed",
+      "category": "NUMERIC",
+      "text": "आजको drawdown five percent छ?",
+      "wav": "codeswitch/wav/nm_006.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "nm_007",
+      "lang": "mixed",
+      "category": "NUMERIC",
+      "text": "Position size पाँच सय shares राख",
+      "wav": "codeswitch/wav/nm_007.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "pn_001",
+      "lang": "en",
+      "category": "PROPER",
+      "text": "SaathiOS Trading Guardian status.",
+      "wav": "codeswitch/wav/pn_001.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "pn_002",
+      "lang": "en",
+      "category": "PROPER",
+      "text": "Is ExecutionGateway healthy?",
+      "wav": "codeswitch/wav/pn_002.wav",
+      "source": "tts_local"
+    },
+    {
+      "id": "pn_003",
+      "lang": "mixed",
+      "category": "PROPER",
+      "text": "Ollama model idle छ कि छैन?",
+      "wav": "codeswitch/wav/pn_003.wav",
+      "source": "tts_local"
+    }
+  ]
+}

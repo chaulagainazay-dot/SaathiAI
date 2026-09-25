@@ -1,0 +1,41 @@
+{
+  "api_namespace": "/api/v1/platform/tg/connectivity-governance/*",
+  "browser_cert": "npm run cert:m319",
+  "cli_commands": [
+    "cg-verdict",
+    "cg-charter-show",
+    "cg-authority-list",
+    "cg-provider-list",
+    "cg-certify"
+  ],
+  "modules": [
+    "__init__.py",
+    "account_scope.py",
+    "approval_policy.py",
+    "approval_records.py",
+    "authority.py",
+    "canary_policy.py",
+    "certification.py",
+    "charter.py",
+    "credential_policy.py",
+    "emergency_shutdown.py",
+    "errors.py",
+    "incident_response.py",
+    "jurisdiction.py",
+    "maturity.py",
+    "models.py",
+    "provider_capabilities.py",
+    "provider_registry.py",
+    "revocation.py",
+    "scope_policy.py",
+    "service.py",
+    "storage.py",
+    "threat_model.py"
+  ],
+  "package": "saathi/platform/tg/connectivity_governance",
+  "tests": [
+    "tests/test_m312_m319_connectivity_governance.py",
+    "saathi-os/lib/m312_connectivity_governance.test.js"
+  ],
+  "ui_route": "/trading/connectivity-governance"
+}

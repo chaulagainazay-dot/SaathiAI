@@ -8,6 +8,7 @@ import time
 from decimal import Decimal
 from typing import Any
 
+from saathi.platform.tg.venue_policy import evaluate_venue
 from saathi.platform.tg.domain import (
     AuthorityMode,
     GateStatus,
@@ -122,6 +123,18 @@ class PolicyEngine:
             f"market {mkt}",
             {"market": mkt, "supported": pol.supported_markets},
         )
+
+        # 2b. TRADING-GUARDIAN-V2 per-venue policy. Independent of strategy status,
+        # construction, or risk: a disabled venue (or, when session gating is
+        # requested, a closed/unknown session) blocks here. Opt-in via `extra` so
+        # default paper evaluation is unchanged.
+        ven = evaluate_venue(
+            proposal.symbol,
+            disabled_venues=extra.get("disabled_venues", ()),
+            require_session=extra.get("require_session", False),
+            session_open=extra.get("session_open"),
+        )
+        gate("venue_enabled", ven["ok"], ven["reason"], ven["explanation"], ven["evidence"])
 
         # 3. supported timeframe
         tf = snapshot.bars[0].timeframe if snapshot.bars else "1d"

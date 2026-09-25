@@ -1,0 +1,257 @@
+{
+  "inventory": "agentdev.model_inventory.v1",
+  "endpoint": "http://127.0.0.1:11434",
+  "thresholds": {
+    "max_model_size_fraction_of_ram": 0.5,
+    "min_free_swap_mib": 512.0,
+    "min_available_memory_mib": 1024.0,
+    "min_free_disk_gib": 10.0,
+    "min_free_memory_percent": 20,
+    "max_resident_models": 1,
+    "max_concurrent_evaluations": 1,
+    "rationale": "Apple M2, 8 GiB unified memory, single SSD. Unified memory means a model competes with every other process for one pool, so the size ceiling is a fraction of physical RAM rather than of free RAM."
+  },
+  "baseline": {
+    "host": {
+      "system": "Darwin",
+      "machine": "arm64",
+      "cpu_count": 8,
+      "total_memory_bytes": 8589934592,
+      "peak_process_memory_bytes": 35274752,
+      "disk_total_bytes": 245107195904,
+      "disk_free_bytes": 63207976960,
+      "load_average": [
+        1.81,
+        1.69,
+        2.25
+      ],
+      "measured_at": 1785934659.236773,
+      "total_memory_gib": 8.0,
+      "disk_free_gib": 58.87,
+      "peak_process_memory_mib": 33.6,
+      "note": "peak_process_memory is this process since start, not current usage; total_memory is physical, not available."
+    },
+    "swap": {
+      "available": true,
+      "total_bytes": 3221225472,
+      "used_bytes": 2506421698,
+      "free_bytes": 714803773,
+      "total_mib": 3072.0,
+      "used_mib": 2390.3,
+      "free_mib": 681.7,
+      "used_fraction": 0.7781
+    },
+    "pages": {
+      "available": true,
+      "page_size_bytes": 16384,
+      "pages": {
+        "pages_free": 9256,
+        "pages_active": 163611,
+        "pages_inactive": 160582,
+        "pages_speculative": 2248,
+        "pages_throttled": 0,
+        "pages_wired_down": 84277,
+        "pages_purgeable": 4092,
+        "pages_copy-on-write": 913968,
+        "pages_zero_filled": 16079728,
+        "pages_reactivated": 17987965,
+        "pages_purged": 761947,
+        "file-backed_pages": 140461,
+        "anonymous_pages": 185980,
+        "pages_stored_in_compressor": 414606,
+        "pages_occupied_by_compressor": 67817,
+        "decompressions": 16497440,
+        "compressions": 18765975,
+        "pageins": 6919486,
+        "pageouts": 138502,
+        "swapins": 394910,
+        "swapouts": 605959
+      },
+      "free_bytes": 151650304,
+      "available_bytes": 2819457024,
+      "available_mib": 2688.8,
+      "wired_bytes": 1380794368,
+      "active_bytes": 2680602624,
+      "compressor_bytes": 1111113728,
+      "note": "available = free + inactive + speculative, the pages Darwin can reclaim without paging out. It is an upper bound on what a model may take, not a promise that it will get it."
+    },
+    "pressure": {
+      "available": true,
+      "free_percent": 68,
+      "used_percent": 32,
+      "note": "Darwin's own free percentage. It counts compressible and reclaimable pages as free, so it reads higher than the memory a new process will actually be handed."
+    },
+    "resident_models": {},
+    "resident_count": 0,
+    "measured_at": 1785934659.252529
+  },
+  "read_only": true,
+  "endpoints_read": [
+    "/api/tags",
+    "/api/ps",
+    "/api/show"
+  ],
+  "provider_reachable": true,
+  "models": [
+    {
+      "name": "gemma4:e2b",
+      "tag": "e2b",
+      "digest": "7fbdbf8f5e45a75bb122155ed546e765b4d9c53a1285f62fd9f506baa1c5a47e",
+      "size_bytes": 7162405886,
+      "quantization": "Q4_K_M",
+      "family": "gemma4",
+      "parameter_size": "5.1B",
+      "context_length": 131072,
+      "capabilities": [
+        "audio",
+        "completion",
+        "thinking",
+        "tools",
+        "vision"
+      ],
+      "installed": true,
+      "running": false,
+      "resident_size_bytes": 0,
+      "eligibility": "resource_unsuitable_on_current_host",
+      "exclusion_reason": "on-disk size 6.67 GiB exceeds the host ceiling of 4.0 GiB (50% of 8.0 GiB physical memory)",
+      "expected_memory_bytes": 8021399345,
+      "size_gib": 6.67,
+      "expected_memory_gib": 7.47,
+      "digest_short": "7fbdbf8f5e45",
+      "memory_note": "expected_memory is the on-disk size plus a flat allowance for the KV cache and provider overhead. It is an estimate stated as one, not a measurement."
+    },
+    {
+      "name": "qwen2.5-coder:3b",
+      "tag": "3b",
+      "digest": "f72c60cabf6237b07f6e632b2c48d533cef25eda2efbd34bed21c5e9c01e6225",
+      "size_bytes": 1929912626,
+      "quantization": "Q4_K_M",
+      "family": "qwen2",
+      "parameter_size": "3.1B",
+      "context_length": 32768,
+      "capabilities": [
+        "completion",
+        "insert",
+        "tools"
+      ],
+      "installed": true,
+      "running": false,
+      "resident_size_bytes": 0,
+      "eligibility": "eligible",
+      "exclusion_reason": "",
+      "expected_memory_bytes": 2788906085,
+      "size_gib": 1.8,
+      "expected_memory_gib": 2.6,
+      "digest_short": "f72c60cabf62",
+      "memory_note": "expected_memory is the on-disk size plus a flat allowance for the KV cache and provider overhead. It is an estimate stated as one, not a measurement."
+    },
+    {
+      "name": "qwen2.5:1.5b",
+      "tag": "1.5b",
+      "digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+      "size_bytes": 986061892,
+      "quantization": "Q4_K_M",
+      "family": "qwen2",
+      "parameter_size": "1.5B",
+      "context_length": 32768,
+      "capabilities": [
+        "completion",
+        "tools"
+      ],
+      "installed": true,
+      "running": false,
+      "resident_size_bytes": 0,
+      "eligibility": "eligible",
+      "exclusion_reason": "",
+      "expected_memory_bytes": 1845055351,
+      "size_gib": 0.92,
+      "expected_memory_gib": 1.72,
+      "digest_short": "65ec06548149",
+      "memory_note": "expected_memory is the on-disk size plus a flat allowance for the KV cache and provider overhead. It is an estimate stated as one, not a measurement."
+    },
+    {
+      "name": "qwen3:4b",
+      "tag": "4b",
+      "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+      "size_bytes": 2497293931,
+      "quantization": "Q4_K_M",
+      "family": "qwen3",
+      "parameter_size": "4.0B",
+      "context_length": 262144,
+      "capabilities": [
+        "completion",
+        "thinking",
+        "tools"
+      ],
+      "installed": true,
+      "running": false,
+      "resident_size_bytes": 0,
+      "eligibility": "eligible",
+      "exclusion_reason": "",
+      "expected_memory_bytes": 3356287390,
+      "size_gib": 2.33,
+      "expected_memory_gib": 3.13,
+      "digest_short": "359d7dd4bcda",
+      "memory_note": "expected_memory is the on-disk size plus a flat allowance for the KV cache and provider overhead. It is an estimate stated as one, not a measurement."
+    },
+    {
+      "name": "qwen3:8b",
+      "tag": "8b",
+      "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+      "size_bytes": 5225388164,
+      "quantization": "Q4_K_M",
+      "family": "qwen3",
+      "parameter_size": "8.2B",
+      "context_length": 40960,
+      "capabilities": [
+        "completion",
+        "thinking",
+        "tools"
+      ],
+      "installed": true,
+      "running": false,
+      "resident_size_bytes": 0,
+      "eligibility": "resource_unsuitable_on_current_host",
+      "exclusion_reason": "on-disk size 4.87 GiB exceeds the host ceiling of 4.0 GiB (50% of 8.0 GiB physical memory)",
+      "expected_memory_bytes": 6084381623,
+      "size_gib": 4.87,
+      "expected_memory_gib": 5.67,
+      "digest_short": "500a1f067a9f",
+      "memory_note": "expected_memory is the on-disk size plus a flat allowance for the KV cache and provider overhead. It is an estimate stated as one, not a measurement."
+    }
+  ],
+  "model_count": 5,
+  "eligible": [
+    "qwen2.5-coder:3b",
+    "qwen2.5:1.5b",
+    "qwen3:4b"
+  ],
+  "excluded": [
+    {
+      "model": "gemma4:e2b",
+      "eligibility": "resource_unsuitable_on_current_host",
+      "reason": "on-disk size 6.67 GiB exceeds the host ceiling of 4.0 GiB (50% of 8.0 GiB physical memory)"
+    },
+    {
+      "model": "qwen3:8b",
+      "eligibility": "resource_unsuitable_on_current_host",
+      "reason": "on-disk size 4.87 GiB exceeds the host ceiling of 4.0 GiB (50% of 8.0 GiB physical memory)"
+    }
+  ],
+  "duplicate_digests": {},
+  "missing_digest": [],
+  "safety": {
+    "safe": true,
+    "breaches": [],
+    "measurements": {
+      "free_swap_mib": 681.7,
+      "available_memory_mib": 2688.8,
+      "free_memory_percent": 68,
+      "free_disk_gib": 58.87,
+      "resident_models": []
+    },
+    "verdict": "proceed"
+  },
+  "duration_ms": 47.87,
+  "limitation": "One reading of one host. Eligibility is a statement about this machine's memory at this moment, never about a model's quality: a model excluded as resource_unsuitable_on_current_host has not been evaluated and nothing here suggests how it would score."
+}
