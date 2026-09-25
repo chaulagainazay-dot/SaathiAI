@@ -42,6 +42,44 @@ def _research_rows(symbol: str | None, limit: int) -> list[dict[str, Any]]:
     return rows
 
 
+def _tracker_rows(symbol: str | None, limit: int) -> list[dict[str, Any]]:
+    """Real news + promoter lock-in/unlock for a symbol from the NEPSE tracker web agent."""
+    if not symbol:
+        # market-wide: latest tracker news headlines
+        try:
+            from saathi.platform.market_data import tracker_web
+            nw = tracker_web.news(limit)
+        except Exception:
+            return []
+        return [{"symbol": None, "headline": n.get("headline"), "event_type": n.get("category"),
+                 "date": n.get("published_date"), "source": n.get("source") or "tracker",
+                 "url": n.get("url"), "catalyst": _is_catalyst(str(n.get("headline")))}
+                for n in nw.get("news", [])]
+    try:
+        from saathi.platform.market_data import tracker_web
+        corp = tracker_web.symbol_corporate(symbol)
+    except Exception:
+        return []
+    rows: list[dict[str, Any]] = []
+    lock = corp.get("promoter_lockin")
+    if lock:
+        st = str(lock.get("status") or "").lower()
+        rows.append({
+            "symbol": symbol,
+            "headline": f"Promoter shares {st or 'lock-in'} — {lock.get('promoter_percentage')}% "
+                        f"({lock.get('promoter_shares')} sh), lock-in date {lock.get('lockin_date')}",
+            "event_type": "Promoter Lock-in / Unlock",
+            "date": lock.get("lockin_date"),
+            "source": "tracker",
+            "catalyst": True,
+        })
+    for n in corp.get("news", []):
+        rows.append({"symbol": symbol, "headline": n.get("headline"), "event_type": n.get("category"),
+                     "date": n.get("published_date"), "source": n.get("source") or "tracker",
+                     "url": n.get("url"), "catalyst": _is_catalyst(str(n.get("headline")))})
+    return rows
+
+
 def _dividend_rows(symbol: str | None, limit: int) -> list[dict[str, Any]]:
     """Announced dividends → news rows. Per-symbol when given, else recent across market."""
     try:
@@ -75,7 +113,7 @@ def _dividend_rows(symbol: str | None, limit: int) -> list[dict[str, Any]]:
 
 def symbol_news(symbol: str | None, limit: int = 12) -> dict[str, Any]:
     sym = symbol.strip().upper() if symbol else None
-    rows = _research_rows(sym, limit) + _dividend_rows(sym, limit)
+    rows = _tracker_rows(sym, limit) + _research_rows(sym, limit) + _dividend_rows(sym, limit)
 
     # de-dupe on (symbol, headline)
     seen = set()
@@ -96,6 +134,6 @@ def symbol_news(symbol: str | None, limit: int = 12) -> dict[str, Any]:
         "symbol": sym,
         "count": len(out),
         "events": out,
-        "sources": ["research_surface", "nepse_tracker_dividends"],
+        "sources": ["nepse_tracker_news", "nepse_tracker_promoter_lockins", "research_surface", "nepse_tracker_dividends"],
         "note": None if out else "No corporate-action or research event found for this symbol in the free sources (promoter lock-in/unlock notices are only available for a few curated symbols).",
     }

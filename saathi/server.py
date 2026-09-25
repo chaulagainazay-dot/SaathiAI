@@ -6187,6 +6187,49 @@ def market_strategies_scan(body: dict = Body(...)):
         return JSONResponse({"error": str(e)[:200]}, status_code=503)
 
 
+@app.get("/api/v1/market/tracker/data/{dataset}")
+def market_tracker_data(dataset: str, limit: int = 0, status: str = "all"):
+    """NEPSE Portfolio Tracker web agent — every live dataset by name:
+    news · today · gainers · losers · sectors · indices · ipos · dividends ·
+    promoter-lockins · mergers · brokers · holidays · pulse · status · summary.
+    Observation-only, live from nepseportfoliotracker.app."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        m = {
+            "news": lambda: tracker_web.news(limit or 20),
+            "today": lambda: tracker_web.today_prices(limit or 3000),
+            "gainers": lambda: tracker_web.gainers(limit or 20),
+            "losers": lambda: tracker_web.losers(limit or 20),
+            "sectors": tracker_web.sectors,
+            "indices": tracker_web.subindices,
+            "ipos": lambda: tracker_web.ipos(limit or 50),
+            "dividends": lambda: tracker_web.dividends(limit or 100),
+            "promoter-lockins": lambda: tracker_web.promoter_lockins(status),
+            "mergers": lambda: tracker_web.mergers(limit or 50),
+            "brokers": tracker_web.brokers,
+            "holidays": tracker_web.holidays,
+            "pulse": tracker_web.market_pulse,
+            "status": tracker_web.market_status,
+            "summary": tracker_web.market_summary,
+        }
+        fn = m.get(dataset)
+        if not fn:
+            return JSONResponse({"error": f"unknown dataset '{dataset}'", "available_datasets": sorted(m)}, status_code=404)
+        return fn()
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
+@app.get("/api/v1/market/tracker/symbol/{symbol}")
+def market_tracker_symbol(symbol: str):
+    """All corporate data for one symbol: promoter lock-in/unlock, dividends, news, IPO/right."""
+    try:
+        from saathi.platform.market_data import tracker_web
+        return tracker_web.symbol_corporate(symbol)
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=503)
+
+
 @app.post("/api/v1/market/predict/swarm")
 def market_predict_swarm(body: dict = Body(...)):
     """Swarm crowd-simulation prediction (MiroFish idea, ported deterministic, no external
